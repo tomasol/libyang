@@ -31,7 +31,7 @@
  * @brief XML printer context.
  */
 struct xmlpr_ctx {
-    struct lyout *out;  /**< output specification */
+    struct lyp_out *out;  /**< output specification */
     unsigned int level; /**< current indentation level: 0 - no formatting, >= 1 indentation levels */
     int options;        /**< [Data printer flags](@ref dataprinterflags) */
     int toplevel;       /**< top-level flag */
@@ -150,7 +150,7 @@ print:
         miter = mlist;
         mlist = mlist->next;
 
-        ly_print(ctx->out, " xmlns:%s=\"%s\"", miter->module->prefix, miter->module->ns);
+        lyp_print(ctx->out, " xmlns:%s=\"%s\"", miter->module->prefix, miter->module->ns);
         free(miter);
     }
 }
@@ -199,7 +199,7 @@ xml_print_attrs(struct xmlpr_ctx *ctx, const struct lyd_node *node)
             wdmod = ly_ctx_get_module(node->schema->module->ctx, "ietf-netconf-with-defaults", NULL, 1);
             if (wdmod) {
                 /* print attribute only if context include with-defaults schema */
-                ly_print(out, " %s:default=\"true\"", wdmod->prefix);
+                lyp_print(out, " %s:default=\"true\"", wdmod->prefix);
             }
         }
     }
@@ -215,7 +215,7 @@ xml_print_attrs(struct xmlpr_ctx *ctx, const struct lyd_node *node)
         /* print namespaces connected with the values's prefixes */
         for (u = 0; u < ns_list.count; ++u) {
             const struct lys_module *mod = (const struct lys_module*)ns_list.objs[u];
-            ly_print(ctx->out, " xmlns:%s=\"%s\"", mod->prefix, mod->ns);
+            lyp_print(ctx->out, " xmlns:%s=\"%s\"", mod->prefix, mod->ns);
         }
         ly_set_erase(&ns_list, NULL);
 
@@ -231,15 +231,15 @@ xml_print_attrs(struct xmlpr_ctx *ctx, const struct lyd_node *node)
                 }
 
                 for (i = 0; i < ns_count; ++i) {
-                    ly_print(out, " xmlns:%s=\"%s\"", prefs[i], nss[i]);
+                    lyp_print(out, " xmlns:%s=\"%s\"", prefs[i], nss[i]);
                 }
                 free(prefs);
                 free(nss);
             }
-            ly_print(out, " %s=\"", attr->name);
+            lyp_print(out, " %s=\"", attr->name);
         } else {
 #endif
-            ly_print(ctx->out, " %s:%s=\"", attr->annotation->module->prefix, attr->name);
+            lyp_print(ctx->out, " %s:%s=\"", attr->annotation->module->prefix, attr->name);
 #if 0
         }
 #endif
@@ -247,7 +247,7 @@ xml_print_attrs(struct xmlpr_ctx *ctx, const struct lyd_node *node)
         if (value && value[0]) {
             lyxml_dump_text(ctx->out, value, 1);
         }
-        ly_print(ctx->out, "\"");
+        lyp_print(ctx->out, "\"");
         if (dynamic) {
             free((void*)value);
         }
@@ -270,9 +270,9 @@ xml_print_node_open(struct xmlpr_ctx *ctx, const struct lyd_node *node)
 {
     if (ctx->toplevel || !node->parent || node->schema->module != node->parent->schema->module) {
         /* print "namespace" */
-        ly_print(ctx->out, "%*s<%s xmlns=\"%s\"", INDENT, node->schema->name, node->schema->module->ns);
+        lyp_print(ctx->out, "%*s<%s xmlns=\"%s\"", INDENT, node->schema->name, node->schema->module->ns);
     } else {
-        ly_print(ctx->out, "%*s<%s", INDENT, node->schema->name);
+        lyp_print(ctx->out, "%*s<%s", INDENT, node->schema->name);
     }
 
     if (ctx->toplevel) {
@@ -308,16 +308,16 @@ xml_print_term(struct xmlpr_ctx *ctx, const struct lyd_node_term *node)
     /* print namespaces connected with the values's prefixes */
     for (u = 0; u < ns_list.count; ++u) {
         const struct lys_module *mod = (const struct lys_module*)ns_list.objs[u];
-        ly_print(ctx->out, "%sxmlns:%s=\"%s\"", u ? " " : "", mod->prefix, mod->ns);
+        lyp_print(ctx->out, "%sxmlns:%s=\"%s\"", u ? " " : "", mod->prefix, mod->ns);
     }
     ly_set_erase(&ns_list, NULL);
 
     if (!value || !value[0]) {
-        ly_print(ctx->out, "/>%s", LEVEL ? "\n" : "");
+        lyp_print(ctx->out, "/>%s", LEVEL ? "\n" : "");
     } else {
-        ly_print(ctx->out, ">");
+        lyp_print(ctx->out, ">");
         lyxml_dump_text(ctx->out, value, 0);
-        ly_print(ctx->out, "</%s>%s", node->schema->name, LEVEL ? "\n" : "");
+        lyp_print(ctx->out, "</%s>%s", node->schema->name, LEVEL ? "\n" : "");
     }
     if (dynamic) {
         free((void*)value);
@@ -342,12 +342,12 @@ xml_print_inner(struct xmlpr_ctx *ctx, const struct lyd_node_inner *node)
     LY_CHECK_RET(xml_print_node_open(ctx, (struct lyd_node *)node));
 
     if (!node->child) {
-        ly_print(ctx->out, "/>%s", ctx->level ? "\n" : "");
+        lyp_print(ctx->out, "/>%s", ctx->level ? "\n" : "");
         return LY_SUCCESS;
     }
 
     /* children */
-    ly_print(ctx->out, ">%s", ctx->level ? "\n" : "");
+    lyp_print(ctx->out, ">%s", ctx->level ? "\n" : "");
 
     LEVEL_INC;
     LY_LIST_FOR(node->child, child) {
@@ -356,7 +356,7 @@ xml_print_inner(struct xmlpr_ctx *ctx, const struct lyd_node_inner *node)
     }
     LEVEL_DEC;
 
-    ly_print(ctx->out, "%*s</%s>%s", INDENT, node->schema->name, LEVEL ? "\n" : "");
+    lyp_print(ctx->out, "%*s</%s>%s", INDENT, node->schema->name, LEVEL ? "\n" : "");
 
     return LY_SUCCESS;
 }
@@ -373,7 +373,7 @@ xml_print_anydata(struct xmlpr_ctx *ctx, const struct lyd_node_any *node)
     if (!any->value.tree) {
         /* no content */
 no_content:
-        ly_print(ctx->out, "/>%s", LEVEL ? "\n" : "");
+        lyp_print(ctx->out, "/>%s", LEVEL ? "\n" : "");
         return LY_SUCCESS;
     } else {
         switch (any->value_type) {
@@ -383,7 +383,7 @@ no_content:
             ctx->options &= ~(LYDP_WITHSIBLINGS | LYDP_NETCONF);
             LEVEL_INC;
 
-            ly_print(ctx->out, ">%s", LEVEL ? "\n" : "");
+            lyp_print(ctx->out, ">%s", LEVEL ? "\n" : "");
             LY_LIST_FOR(any->value.tree, iter) {
                 if (xml_print_node(ctx, iter)) {
                     return EXIT_FAILURE;
@@ -399,7 +399,7 @@ no_content:
                 goto no_content;
             }
             /* close opening tag and print data */
-            ly_print(ctx->out, ">");
+            lyp_print(ctx->out, ">");
             lyxml_dump_text(ctx->out, any->value.str, 0);
             break;
         case LYD_ANYDATA_XML:
@@ -407,7 +407,7 @@ no_content:
             if (!any->value.str[0]) {
                 goto no_content;
             }
-            ly_print(ctx->out, ">%s", any->value.str);
+            lyp_print(ctx->out, ">%s", any->value.str);
             break;
         case LYD_ANYDATA_JSON:
 #if 0 /* TODO LYB format */
@@ -420,9 +420,9 @@ no_content:
 
         /* closing tag */
         if (any->value_type == LYD_ANYDATA_DATATREE) {
-            ly_print(ctx->out, "%*s</%s>%s", INDENT, node->schema->name, LEVEL ? "\n" : "");
+            lyp_print(ctx->out, "%*s</%s>%s", INDENT, node->schema->name, LEVEL ? "\n" : "");
         } else {
-            ly_print(ctx->out, "</%s>%s", node->schema->name, LEVEL ? "\n" : "");
+            lyp_print(ctx->out, "</%s>%s", node->schema->name, LEVEL ? "\n" : "");
         }
     }
 
@@ -473,14 +473,14 @@ xml_print_node(struct xmlpr_ctx *ctx, const struct lyd_node *node)
 }
 
 LY_ERR
-xml_print_data(struct lyout *out, const struct lyd_node *root, int options)
+xml_print_data(struct lyp_out *out, const struct lyd_node *root, int options)
 {
     const struct lyd_node *node;
     struct xmlpr_ctx ctx_ = {.out = out, .level = (options & LYDP_FORMAT ? 1 : 0), .options = options, .toplevel = 1}, *ctx = &ctx_;
 
     if (!root) {
-        if (out->type == LYOUT_MEMORY || out->type == LYOUT_CALLBACK) {
-            ly_print(out, "");
+        if (out->type == LYP_OUT_MEMORY || out->type == LYP_OUT_CALLBACK) {
+            lyp_print(out, "");
         }
         goto finish;
     }

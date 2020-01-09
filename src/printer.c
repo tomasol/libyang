@@ -62,61 +62,336 @@ struct ext_substmt_info_s ext_substmt_info[] = {
   {"unique", "tag", 0},                         /**< LYEXT_SUBSTMT_UNIQUE */
 };
 
-LY_ERR
-ly_print(struct lyout *out, const char *format, ...)
+API struct lyp_out *
+lyp_new_clb(ssize_t (*writeclb)(void *arg, const void *buf, size_t count), void *arg)
+{
+    struct lyp_out *out;
+
+    out = calloc(1, sizeof *out);
+    LY_CHECK_ERR_RET(!out, LOGMEM(NULL), NULL);
+
+    out->type = LYP_OUT_CALLBACK;
+    out->method.clb.func = writeclb;
+    out->method.clb.arg = arg;
+
+    return out;
+}
+
+API ssize_t (*lyp_clb(struct lyp_out *out, ssize_t (*writeclb)(void *arg, const void *buf, size_t count)))(void *arg, const void *buf, size_t count)
+{
+    void *prev_clb;
+
+    LY_CHECK_ARG_RET(NULL, out, out->type == LYP_OUT_CALLBACK, NULL);
+
+    prev_clb = out->method.clb.func;
+
+    if (writeclb) {
+        out->method.clb.func = writeclb;
+    }
+
+    return prev_clb;
+}
+
+API void *
+lyp_clb_arg(struct lyp_out *out, void *arg)
+{
+    void *prev_arg;
+
+    LY_CHECK_ARG_RET(NULL, out, out->type == LYP_OUT_CALLBACK, NULL);
+
+    prev_arg = out->method.clb.arg;
+
+    if (arg) {
+        out->method.clb.arg = arg;
+    }
+
+    return prev_arg;
+}
+
+API struct lyp_out *
+lyp_new_fd(int fd)
+{
+    struct lyp_out *out;
+
+    out = calloc(1, sizeof *out);
+    LY_CHECK_ERR_RET(!out, LOGMEM(NULL), NULL);
+
+#ifdef HAVE_VDPRINTF
+    out->type = LYP_OUT_FD;
+    out->method.fd = fd;
+#else
+    /* Without vdfprintf(), change the printing method to printing to a FILE stream.
+     * To preserve the original file descriptor, duplicate it and use it to open file stream. */
+    out->type = LYP_OUT_FDSTREAM;
+    out->method.fdstream.fd = fd;
+
+    fd = dup(out->method.fdstream.fd);
+    if (fd < 0) {
+        LOGERR(NULL, LY_ESYS, "Unable to duplicate provided file descriptor (%d) for printing the output (%s).",
+               out->method.fdstream.fd, strerror(errno));
+        free(out);
+        return NULL;
+    }
+    out->method.fdstream.f = fdopen(fd, "a");
+    if (!out->method.fdstream.f) {
+        LOGERR(NULL, LY_ESYS, "Unable to open provided file descriptor (%d) for printing the output (%s).",
+               out->method.fdstream.fd, strerror(errno));
+        free(out);
+        fclose(fd);
+        return NULL;
+    }
+#endif
+
+    return out;
+}
+
+API int
+lyp_fd(struct lyp_out *out, int fd)
+{
+    int prev_fd;
+
+    LY_CHECK_ARG_RET(NULL, out, out->type <= LYP_OUT_FDSTREAM, -1);
+
+    if (out->type == LYP_OUT_FDSTREAM) {
+        prev_fd = out->method.fdstream.fd;
+    } else { /* LYP_OUT_FD */
+        prev_fd = out->method.fd;
+    }
+
+    if (fd != -1) {
+        /* replace output stream */
+        if (out->type == LYP_OUT_FDSTREAM) {
+            int streamfd;
+            FILE *stream;
+
+            streamfd = dup(fd);
+            if (streamfd < 0) {
+                LOGERR(NULL, LY_ESYS, "Unable to duplicate provided file descriptor (%d) for printing the output (%s).", fd, strerror(errno));
+                return -1;
+            }
+            stream = fdopen(streamfd, "a");
+            if (!stream) {
+                LOGERR(NULL, LY_ESYS, "Unable to open provided file descriptor (%d) for printing the output (%s).", fd, strerror(errno));
+                close(streamfd);
+                return -1;
+            }
+            /* close only the internally created stream, file descriptor is returned and supposed to be closed by the caller */
+            fclose(out->method.fdstream.f);
+            out->method.fdstream.f = stream;
+            out->method.fdstream.fd = streamfd;
+        } else { /* LYP_OUT_FD */
+            out->method.fd = fd;
+        }
+    }
+
+    return prev_fd;
+}
+
+API struct lyp_out *
+lyp_new_file(FILE *f)
+{
+    struct lyp_out *out;
+
+    out = calloc(1, sizeof *out);
+    LY_CHECK_ERR_RET(!out, LOGMEM(NULL), NULL);
+
+    out->type = LYP_OUT_FILE;
+    out->method.f = f;
+
+    return out;
+}
+
+API FILE *
+lyp_file(struct lyp_out *out, FILE *f)
+{
+    FILE *prev_f;
+
+    LY_CHECK_ARG_RET(NULL, out, out->type == LYP_OUT_FILE, NULL);
+
+    prev_f = out->method.f;
+
+    if (f) {
+        out->method.f = f;
+    }
+
+    return prev_f;
+}
+
+API struct lyp_out *
+lyp_new_memory(char **strp, size_t size)
+{
+    struct lyp_out *out;
+
+    out = calloc(1, sizeof *out);
+    LY_CHECK_ERR_RET(!out, LOGMEM(NULL), NULL);
+
+    out->type = LYP_OUT_MEMORY;
+    out->method.mem.buf = strp;
+    if (!size) {
+        /* buffer is supposed to be allocated */
+        *strp = NULL;
+    } else if (*strp) {
+        /* there is already buffer to use */
+        out->method.mem.size = size;
+    }
+
+    return out;
+}
+
+char *
+lyp_memory(struct lyp_out *out, char **strp, size_t size)
+{
+    char *data;
+
+    LY_CHECK_ARG_RET(NULL, out, out->type == LYP_OUT_MEMORY, NULL);
+
+    data = *out->method.mem.buf;
+
+    if (strp) {
+        out->method.mem.buf = strp;
+        out->method.mem.len = out->method.mem.size = 0;
+        out->printed = 0;
+        if (!size) {
+            /* buffer is supposed to be allocated */
+            *strp = NULL;
+        } else if (*strp) {
+            /* there is already buffer to use */
+            out->method.mem.size = size;
+        }
+    }
+
+    return data;
+}
+
+API void
+lyp_memory_clean(struct lyp_out *out)
+{
+    LY_CHECK_ARG_RET(NULL, out, out->type == LYP_OUT_MEMORY,);
+
+    out->printed = 0;
+    out->method.mem.len = 0;
+}
+
+API struct lyp_out *
+lyp_new_filepath(const char *filepath)
+{
+    struct lyp_out *out;
+
+    out = calloc(1, sizeof *out);
+    LY_CHECK_ERR_RET(!out, LOGMEM(NULL), NULL);
+
+    out->type = LYP_OUT_FILEPATH;
+    out->method.fpath.f = fopen(filepath, "w");
+    if (!out->method.fpath.f) {
+        LOGERR(NULL, LY_ESYS, "Failed to open file \"%s\" (%s).", filepath, strerror(errno));
+        return NULL;
+    }
+    out->method.fpath.filepath = strdup(filepath);
+    return out;
+}
+
+API const char *
+lyp_filepath(struct lyp_out *out, const char *filepath)
+{
+    FILE *f;
+
+    LY_CHECK_ARG_RET(NULL, out, out->type == LYP_OUT_FILEPATH, filepath ? NULL : ((void *)-1));
+
+    if (!filepath) {
+        return out->method.fpath.filepath;
+    }
+
+    /* replace filepath */
+    f = out->method.fpath.f;
+    out->method.fpath.f = fopen(filepath, "w");
+    if (!out->method.fpath.f) {
+        LOGERR(NULL, LY_ESYS, "Failed to open file \"%s\" (%s).", filepath, strerror(errno));
+        out->method.fpath.f = f;
+        return ((void *)-1);
+    }
+    fclose(f);
+    free(out->method.fpath.filepath);
+    out->method.fpath.filepath = strdup(filepath);
+
+    return NULL;
+}
+
+API void
+lyp_free(struct lyp_out *out, void (*clb_arg_destructor)(void *arg), int destroy)
+{
+    if (!out) {
+        return;
+    }
+
+    switch (out->type) {
+    case LYP_OUT_CALLBACK:
+        if (clb_arg_destructor) {
+            clb_arg_destructor(out->method.clb.arg);
+        }
+        break;
+    case LYP_OUT_FDSTREAM:
+        fclose(out->method.fdstream.f);
+        if (destroy) {
+            close(out->method.fdstream.fd);
+        }
+        break;
+    case LYP_OUT_FD:
+        if (destroy) {
+            close(out->method.fd);
+        }
+        break;
+    case LYP_OUT_FILE:
+        if (destroy) {
+            fclose(out->method.f);
+        }
+        break;
+    case LYP_OUT_MEMORY:
+        if (destroy) {
+            free(*out->method.mem.buf);
+        }
+        break;
+    case LYP_OUT_FILEPATH:
+        free(out->method.fpath.filepath);
+        if (destroy) {
+            fclose(out->method.fpath.f);
+        }
+        break;
+    }
+    free(out);
+}
+
+API LY_ERR
+lyp_print(struct lyp_out *out, const char *format, ...)
 {
     int count = 0;
     char *msg = NULL, *aux;
     va_list ap;
-#ifndef HAVE_VDPRINTF
-    int fd;
-    FILE *stream;
-#endif
 
     LYOUT_CHECK(out, out->status);
 
     va_start(ap, format);
 
     switch (out->type) {
-    case LYOUT_FD:
+    case LYP_OUT_FD:
 #ifdef HAVE_VDPRINTF
         count = vdprintf(out->method.fd, format, ap);
         break;
 #else
-        /* Without vdfprintf(), change the printing method to printing to a FILE stream.
-         * To preserve the original file descriptor, duplicate it and use it to open file stream.
-         * Due to a standalone LYOUT_FDSTREAM, ly*_print_fd() functions are supposed to detect the
-         * change and close the stream on their exit. */
-        fd = dup(out->method.fd);
-        if (fd < 0) {
-            LOGERR(NULL, LY_ESYS, "Unable to duplicate provided file descriptor (%d) for printing the output (%s).",
-                   out->method.fd, strerror(errno));
-            va_end(ap);
-            out->status = LY_ESYS;
-            return LY_ESYS;
-        }
-        stream = fdopen(fd, "a");
-        if (!stream) {
-            LOGERR(NULL, LY_ESYS, "Unable to open provided file descriptor (%d) for printing the output (%s).",
-                   out->method.fd, strerror(errno));
-            va_end(ap);
-            out->status = LY_ESYS;
-            return LY_ESYS;
-        }
-        out->method.f = stream;
-        out->type = LYOUT_FDSTREAM;
+        /* never should be here since lyp_fd() is supposed to set type to LYP_OUT_FDSTREAM in case vdprintf() is missing */
+        LOGINT(NULL);
+        return LY_EINT;
 #endif
-        /* fall through */
-    case LYOUT_FDSTREAM:
-    case LYOUT_STREAM:
+    case LYP_OUT_FDSTREAM:
+    case LYP_OUT_FILEPATH:
+    case LYP_OUT_FILE:
         count = vfprintf(out->method.f, format, ap);
         break;
-    case LYOUT_MEMORY:
+    case LYP_OUT_MEMORY:
         if ((count = vasprintf(&msg, format, ap)) < 0) {
             break;
         }
         if (out->method.mem.len + count + 1 > out->method.mem.size) {
-            aux = ly_realloc(out->method.mem.buf, out->method.mem.len + count + 1);
+            aux = ly_realloc(*out->method.mem.buf, out->method.mem.len + count + 1);
             if (!aux) {
                 out->method.mem.buf = NULL;
                 out->method.mem.len = 0;
@@ -125,19 +400,19 @@ ly_print(struct lyout *out, const char *format, ...)
                 va_end(ap);
                 return LY_EMEM;
             }
-            out->method.mem.buf = aux;
+            *out->method.mem.buf = aux;
             out->method.mem.size = out->method.mem.len + count + 1;
         }
-        memcpy(&out->method.mem.buf[out->method.mem.len], msg, count);
+        memcpy(&(*out->method.mem.buf)[out->method.mem.len], msg, count);
         out->method.mem.len += count;
-        out->method.mem.buf[out->method.mem.len] = '\0';
+        (*out->method.mem.buf)[out->method.mem.len] = '\0';
         free(msg);
         break;
-    case LYOUT_CALLBACK:
+    case LYP_OUT_CALLBACK:
         if ((count = vasprintf(&msg, format, ap)) < 0) {
             break;
         }
-        count = out->method.clb.f(out->method.clb.arg, msg, count);
+        count = out->method.clb.func(out->method.clb.arg, msg, count);
         free(msg);
         break;
     }
@@ -149,24 +424,33 @@ ly_print(struct lyout *out, const char *format, ...)
         out->status = LY_ESYS;
         return LY_ESYS;
     } else {
+        if (out->type == LYP_OUT_FDSTREAM) {
+            /* move the original file descriptor to the end of the output file */
+            lseek(out->method.fdstream.fd, 0, SEEK_END);
+        }
         out->printed += count;
         return LY_SUCCESS;
     }
 }
 
 void
-ly_print_flush(struct lyout *out)
+ly_print_flush(struct lyp_out *out)
 {
     switch (out->type) {
-    case LYOUT_FDSTREAM:
-    case LYOUT_STREAM:
+    case LYP_OUT_FDSTREAM:
+        /* move the original file descriptor to the end of the output file */
+        lseek(out->method.fdstream.fd, 0, SEEK_END);
+        fflush(out->method.fdstream.f);
+        break;
+    case LYP_OUT_FILEPATH:
+    case LYP_OUT_FILE:
         fflush(out->method.f);
         break;
-    case LYOUT_FD:
+    case LYP_OUT_FD:
         fsync(out->method.fd);
         break;
-    case LYOUT_MEMORY:
-    case LYOUT_CALLBACK:
+    case LYP_OUT_MEMORY:
+    case LYP_OUT_CALLBACK:
         /* nothing to do */
         break;
     }
@@ -175,8 +459,8 @@ ly_print_flush(struct lyout *out)
     out->buf_size = out->buf_len = 0;
 }
 
-LY_ERR
-ly_write(struct lyout *out, const char *buf, size_t len)
+API LY_ERR
+lyp_write(struct lyp_out *out, const char *buf, size_t len)
 {
     int written = 0;
 
@@ -201,31 +485,32 @@ ly_write(struct lyout *out, const char *buf, size_t len)
 
 repeat:
     switch (out->type) {
-    case LYOUT_MEMORY:
+    case LYP_OUT_MEMORY:
         if (out->method.mem.len + len + 1 > out->method.mem.size) {
-            out->method.mem.buf = ly_realloc(out->method.mem.buf, out->method.mem.len + len + 1);
-            if (!out->method.mem.buf) {
+            *out->method.mem.buf = ly_realloc(*out->method.mem.buf, out->method.mem.len + len + 1);
+            if (!*out->method.mem.buf) {
                 out->method.mem.len = 0;
                 out->method.mem.size = 0;
                 LOGMEM_RET(NULL);
             }
             out->method.mem.size = out->method.mem.len + len + 1;
         }
-        memcpy(&out->method.mem.buf[out->method.mem.len], buf, len);
+        memcpy(&(*out->method.mem.buf)[out->method.mem.len], buf, len);
         out->method.mem.len += len;
-        out->method.mem.buf[out->method.mem.len] = '\0';
+        (*out->method.mem.buf)[out->method.mem.len] = '\0';
 
         out->printed += len;
         return LY_SUCCESS;
-    case LYOUT_FD:
+    case LYP_OUT_FD:
         written = write(out->method.fd, buf, len);
         break;
-    case LYOUT_FDSTREAM:
-    case LYOUT_STREAM:
+    case LYP_OUT_FDSTREAM:
+    case LYP_OUT_FILEPATH:
+    case LYP_OUT_FILE:
         written =  fwrite(buf, sizeof *buf, len, out->method.f);
         break;
-    case LYOUT_CALLBACK:
-        written = out->method.clb.f(out->method.clb.arg, buf, len);
+    case LYP_OUT_CALLBACK:
+        written = out->method.clb.func(out->method.clb.arg, buf, len);
         break;
     }
 
@@ -241,21 +526,25 @@ repeat:
         out->status = LY_ESYS;
         return LY_ESYS;
     } else {
+        if (out->type == LYP_OUT_FDSTREAM) {
+            /* move the original file descriptor to the end of the output file */
+            lseek(out->method.fdstream.fd, 0, SEEK_END);
+        }
         out->printed += written;
         return LY_SUCCESS;
     }
 }
 
 LY_ERR
-ly_write_skip(struct lyout *out, size_t count, size_t *position)
+ly_write_skip(struct lyp_out *out, size_t count, size_t *position)
 {
     LYOUT_CHECK(out, out->status);
 
     switch (out->type) {
-    case LYOUT_MEMORY:
+    case LYP_OUT_MEMORY:
         if (out->method.mem.len + count > out->method.mem.size) {
-            out->method.mem.buf = ly_realloc(out->method.mem.buf, out->method.mem.len + count);
-            if (!out->method.mem.buf) {
+            *out->method.mem.buf = ly_realloc(*out->method.mem.buf, out->method.mem.len + count);
+            if (!(*out->method.mem.buf)) {
                 out->method.mem.len = 0;
                 out->method.mem.size = 0;
                 out->status = LY_ESYS;
@@ -273,10 +562,11 @@ ly_write_skip(struct lyout *out, size_t count, size_t *position)
         /* update printed bytes counter despite we actually printed just a hole */
         out->printed += count;
         break;
-    case LYOUT_FD:
-    case LYOUT_FDSTREAM:
-    case LYOUT_STREAM:
-    case LYOUT_CALLBACK:
+    case LYP_OUT_FD:
+    case LYP_OUT_FDSTREAM:
+    case LYP_OUT_FILEPATH:
+    case LYP_OUT_FILE:
+    case LYP_OUT_CALLBACK:
         /* buffer the hole */
         if (out->buf_len + count > out->buf_size) {
             out->buffered = ly_realloc(out->buffered, out->buf_len + count);
@@ -303,21 +593,22 @@ ly_write_skip(struct lyout *out, size_t count, size_t *position)
 }
 
 LY_ERR
-ly_write_skipped(struct lyout *out, size_t position, const char *buf, size_t count)
+ly_write_skipped(struct lyp_out *out, size_t position, const char *buf, size_t count)
 {
     LY_ERR ret = LY_SUCCESS;
 
     LYOUT_CHECK(out, out->status);
 
     switch (out->type) {
-    case LYOUT_MEMORY:
+    case LYP_OUT_MEMORY:
         /* write */
-        memcpy(&out->method.mem.buf[position], buf, count);
+        memcpy(&(*out->method.mem.buf)[position], buf, count);
         break;
-    case LYOUT_FD:
-    case LYOUT_FDSTREAM:
-    case LYOUT_STREAM:
-    case LYOUT_CALLBACK:
+    case LYP_OUT_FD:
+    case LYP_OUT_FDSTREAM:
+    case LYP_OUT_FILEPATH:
+    case LYP_OUT_FILE:
+    case LYP_OUT_CALLBACK:
         if (out->buf_len < position + count) {
             out->status = LY_ESYS;
             LOGMEM_RET(NULL);
@@ -332,11 +623,15 @@ ly_write_skipped(struct lyout *out, size_t position, const char *buf, size_t cou
         if (!out->hole_count) {
             /* all holes filled, we can write the buffer,
              * printed bytes counter is updated by ly_write() */
-            ret = ly_write(out, out->buffered, out->buf_len);
+            ret = lyp_write(out, out->buffered, out->buf_len);
             out->buf_len = 0;
         }
         break;
     }
 
+    if (out->type == LYP_OUT_FILEPATH) {
+        /* move the original file descriptor to the end of the output file */
+        lseek(out->method.fdstream.fd, 0, SEEK_END);
+    }
     return ret;
 }

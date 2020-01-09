@@ -937,7 +937,7 @@ lyxml_context_clear(struct lyxml_context *context)
 }
 
 LY_ERR
-lyxml_dump_text(struct lyout *out, const char *text, int attribute)
+lyxml_dump_text(struct lyp_out *out, const char *text, int attribute)
 {
     LY_ERR ret = LY_SUCCESS;
     unsigned int u;
@@ -949,23 +949,23 @@ lyxml_dump_text(struct lyout *out, const char *text, int attribute)
     for (u = 0; text[u]; u++) {
         switch (text[u]) {
         case '&':
-            ret = ly_print(out, "&amp;");
+            ret = lyp_print(out, "&amp;");
             break;
         case '<':
-            ret = ly_print(out, "&lt;");
+            ret = lyp_print(out, "&lt;");
             break;
         case '>':
             /* not needed, just for readability */
-            ret = ly_print(out, "&gt;");
+            ret = lyp_print(out, "&gt;");
             break;
         case '"':
             if (attribute) {
-                ret = ly_print(out, "&quot;");
+                ret = lyp_print(out, "&quot;");
                 break;
             }
             /* falls through */
         default:
-            ly_write(out, &text[u], 1);
+            lyp_write(out, &text[u], 1);
         }
     }
 

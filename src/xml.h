@@ -21,7 +21,7 @@
 #include "log.h"
 #include "set.h"
 
-struct lyout;
+struct lyp_out;
 
 /* Macro to test if character is whitespace */
 #define is_xmlws(c) (c == 0x20 || c == 0x9 || c == 0xa || c == 0xd)
@@ -184,7 +184,7 @@ const struct lyxml_ns *lyxml_ns_get(struct lyxml_context *context, const char *p
  * @param[in] attribute Flag for attribute's value where a double quotes must be replaced.
  * @return LY_ERR values.
  */
-LY_ERR lyxml_dump_text(struct lyout *out, const char *text, int attribute);
+LY_ERR lyxml_dump_text(struct lyp_out *out, const char *text, int attribute);
 
 /**
  * @brief Remove the allocated working memory of the context.
