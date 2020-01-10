@@ -605,10 +605,15 @@ set_insert_node_hash(struct lyxp_set *set, struct lyd_node *node, enum lyxp_node
             r = lyht_insert(set->ht, &hnode, hash, NULL);
             assert(!r);
             (void)r;
-        }
-    } else if (set->ht) {
-        assert(node);
 
+            if (hnode.node == node) {
+                /* it was just added, do not add it twice */
+                node = NULL;
+            }
+        }
+    }
+
+    if (set->ht && node) {
         /* add the new node into hash table */
         hnode.node = node;
         hnode.type = type;
@@ -748,6 +753,7 @@ set_init(struct lyxp_set *new, struct lyxp_set *set)
     if (set) {
         new->ctx = set->ctx;
         new->ctx_node = set->ctx_node;
+        new->root_type = set->root_type;
         new->local_mod = set->local_mod;
         new->trees = set->trees;
         new->format = set->format;
@@ -765,6 +771,7 @@ set_copy(struct lyxp_set *set)
 {
     struct lyxp_set *ret;
     uint16_t i;
+    int idx;
 
     if (!set) {
         return NULL;
@@ -778,11 +785,14 @@ set_copy(struct lyxp_set *set)
         ret->type = set->type;
 
         for (i = 0; i < set->used; ++i) {
-            if (set->val.scnodes[i].in_ctx == 1) {
-                if (lyxp_set_scnode_insert_node(ret, set->val.scnodes[i].scnode, set->val.scnodes[i].type)) {
+            if ((set->val.scnodes[i].in_ctx == 1) || (set->val.scnodes[i].in_ctx == -2)) {
+                idx = lyxp_set_scnode_insert_node(ret, set->val.scnodes[i].scnode, set->val.scnodes[i].type);
+                /* coverity seems to think scnodes can be NULL */
+                if ((idx == -1) || !ret->val.scnodes) {
                     lyxp_set_free(ret);
                     return NULL;
                 }
+                ret->val.scnodes[idx].in_ctx = set->val.scnodes[i].in_ctx;
             }
         }
     } else if (set->type == LYXP_SET_NODE_SET) {
@@ -3193,7 +3203,7 @@ warn_equality_value(struct lyxp_expr *exp, struct lyxp_set *set, uint16_t val_ex
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_bit_is_set(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -3207,22 +3217,17 @@ xpath_bit_is_set(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp
     if (options & LYXP_SCNODE_ALL) {
         if ((args[0]->type != LYXP_SET_SCNODE_SET) || !(sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             LOGWRN(set->ctx, "Argument #1 of %s not a node-set as expected.", __func__);
-            rc = LY_EINVAL;
         } else if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
             LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-            rc = LY_EINVAL;
         } else if (!warn_is_specific_type(sleaf->type, LY_TYPE_BITS)) {
             LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of type \"bits\".", __func__, sleaf->name);
-            rc = LY_EINVAL;
         }
 
         if ((args[1]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[1]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #2 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #2 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -3262,7 +3267,7 @@ xpath_bit_is_set(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_boolean(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -3289,7 +3294,7 @@ xpath_boolean(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_se
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_ceiling(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -3300,13 +3305,10 @@ xpath_ceiling(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_se
     if (options & LYXP_SCNODE_ALL) {
         if ((args[0]->type != LYXP_SET_SCNODE_SET) || !(sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             LOGWRN(set->ctx, "Argument #1 of %s not a node-set as expected.", __func__);
-            rc = LY_EINVAL;
         } else if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
             LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-            rc = LY_EINVAL;
         } else if (!warn_is_specific_type(sleaf->type, LY_TYPE_DEC64)) {
             LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of type \"decimal64\".", __func__, sleaf->name);
-            rc = LY_EINVAL;
         }
         set_scnode_clear_ctx(set);
         return rc;
@@ -3331,7 +3333,7 @@ xpath_ceiling(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_se
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_concat(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, int options)
@@ -3348,10 +3350,8 @@ xpath_concat(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, i
                 if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                     LOGWRN(set->ctx, "Argument #%u of %s is a %s node \"%s\".",
                            i + 1, __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                    rc = LY_EINVAL;
                 } else if (!warn_is_string_type(sleaf->type)) {
                     LOGWRN(set->ctx, "Argument #%u of %s is node \"%s\", not of string-type.", __func__, i + 1, sleaf->name);
-                    rc = LY_EINVAL;
                 }
             }
         }
@@ -3389,7 +3389,7 @@ xpath_concat(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, i
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_contains(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -3401,20 +3401,16 @@ xpath_contains(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_s
         if ((args[0]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
 
         if ((args[1]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[1]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #2 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #2 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -3443,7 +3439,7 @@ xpath_contains(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_s
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_count(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -3454,7 +3450,6 @@ xpath_count(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set 
     if (options & LYXP_SCNODE_ALL) {
         if ((args[0]->type != LYXP_SET_SCNODE_SET) || !(scnode = warn_get_scnode_in_ctx(args[0]))) {
             LOGWRN(set->ctx, "Argument #1 of %s not a node-set as expected.", __func__);
-            rc = LY_EINVAL;
         }
         set_scnode_clear_ctx(set);
         return rc;
@@ -3482,7 +3477,7 @@ xpath_count(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set 
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_current(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, int options)
@@ -3514,14 +3509,14 @@ xpath_current(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, 
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_deref(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
 {
     struct lysc_ctx cctx;
     struct lyd_node_term *leaf;
-    struct lysc_node_leaf *sleaf;
+    struct lysc_node_leaf *sleaf = NULL;
     const struct lysc_node *target;
     const struct lyd_node *node;
     char *errmsg = NULL;
@@ -3532,17 +3527,14 @@ xpath_deref(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set 
     if (options & LYXP_SCNODE_ALL) {
         if ((args[0]->type != LYXP_SET_SCNODE_SET) || !(sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             LOGWRN(set->ctx, "Argument #1 of %s not a node-set as expected.", __func__);
-            rc = LY_EINVAL;
         } else if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
             LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-            rc = LY_EINVAL;
         } else if (!warn_is_specific_type(sleaf->type, LY_TYPE_LEAFREF) && !warn_is_specific_type(sleaf->type, LY_TYPE_INST)) {
             LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of type \"leafref\" nor \"instance-identifier\".",
                    __func__, sleaf->name);
-            rc = LY_EINVAL;
         }
         set_scnode_clear_ctx(set);
-        if ((rc == LY_SUCCESS) && (sleaf->type->basetype == LY_TYPE_LEAFREF)) {
+        if (sleaf && (sleaf->type->basetype == LY_TYPE_LEAFREF)) {
             cctx.ctx = set->ctx;
             rc = lys_compile_leafref_validate(&cctx, (struct lysc_node *)sleaf, (struct lysc_type_leafref *)sleaf->type, &target);
             /* it was already validated, it must succeed */
@@ -3607,7 +3599,7 @@ xpath_deref(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set 
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_derived_from(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -3623,22 +3615,17 @@ xpath_derived_from(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct ly
     if (options & LYXP_SCNODE_ALL) {
         if ((args[0]->type != LYXP_SET_SCNODE_SET) || !(sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             LOGWRN(set->ctx, "Argument #1 of %s not a node-set as expected.", __func__);
-            rc = LY_EINVAL;
         } else if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
             LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-            rc = LY_EINVAL;
         } else if (!warn_is_specific_type(sleaf->type, LY_TYPE_IDENT)) {
             LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of type \"identityref\".", __func__, sleaf->name);
-            rc = LY_EINVAL;
         }
 
         if ((args[1]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[1]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #2 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #2 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -3695,7 +3682,7 @@ xpath_derived_from(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct ly
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_derived_from_or_self(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -3711,22 +3698,17 @@ xpath_derived_from_or_self(struct lyxp_set **args, uint16_t UNUSED(arg_count), s
     if (options & LYXP_SCNODE_ALL) {
         if ((args[0]->type != LYXP_SET_SCNODE_SET) || !(sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             LOGWRN(set->ctx, "Argument #1 of %s not a node-set as expected.", __func__);
-            rc = LY_EINVAL;
         } else if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
             LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-            rc = LY_EINVAL;
         } else if (!warn_is_specific_type(sleaf->type, LY_TYPE_IDENT)) {
             LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of type \"identityref\".", __func__, sleaf->name);
-            rc = LY_EINVAL;
         }
 
         if ((args[1]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[1]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #2 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #2 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -3786,7 +3768,7 @@ xpath_derived_from_or_self(struct lyxp_set **args, uint16_t UNUSED(arg_count), s
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_enum_value(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -3798,13 +3780,10 @@ xpath_enum_value(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp
     if (options & LYXP_SCNODE_ALL) {
         if ((args[0]->type != LYXP_SET_SCNODE_SET) || !(sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             LOGWRN(set->ctx, "Argument #1 of %s not a node-set as expected.", __func__);
-            rc = LY_EINVAL;
         } else if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
             LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-            rc = LY_EINVAL;
         } else if (!warn_is_specific_type(sleaf->type, LY_TYPE_ENUM)) {
             LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of type \"enumeration\".", __func__, sleaf->name);
-            rc = LY_EINVAL;
         }
         set_scnode_clear_ctx(set);
         return rc;
@@ -3835,7 +3814,7 @@ xpath_enum_value(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_false(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -3857,7 +3836,7 @@ xpath_false(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struct l
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_floor(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int UNUSED(options))
@@ -3881,7 +3860,7 @@ xpath_floor(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set 
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_lang(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -3897,10 +3876,8 @@ xpath_lang(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *
         if ((args[0]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -3981,7 +3958,7 @@ xpath_lang(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_last(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -4012,7 +3989,7 @@ xpath_last(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struct ly
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_local_name(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, int options)
@@ -4083,7 +4060,7 @@ xpath_local_name(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *se
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_name(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, int options)
@@ -4255,7 +4232,7 @@ xpath_namespace_uri(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set 
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_node(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -4280,7 +4257,7 @@ xpath_node(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struct ly
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_normalize_space(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, int options)
@@ -4295,10 +4272,8 @@ xpath_normalize_space(struct lyxp_set **args, uint16_t arg_count, struct lyxp_se
         if (arg_count && (args[0]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -4372,7 +4347,7 @@ xpath_normalize_space(struct lyxp_set **args, uint16_t arg_count, struct lyxp_se
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_not(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -4400,7 +4375,7 @@ xpath_not(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *s
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_number(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, int options)
@@ -4432,7 +4407,7 @@ xpath_number(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, i
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_position(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -4467,7 +4442,7 @@ xpath_position(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struc
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_re_match(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -4482,20 +4457,16 @@ xpath_re_match(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_s
         if ((args[0]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
 
         if ((args[1]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[1]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #2 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #2 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -4546,7 +4517,7 @@ xpath_re_match(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_s
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_round(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -4557,13 +4528,10 @@ xpath_round(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set 
     if (options & LYXP_SCNODE_ALL) {
         if ((args[0]->type != LYXP_SET_SCNODE_SET) || !(sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             LOGWRN(set->ctx, "Argument #1 of %s not a node-set as expected.", __func__);
-            rc = LY_EINVAL;
         } else if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
             LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-            rc = LY_EINVAL;
         } else if (!warn_is_specific_type(sleaf->type, LY_TYPE_DEC64)) {
             LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of type \"decimal64\".", __func__, sleaf->name);
-            rc = LY_EINVAL;
         }
         set_scnode_clear_ctx(set);
         return rc;
@@ -4594,7 +4562,7 @@ xpath_round(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set 
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_starts_with(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -4606,20 +4574,16 @@ xpath_starts_with(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyx
         if ((args[0]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
 
         if ((args[1]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[1]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #2 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #2 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -4648,7 +4612,7 @@ xpath_starts_with(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyx
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_string(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, int options)
@@ -4680,7 +4644,7 @@ xpath_string(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, i
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_string_length(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, int options)
@@ -4692,19 +4656,15 @@ xpath_string_length(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set 
         if (arg_count && (args[0]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         if (!arg_count && (set->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(set))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #0 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #0 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -4735,7 +4695,7 @@ xpath_string_length(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set 
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_substring(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set, int options)
@@ -4749,20 +4709,16 @@ xpath_substring(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set
         if ((args[0]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
 
         if ((args[1]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[1]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #2 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_numeric_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #2 of %s is node \"%s\", not of numeric type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
 
@@ -4770,10 +4726,8 @@ xpath_substring(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set
                     && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[2]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #3 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_numeric_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #3 of %s is node \"%s\", not of numeric type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -4836,7 +4790,7 @@ xpath_substring(struct lyxp_set **args, uint16_t arg_count, struct lyxp_set *set
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_substring_after(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -4849,20 +4803,16 @@ xpath_substring_after(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct
         if ((args[0]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
 
         if ((args[1]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[1]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #2 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #2 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -4893,7 +4843,7 @@ xpath_substring_after(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_substring_before(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -4906,20 +4856,16 @@ xpath_substring_before(struct lyxp_set **args, uint16_t UNUSED(arg_count), struc
         if ((args[0]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
 
         if ((args[1]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[1]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #2 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #2 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -4949,7 +4895,7 @@ xpath_substring_before(struct lyxp_set **args, uint16_t UNUSED(arg_count), struc
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_sum(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -4969,10 +4915,8 @@ xpath_sum(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *s
                     if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                         LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__,
                                lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                        rc = LY_EINVAL;
                     } else if (!warn_is_numeric_type(sleaf->type)) {
                         LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of numeric type.", __func__, sleaf->name);
-                        rc = LY_EINVAL;
                     }
                 }
             }
@@ -5023,7 +4967,7 @@ xpath_sum(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *s
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_text(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -5076,7 +5020,7 @@ xpath_text(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struct ly
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_translate(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -5091,30 +5035,24 @@ xpath_translate(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_
         if ((args[0]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[0]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #1 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #1 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
 
         if ((args[1]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[1]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #2 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #2 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
 
         if ((args[2]->type == LYXP_SET_SCNODE_SET) && (sleaf = (struct lysc_node_leaf *)warn_get_scnode_in_ctx(args[2]))) {
             if (!(sleaf->nodetype & (LYS_LEAF | LYS_LEAFLIST))) {
                 LOGWRN(set->ctx, "Argument #3 of %s is a %s node \"%s\".", __func__, lys_nodetype2str(sleaf->nodetype), sleaf->name);
-                rc = LY_EINVAL;
             } else if (!warn_is_string_type(sleaf->type)) {
                 LOGWRN(set->ctx, "Argument #3 of %s is node \"%s\", not of string-type.", __func__, sleaf->name);
-                rc = LY_EINVAL;
             }
         }
         set_scnode_clear_ctx(set);
@@ -5180,7 +5118,7 @@ xpath_translate(struct lyxp_set **args, uint16_t UNUSED(arg_count), struct lyxp_
  * @param[in] arg_count Count of elements in @p args.
  * @param[in,out] set Context and result set at the same time.
  * @param[in] options XPath options.
- * @return LY_ERR (LY_EINVAL for wrong arguments on schema)
+ * @return LY_ERR
  */
 static LY_ERR
 xpath_true(struct lyxp_set **UNUSED(args), uint16_t UNUSED(arg_count), struct lyxp_set *set, int options)
@@ -5236,14 +5174,12 @@ moveto_resolve_model(const char **qname, uint16_t *qname_len, struct lyxp_set *s
             LOGINT_RET(set->ctx);
         }
 
-        if (!mod->implemented) {
-            /* non-implemented module is not valid */
-            mod = NULL;
-        }
-        if (!mod) {
+        /* Check for errors and non-implemented modules, as they are not valid */
+        if (!mod || !mod->implemented) {
             LOGVAL(set->ctx, LY_VLOG_LYD, set->ctx_node, LY_VCODE_XP_INMOD, pref_len, *qname);
             return LY_EVALID;
         }
+
         *qname += pref_len + 1;
         *qname_len -= pref_len + 1;
     } else if (((*qname)[0] == '*') && (*qname_len == 1)) {
@@ -5492,7 +5428,7 @@ moveto_scnode(struct lyxp_set *set, const char *qname, uint16_t qname_len, int o
     }
 
     if (set->type != LYXP_SET_SCNODE_SET) {
-        LOGVAL(set->ctx, LY_VLOG_LYS, set->ctx_scnode, LY_VCODE_XP_INOP_1, "path operator", print_set_type(set));
+        LOGVAL(set->ctx, LY_VLOG_LYSC, set->ctx_scnode, LY_VCODE_XP_INOP_1, "path operator", print_set_type(set));
         return LY_EVALID;
     }
 
@@ -5517,6 +5453,8 @@ moveto_scnode(struct lyxp_set *set, const char *qname, uint16_t qname_len, int o
 
             /* remember context node */
             set->val.scnodes[i].in_ctx = -1;
+        } else {
+            set->val.scnodes[i].in_ctx = 0;
         }
 
         start_parent = set->val.scnodes[i].scnode;
@@ -5527,7 +5465,8 @@ moveto_scnode(struct lyxp_set *set, const char *qname, uint16_t qname_len, int o
             mod_idx = 0;
             while (moveto_mod || (moveto_mod = (struct lys_module *)ly_ctx_get_module_iter(set->ctx, &mod_idx))) {
                 sub = NULL;
-                while ((sub = lys_getnext(sub, NULL, moveto_mod->compiled, getnext_opts))) {
+                /* module may not be implemented */
+                while (moveto_mod->implemented && (sub = lys_getnext(sub, NULL, moveto_mod->compiled, getnext_opts))) {
                     if (!moveto_scnode_check(sub, set->root_type, name_dict, moveto_mod)) {
                         idx = lyxp_set_scnode_insert_node(set, sub, LYXP_NODE_ELEM);
                         /* we need to prevent these nodes from being considered in this moveto */
@@ -5698,7 +5637,7 @@ moveto_scnode_alldesc(struct lyxp_set *set, const char *qname, uint16_t qname_le
     }
 
     if (set->type != LYXP_SET_SCNODE_SET) {
-        LOGVAL(set->ctx, LY_VLOG_LYS, set->ctx_scnode, LY_VCODE_XP_INOP_1, "path operator", print_set_type(set));
+        LOGVAL(set->ctx, LY_VLOG_LYSC, set->ctx_scnode, LY_VCODE_XP_INOP_1, "path operator", print_set_type(set));
         return LY_EVALID;
     }
 
@@ -5714,6 +5653,8 @@ moveto_scnode_alldesc(struct lyxp_set *set, const char *qname, uint16_t qname_le
 
             /* remember context node */
             set->val.scnodes[i].in_ctx = -1;
+        } else {
+            set->val.scnodes[i].in_ctx = 0;
         }
 
         /* TREE DFS */
@@ -6138,7 +6079,7 @@ moveto_scnode_self(struct lyxp_set *set, int all_desc, int options)
     }
 
     if (set->type != LYXP_SET_SCNODE_SET) {
-        LOGVAL(set->ctx, LY_VLOG_LYS, set->ctx_scnode, LY_VCODE_XP_INOP_1, "path operator", print_set_type(set));
+        LOGVAL(set->ctx, LY_VLOG_LYSC, set->ctx_scnode, LY_VCODE_XP_INOP_1, "path operator", print_set_type(set));
         return LY_EVALID;
     }
 
@@ -6286,7 +6227,7 @@ moveto_scnode_parent(struct lyxp_set *set, int all_desc, int options)
     }
 
     if (set->type != LYXP_SET_SCNODE_SET) {
-        LOGVAL(set->ctx, LY_VLOG_LYS, set->ctx_scnode, LY_VCODE_XP_INOP_1, "path operator", print_set_type(set));
+        LOGVAL(set->ctx, LY_VLOG_LYSC, set->ctx_scnode, LY_VCODE_XP_INOP_1, "path operator", print_set_type(set));
         return LY_EVALID;
     }
 
@@ -6305,6 +6246,8 @@ moveto_scnode_parent(struct lyxp_set *set, int all_desc, int options)
 
             /* remember context node */
             set->val.scnodes[i].in_ctx = -1;
+        } else {
+            set->val.scnodes[i].in_ctx = 0;
         }
 
         node = set->val.scnodes[i].scnode;
@@ -7056,7 +6999,7 @@ eval_function_call(struct lyxp_expr *exp, uint16_t *exp_idx, struct lyxp_set *se
 {
     LY_ERR rc;
     LY_ERR (*xpath_func)(struct lyxp_set **, uint16_t, struct lyxp_set *, int) = NULL;
-    uint16_t arg_count = 0, i, func_exp = *exp_idx;
+    uint16_t arg_count = 0, i;
     struct lyxp_set **args = NULL, **args_aux;
 
     if (set) {
@@ -7243,13 +7186,6 @@ eval_function_call(struct lyxp_expr *exp, uint16_t *exp_idx, struct lyxp_set *se
         rc = xpath_func(args, arg_count, set, options);
 
         if (options & LYXP_SCNODE_ALL) {
-            if (rc == LY_EINVAL) {
-                /* some validation warning TODO log everything immediately? */
-                LOGWRN(set->ctx, "Previous warning generated by XPath function \"%.*s\".",
-                       (exp->tok_pos[*exp_idx - 1] - exp->tok_pos[func_exp]) + 1, &exp->expr[exp->tok_pos[func_exp]]);
-                rc = LY_SUCCESS;
-            }
-
             /* merge all nodes from arg evaluations */
             for (i = 0; i < arg_count; ++i) {
                 set_scnode_clear_ctx(args[i]);
