@@ -140,10 +140,10 @@ test_module(void **state)
     assert_non_null(mod = lys_parse_mem(ctx, orig, LYS_IN_YANG));
     assert_int_equal(strlen(orig), size = lys_print(out, mod, LYS_OUT_YANG, 0, 0));
     assert_string_equal(printed, orig);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     assert_int_equal(strlen(compiled), lys_print(out, mod, LYS_OUT_YANG_COMPILED, 0, 0));
     assert_string_equal(printed, compiled);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
 
     orig = "module b {\n"
             "  yang-version 1.1;\n"
@@ -189,10 +189,10 @@ test_module(void **state)
     assert_non_null(mod = lys_parse_mem(ctx, orig, LYS_IN_YANG));
     assert_int_equal(strlen(orig), lys_print(out, mod, LYS_OUT_YANG, 0, 0));
     assert_string_equal(printed, orig);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     assert_int_equal(strlen(compiled), lys_print(out, mod, LYS_OUT_YANG_COMPILED, 0, 0));
     assert_string_equal(printed, compiled);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
 
     orig = compiled ="module c {\n"
             "  yang-version 1.1;\n"
@@ -214,7 +214,7 @@ test_module(void **state)
     assert_non_null(mod = lys_parse_mem(ctx, orig, LYS_IN_YANG));
     assert_int_equal(strlen(orig), lys_print(out, mod, LYS_OUT_YANG, 0, 0));
     assert_string_equal(printed, orig);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     assert_int_equal(strlen(compiled), lys_print(out, mod, LYS_OUT_YANG, 0, 0));
     assert_string_equal(printed, compiled);
     /* missing free(printed); which is done in the following lyp_free() */

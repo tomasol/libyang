@@ -26,6 +26,7 @@ struct lyp_out;
  * @brief Types of the printer's output
  */
 typedef enum LYP_OUT_TYPE {
+    LYP_OUT_ERROR = -1,  /**< error value to indicate failure of the functions returning LYP_OUT_TYPE */
     LYP_OUT_FD,          /**< file descriptor printer */
     LYP_OUT_FDSTREAM,    /**< internal replacement for LYP_OUT_FD in case vdprintf() is not available */
     LYP_OUT_FILE,        /**< FILE stream printer */
@@ -33,6 +34,29 @@ typedef enum LYP_OUT_TYPE {
     LYP_OUT_MEMORY,      /**< memory printer */
     LYP_OUT_CALLBACK     /**< callback printer */
 } LYP_OUT_TYPE;
+
+/**
+ * @brief Get output type of the printer handler.
+ *
+ * @param[in] out Printer handler.
+ * @return Type of the printer's output.
+ */
+LYP_OUT_TYPE lyp_out_type(const struct lyp_out *out);
+
+/**
+ * @brief Reset the output medium to write from its beginning, so the following printer function will rewrite the current data
+ * instead of appending.
+ *
+ * Note that in case the underlying output is not seekable (stream referring a pipe/FIFO/socket or the callback output type),
+ * nothing actually happens despite the function succeeds. Also note that the medium is not returned to the state it was when
+ * the handler was created. For example, file is seeked into the offset zero, not to the offset where it was opened when
+ * lyp_new_file() was called.
+ *
+ * @param[in] out Printer handler.
+ * @return LY_SUCCESS in case of success
+ * @return LY_ESYS in case of failure
+ */
+LY_ERR lyp_out_reset(struct lyp_out *out);
 
 /**
  * @brief Create printer handler using callback printer function.
@@ -122,13 +146,6 @@ struct lyp_out *lyp_new_memory(char **strp, size_t size);
  * @return Previous dumped data. Note that the caller is responsible to free the data in case of changing string pointer @p strp.
  */
 char *lyp_memory(struct lyp_out *out, char **strp, size_t size);
-
-/**
- * @brief Cleanup the string buffer to start printing data again from its beginning.
- *
- * @brief[in] out Printer handler.
- */
-void lyp_memory_clean(struct lyp_out *out);
 
 /**
  * @brief Create printer handler file of the given filename.

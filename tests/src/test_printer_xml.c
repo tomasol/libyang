@@ -189,7 +189,7 @@ test_anydata(void **state)
     assert_true((len = lyd_print(out, tree, LYD_XML, 0)) >= 0);
     assert_int_equal(len, strlen(printed));
     assert_string_equal(printed, data);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     lyd_free_all(tree);
 
     data = "<any xmlns=\"urn:tests:types\"/>";
@@ -197,7 +197,7 @@ test_anydata(void **state)
     assert_true((len = lyd_print(out, tree, LYD_XML, 0)) >= 0);
     assert_int_equal(len, strlen(printed));
     assert_string_equal(printed, data);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     lyd_free_all(tree);
 
     lyp_free(out, NULL, 1);
@@ -227,13 +227,13 @@ test_rpc(void **state)
     assert_true((len = lyd_print(out, tree1, LYD_XML, 0)) >= 0);
     assert_int_equal(len, strlen(printed));
     assert_string_equal(printed, request);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     assert_non_null(trees = lyd_trees_new(1, tree1));
     assert_non_null(tree2 = lyd_parse_mem(s->ctx, reply, LYD_XML, LYD_OPT_RPCREPLY, trees));
     assert_true((len = lyd_print(out, tree2, LYD_XML, 0)) >= 0);
     assert_int_equal(len, strlen(printed));
     assert_string_equal(printed, result);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     lyd_trees_free(trees, 0);
     lyd_free_all(tree1);
     lyd_free_all(tree2);
@@ -246,13 +246,13 @@ test_rpc(void **state)
     assert_true((len = lyd_print(out, tree1, LYD_XML, 0)) >= 0);
     assert_int_equal(len, strlen(printed));
     assert_string_equal(printed, request);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     assert_non_null(trees = lyd_trees_new(1, tree1));
     assert_non_null(tree2 = lyd_parse_mem(s->ctx, reply, LYD_XML, LYD_OPT_RPCREPLY, trees));
     assert_true((len = lyd_print(out, tree2, LYD_XML, 0)) >= 0);
     assert_int_equal(len, strlen(printed));
     assert_string_equal(printed, result);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     lyd_trees_free(trees, 0);
     lyd_free_all(tree1);
     lyd_free_all(tree2);
@@ -270,13 +270,13 @@ test_rpc(void **state)
     assert_true((len = lyd_print(out, tree1, LYD_XML, 0)) >= 0);
     assert_int_equal(len, strlen(printed));
     assert_string_equal(printed, request);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     assert_non_null(trees = lyd_trees_new(1, tree1));
     assert_non_null(tree2 = lyd_parse_mem(s->ctx, reply, LYD_XML, LYD_OPT_RPCREPLY, trees));
     assert_true((len = lyd_print(out, tree2, LYD_XML, 0)) >= 0);
     assert_int_equal(len, strlen(printed));
     assert_string_equal(printed, result);
-    lyp_memory_clean(out);
+    lyp_out_reset(out);
     lyd_trees_free(trees, 0);
     lyd_free_all(tree1);
     lyd_free_all(tree2);

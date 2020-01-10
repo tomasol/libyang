@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "log.h"
@@ -61,6 +62,13 @@ struct ext_substmt_info_s ext_substmt_info[] = {
   {"position", "value", SUBST_FLAG_ID},         /**< LYEXT_SUBSTMT_POSITION */
   {"unique", "tag", 0},                         /**< LYEXT_SUBSTMT_UNIQUE */
 };
+
+API LYP_OUT_TYPE
+lyp_out_type(const struct lyp_out *out)
+{
+    LY_CHECK_ARG_RET(NULL, out, LYP_OUT_ERROR);
+    return out->type;
+}
 
 API struct lyp_out *
 lyp_new_clb(ssize_t (*writeclb)(void *arg, const void *buf, size_t count), void *arg)
@@ -263,13 +271,39 @@ lyp_memory(struct lyp_out *out, char **strp, size_t size)
     return data;
 }
 
-API void
-lyp_memory_clean(struct lyp_out *out)
+API LY_ERR
+lyp_out_reset(struct lyp_out *out)
 {
-    LY_CHECK_ARG_RET(NULL, out, out->type == LYP_OUT_MEMORY,);
+    LY_CHECK_ARG_RET(NULL, out, LY_EINVAL);
 
-    out->printed = 0;
-    out->method.mem.len = 0;
+    switch(out->type) {
+    case LYP_OUT_ERROR:
+        LOGINT(NULL);
+        return LY_EINT;
+    case LYP_OUT_FD:
+        if ((lseek(out->method.fd, 0, SEEK_SET) == -1) && errno != ESPIPE) {
+            LOGERR(NULL, LY_ESYS, "Seeking output file descriptor failed (%s).", strerror(errno));
+            return LY_ESYS;
+        }
+        break;
+    case LYP_OUT_FDSTREAM:
+    case LYP_OUT_FILE:
+    case LYP_OUT_FILEPATH:
+        if ((fseek(out->method.f, 0, SEEK_SET) == -1) && errno != ESPIPE) {
+            LOGERR(NULL, LY_ESYS, "Seeking output file stream failed (%s).", strerror(errno));
+            return LY_ESYS;
+        }
+        break;
+    case LYP_OUT_MEMORY:
+        out->printed = 0;
+        out->method.mem.len = 0;
+        break;
+    case LYP_OUT_CALLBACK:
+        /* nothing to do (not seekable) */
+        break;
+    }
+
+    return LY_SUCCESS;
 }
 
 API struct lyp_out *
@@ -356,6 +390,8 @@ lyp_free(struct lyp_out *out, void (*clb_arg_destructor)(void *arg), int destroy
             fclose(out->method.fpath.f);
         }
         break;
+    case LYP_OUT_ERROR:
+        LOGINT(NULL);
     }
     free(out);
 }
@@ -415,6 +451,8 @@ lyp_print(struct lyp_out *out, const char *format, ...)
         count = out->method.clb.func(out->method.clb.arg, msg, count);
         free(msg);
         break;
+    case LYP_OUT_ERROR:
+        LOGINT(NULL);
     }
 
     va_end(ap);
@@ -453,6 +491,8 @@ ly_print_flush(struct lyp_out *out)
     case LYP_OUT_CALLBACK:
         /* nothing to do */
         break;
+    case LYP_OUT_ERROR:
+        LOGINT(NULL);
     }
 
     free(out->buffered);
@@ -512,6 +552,8 @@ repeat:
     case LYP_OUT_CALLBACK:
         written = out->method.clb.func(out->method.clb.arg, buf, len);
         break;
+    case LYP_OUT_ERROR:
+        LOGINT(NULL);
     }
 
     if (written < 0) {
@@ -587,6 +629,10 @@ ly_write_skip(struct lyp_out *out, size_t count, size_t *position)
 
         /* increase hole counter */
         ++out->hole_count;
+
+        break;
+    case LYP_OUT_ERROR:
+        LOGINT(NULL);
     }
 
     return LY_SUCCESS;
@@ -627,6 +673,8 @@ ly_write_skipped(struct lyp_out *out, size_t position, const char *buf, size_t c
             out->buf_len = 0;
         }
         break;
+    case LYP_OUT_ERROR:
+        LOGINT(NULL);
     }
 
     if (out->type == LYP_OUT_FILEPATH) {
