@@ -358,7 +358,7 @@ extern "C" {
  * Extensions and user types are supported in the form of **plugins**. These are loaded from the plugin directory
  * (`LIBDIR/libyang/`) whenever a context is created. However, the list of plugins can be refreshed manually by llly_load_plugins().
  * The extension plugin directory path (default `LIBDIR/libyang/extensions/`) can be change via the
- * `LIBYANG_EXTENSIONS_PLUGINS_DIR` environment variable and similarly the user type directory (default `LIBDIR/libyang/user_types/`)
+ * `LLLIBYANG_EXTENSIONS_PLUGINS_DIR` environment variable and similarly the user type directory (default `LIBDIR/libyang/user_types/`)
  * via `LIBYANG_USER_TYPES_PLUGINS_DIR`. Note, that unavailable plugins are not removed, only
  * any new plugins are loaded. Also note that the availability of new plugins does not affect the current schemas in the
  * contexts, they are applied only to the newly parsed schemas.

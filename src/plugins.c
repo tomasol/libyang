@@ -415,7 +415,7 @@ llly_load_plugins(void)
     ++plugin_refs;
 
     /* try to get the plugins directory from environment variable */
-    pluginsdir = getenv("LIBYANG_EXTENSIONS_PLUGINS_DIR");
+    pluginsdir = getenv("LLLIBYANG_EXTENSIONS_PLUGINS_DIR");
     if (!pluginsdir) {
         pluginsdir = LLLYEXT_PLUGINS_DIR;
     }
