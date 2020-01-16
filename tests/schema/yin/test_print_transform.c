@@ -64,8 +64,8 @@ fail:
 static int
 setup_ctx(void **state)
 {
-    //ly_verb(LY_LLVRB);
-    (*state) = ly_ctx_new(SCHEMA_FOLDER, 0);
+    //llly_verb(LLLY_LLVRB);
+    (*state) = llly_ctx_new(SCHEMA_FOLDER, 0);
     if (!(*state)) {
         return -1;
     }
@@ -76,7 +76,7 @@ setup_ctx(void **state)
 static int
 teardown_ctx(void **state)
 {
-    ly_ctx_destroy((struct ly_ctx *)(*state), NULL);
+    llly_ctx_destroy((struct llly_ctx *)(*state), NULL);
     (*state) = NULL;
 
     return 0;
@@ -88,17 +88,17 @@ execute_test_with_filenames(void **state,
                             char *yang_file,
                             char *yin_file)
 {
-    struct ly_ctx *ctx = *state;
-    const struct lys_module *module;
+    struct llly_ctx *ctx = *state;
+    const struct lllys_module *module;
     char *new;
     FILE *file;
     int ret;
 
-    module = ly_ctx_load_module(ctx, module_name, NULL);
+    module = llly_ctx_load_module(ctx, module_name, NULL);
     assert_non_null(module);
 
     /* YANG */
-    ret = lys_print_mem(&new, module, LYS_OUT_YANG, NULL, 0, 0);
+    ret = lllys_print_mem(&new, module, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_int_equal(ret, 0);
 
     file = fopen(yang_file, "r");
@@ -110,7 +110,7 @@ execute_test_with_filenames(void **state,
     assert_int_equal(ret, 0);
 
     /* YIN */
-    ret = lys_print_mem(&new, module, LYS_OUT_YIN, NULL, 0, 0);
+    ret = lllys_print_mem(&new, module, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_int_equal(ret, 0);
 
     file = fopen(yin_file, "r");

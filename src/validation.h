@@ -12,8 +12,8 @@
  *     https://opensource.org/licenses/BSD-3-Clause
  */
 
-#ifndef LY_VALIDATION_H_
-#define LY_VALIDATION_H_
+#ifndef LLLY_VALIDATION_H_
+#define LLLY_VALIDATION_H_
 
 #include "libyang.h"
 #include "resolve.h"
@@ -24,9 +24,9 @@
  *
  * Checks included:
  * - data node is not disabled via if-features
- * - data node's when-stmt condition - if false, 1 is returned and ly_vecode is set to LYE_NOCOND,
- * - data node is not status in case of edit-config content (options includes LYD_OPT_EDIT)
- * - data node is in correct place (options includes LYD_OPT_RPC or LYD_OPT_RPCREPLY), since elements order matters
+ * - data node's when-stmt condition - if false, 1 is returned and llly_vecode is set to LLLYE_NOCOND,
+ * - data node is not status in case of edit-config content (options includes LLLYD_OPT_EDIT)
+ * - data node is in correct place (options includes LLLYD_OPT_RPC or LLLYD_OPT_RPCREPLY), since elements order matters
  *   in RPCs and RPC replies.
  *
  * @param[in] node Data tree node to be checked.
@@ -34,7 +34,7 @@
  * @param[out] unres Structure to store unresolved items into. Cannot be NULL.
  * @return 0 on success, non-zero on error.
  */
-int lyv_data_context(const struct lyd_node *node, int options, struct unres_data *unres);
+int lllyv_data_context(const struct lllyd_node *node, int options, struct unres_data *unres);
 
 /**
  * @brief Validate if the node's content is valid in the context it is placed.
@@ -47,7 +47,7 @@ int lyv_data_context(const struct lyd_node *node, int options, struct unres_data
  * @param[out] unres Structure to store unresolved items into. Cannot be NULL.
  * @return 0 on success, non-zero on error.
  */
-int lyv_data_content(struct lyd_node *node, int options, struct unres_data *unres);
+int lllyv_data_content(struct lllyd_node *node, int options, struct unres_data *unres);
 
 /**
  * @brief Check list unique leaves.
@@ -55,12 +55,12 @@ int lyv_data_content(struct lyd_node *node, int options, struct unres_data *unre
  * @param[in] list List node to be checked.
  * @return 0 on success, non-zero on error.
  */
-int lyv_data_unique(struct lyd_node *list);
+int lllyv_data_unique(struct lllyd_node *list);
 
 /**
  * @brief Check for list/leaflist instance duplications.
  *
- * Function is used by lyv_data_context for inner lists/leaflists. Due to optimization, the function
+ * Function is used by lllyv_data_context for inner lists/leaflists. Due to optimization, the function
  * is used separatedly for the top-level lists/leaflists.
  *
  * @param[in] node List/leaflist node to be checked.
@@ -68,7 +68,7 @@ int lyv_data_unique(struct lyd_node *list);
  *                  Used for optimization, but can be NULL and the first sibling will be found.
  * @return 0 on success, non-zero on error.
  */
-int lyv_data_dup(struct lyd_node *node, struct lyd_node *start);
+int lllyv_data_dup(struct lllyd_node *node, struct lllyd_node *start);
 
 /**
  * @brief Validate if the \p node has a sibling from another choice's case. It can report an error or automatically
@@ -82,7 +82,7 @@ int lyv_data_dup(struct lyd_node *node, struct lyd_node *start);
  * @param[in] nodel Exception for autodelete, if the \p nodel node would be removed, report an error.
  * @return 0 on success (possible implicit autodelete), 1 on reported autodelete.
  */
-int lyv_multicases(struct lyd_node *node, struct lys_node *schemanode, struct lyd_node **first_sibling, int autodelete,
-                   struct lyd_node *nodel);
+int lllyv_multicases(struct lllyd_node *node, struct lllys_node *schemanode, struct lllyd_node **first_sibling, int autodelete,
+                   struct lllyd_node *nodel);
 
-#endif /* LY_VALIDATION_H_ */
+#endif /* LLLY_VALIDATION_H_ */

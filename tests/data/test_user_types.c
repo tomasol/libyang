@@ -22,9 +22,9 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    const struct lys_module *mod;
-    struct lyd_node *dt;
+    struct llly_ctx *ctx;
+    const struct lllys_module *mod;
+    struct lllyd_node *dt;
 };
 
 static int
@@ -39,13 +39,13 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(TESTS_DIR"/data/files", 0);
+    st->ctx = llly_ctx_new(TESTS_DIR"/data/files", 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
     }
 
-    st->mod = ly_ctx_load_module(st->ctx, "user-types", NULL);
+    st->mod = llly_ctx_load_module(st->ctx, "user-types", NULL);
     if (!st->mod) {
         fprintf(stderr, "Failed to load schema.\n");
         goto error;
@@ -54,7 +54,7 @@ setup_f(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -66,8 +66,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->dt);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -80,51 +80,51 @@ test_yang_types(void **state)
     struct state *st = (struct state *)*state;
 
     /* date-and-time */
-    st->dt = lyd_new_leaf(NULL, st->mod, "yang1", "2005-05-25T23:15:15.88888Z");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "yang1", "2005-05-25T23:15:15.88888Z");
     assert_non_null(st->dt);
-    lyd_free_withsiblings(st->dt);
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "yang1", "2005-05-31T23:15:15-08:59");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "yang1", "2005-05-31T23:15:15-08:59");
     assert_non_null(st->dt);
-    lyd_free_withsiblings(st->dt);
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "yang1", "2005-05-31T23:15:15-23:00");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "yang1", "2005-05-31T23:15:15-23:00");
     assert_non_null(st->dt);
-    lyd_free_withsiblings(st->dt);
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "yang1", "2005-05-31T23:15:15.-08:00");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "yang1", "2005-05-31T23:15:15.-08:00");
     assert_null(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "yang1", "2005-02-29T23:15:15-08:00");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "yang1", "2005-02-29T23:15:15-08:00");
     assert_null(st->dt);
 
     /* phys-address */
-    st->dt = lyd_new_leaf(NULL, st->mod, "yang2", "aa:bb:cc:dd");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "yang2", "aa:bb:cc:dd");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "aa:bb:cc:dd");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "aa:bb:cc:dd");
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "yang2", "AA:BB:1D:2F:CA:52");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "yang2", "AA:BB:1D:2F:CA:52");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "aa:bb:1d:2f:ca:52");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "aa:bb:1d:2f:ca:52");
+    lllyd_free_withsiblings(st->dt);
 
     /* mac-address */
-    st->dt = lyd_new_leaf(NULL, st->mod, "yang3", "12:34:56:78:9A:BC");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "yang3", "12:34:56:78:9A:BC");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "12:34:56:78:9a:bc");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "12:34:56:78:9a:bc");
+    lllyd_free_withsiblings(st->dt);
 
     /* hex-string */
-    st->dt = lyd_new_leaf(NULL, st->mod, "yang4", "AB:CD:eF:fE:dc:Ba:Ab");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "yang4", "AB:CD:eF:fE:dc:Ba:Ab");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "ab:cd:ef:fe:dc:ba:ab");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "ab:cd:ef:fe:dc:ba:ab");
+    lllyd_free_withsiblings(st->dt);
 
     /* uuid */
-    st->dt = lyd_new_leaf(NULL, st->mod, "yang5", "12AbCDef-3456-58cd-9ABC-8796cdACdfEE");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "yang5", "12AbCDef-3456-58cd-9ABC-8796cdACdfEE");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "12abcdef-3456-58cd-9abc-8796cdacdfee");
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "12abcdef-3456-58cd-9abc-8796cdacdfee");
 }
 
 static void
@@ -133,90 +133,90 @@ test_inet_types(void **state)
     struct state *st = (struct state *)*state;
 
     /* ip-address */
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet1", "192.168.0.1");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet1", "192.168.0.1");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "192.168.0.1");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "192.168.0.1");
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet1", "192.168.0.1%12");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet1", "192.168.0.1%12");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "192.168.0.1%12");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "192.168.0.1%12");
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet1", "2008:15:0:0:0:0:feAC:1");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet1", "2008:15:0:0:0:0:feAC:1");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "2008:15::feac:1");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "2008:15::feac:1");
+    lllyd_free_withsiblings(st->dt);
 
     /* ipv6-address */
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet2", "FAAC:21:011:Da85::87:daaF%1");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet2", "FAAC:21:011:Da85::87:daaF%1");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "faac:21:11:da85::87:daaf%1");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "faac:21:11:da85::87:daaf%1");
+    lllyd_free_withsiblings(st->dt);
 
     /* ip-address-no-zone */
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet3", "127.0.0.1");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet3", "127.0.0.1");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "127.0.0.1");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "127.0.0.1");
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet3", "0:00:000:0000:000:00:0:1");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet3", "0:00:000:0000:000:00:0:1");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "::1");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "::1");
+    lllyd_free_withsiblings(st->dt);
 
     /* ipv6-address-no-zone */
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet4", "A:B:c:D:e:f:1:0");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet4", "A:B:c:D:e:f:1:0");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "a:b:c:d:e:f:1:0");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "a:b:c:d:e:f:1:0");
+    lllyd_free_withsiblings(st->dt);
 
     /* ip-prefix */
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet5", "158.1.58.4/1");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet5", "158.1.58.4/1");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "128.0.0.0/1");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "128.0.0.0/1");
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet5", "158.1.58.4/24");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet5", "158.1.58.4/24");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "158.1.58.0/24");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "158.1.58.0/24");
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet5", "2000:A:B:C:D:E:f:a/16");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet5", "2000:A:B:C:D:E:f:a/16");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "2000::/16");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "2000::/16");
+    lllyd_free_withsiblings(st->dt);
 
     /* ipv4-prefix */
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet6", "0.1.58.4/32");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet6", "0.1.58.4/32");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "0.1.58.4/32");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "0.1.58.4/32");
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet6", "12.1.58.4/8");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet6", "12.1.58.4/8");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "12.0.0.0/8");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "12.0.0.0/8");
+    lllyd_free_withsiblings(st->dt);
 
     /* ipv6-prefix */
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/112");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/112");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "::c:d:e:f:0/112");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "::c:d:e:f:0/112");
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/110");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/110");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "::c:d:e:c:0/110");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "::c:d:e:c:0/110");
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/96");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/96");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "::c:d:e:0:0/96");
-    lyd_free_withsiblings(st->dt);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "::c:d:e:0:0/96");
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/55");
+    st->dt = lllyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/55");
     assert_non_null(st->dt);
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "::/55");
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt)->value_str, "::/55");
 }
 
 int main(void)

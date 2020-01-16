@@ -30,7 +30,7 @@
 volatile uint8_t verbose = 0;
 
 /* from commands.c */
-int print_list(FILE *out, struct ly_ctx *ctx, LYD_FORMAT outformat);
+int print_list(FILE *out, struct llly_ctx *ctx, LLLYD_FORMAT outformat);
 
 void
 help(int shortout)
@@ -161,22 +161,22 @@ tree_help(void)
 void
 version(void)
 {
-    fprintf(stdout, "yanglint SO %d.%d.%d\n", LY_VERSION_MAJOR, LY_VERSION_MINOR, LY_VERSION_MICRO);
+    fprintf(stdout, "yanglint SO %d.%d.%d\n", LLLY_VERSION_MAJOR, LLLY_VERSION_MINOR, LLLY_VERSION_MICRO);
 }
 void
-libyang_verbclb(LY_LOG_LEVEL level, const char *msg, const char *path)
+libyang_verbclb(LLLY_LOG_LEVEL level, const char *msg, const char *path)
 {
     char *levstr;
 
     if (level <= verbose) {
         switch(level) {
-        case LY_LLERR:
+        case LLLY_LLERR:
             levstr = "err :";
             break;
-        case LY_LLWRN:
+        case LLLY_LLWRN:
             levstr = "warn:";
             break;
-        case LY_LLVRB:
+        case LLLY_LLVRB:
             levstr = "verb:";
             break;
         default:
@@ -198,27 +198,27 @@ libyang_verbclb(LY_LOG_LEVEL level, const char *msg, const char *path)
  * 2 - data format
  */
 static int
-get_fileformat(const char *filename, LYS_INFORMAT *schema, LYD_FORMAT *data)
+get_fileformat(const char *filename, LLLYS_INFORMAT *schema, LLLYD_FORMAT *data)
 {
     char *ptr;
-    LYS_INFORMAT informat_s;
-    LYD_FORMAT informat_d;
+    LLLYS_INFORMAT informat_s;
+    LLLYD_FORMAT informat_d;
 
     /* get the file format */
     if ((ptr = strrchr(filename, '.')) != NULL) {
         ++ptr;
         if (!strcmp(ptr, "yin")) {
-            informat_s = LYS_IN_YIN;
+            informat_s = LLLYS_IN_YIN;
             informat_d = 0;
         } else if (!strcmp(ptr, "yang")) {
-            informat_s = LYS_IN_YANG;
+            informat_s = LLLYS_IN_YANG;
             informat_d = 0;
         } else if (!strcmp(ptr, "xml")) {
             informat_s = 0;
-            informat_d = LYD_XML;
+            informat_d = LLLYD_XML;
         } else if (!strcmp(ptr, "json")) {
             informat_s = 0;
-            informat_d = LYD_JSON;
+            informat_d = LLLYD_JSON;
         } else {
             fprintf(stderr, "yanglint error: input file in an unknown format \"%s\".\n", ptr);
             return 0;
@@ -278,31 +278,31 @@ main_ni(int argc, char* argv[])
         {NULL,               0,                 NULL, 0}
     };
     FILE *out = stdout;
-    struct ly_ctx *ctx = NULL;
-    const struct lys_module *mod;
-    LYS_OUTFORMAT outformat_s = 0;
-    LYS_INFORMAT informat_s;
-    LYD_FORMAT informat_d, outformat_d = 0, ylformat = 0;
-    struct ly_set *searchpaths = NULL;
+    struct llly_ctx *ctx = NULL;
+    const struct lllys_module *mod;
+    LLLYS_OUTFORMAT outformat_s = 0;
+    LLLYS_INFORMAT informat_s;
+    LLLYD_FORMAT informat_d, outformat_d = 0, ylformat = 0;
+    struct llly_set *searchpaths = NULL;
     const char *oper_file = NULL, *envelope_s = NULL, *outtarget_s = NULL;
     char **feat = NULL, *ptr, *featlist, *ylpath = NULL, *dir;
     struct stat st;
     uint32_t u;
-    int options_dflt = 0, options_parser = 0, options_ctx = LY_CTX_NOYANGLIBRARY, envelope = 0, autodetection = 0;
+    int options_dflt = 0, options_parser = 0, options_ctx = LLLY_CTX_NOYANGLIBRARY, envelope = 0, autodetection = 0;
     int merge = 0, list = 0, outoptions_s = 0, outline_length_s = 0;
     struct dataitem {
         const char *filename;
-        struct lyxml_elem *xml;
-        struct lyd_node *tree;
+        struct lllyxml_elem *xml;
+        struct lllyd_node *tree;
         struct dataitem *next;
-        LYD_FORMAT format;
+        LLLYD_FORMAT format;
         int type;
     } *data = NULL, *data_item, *data_prev = NULL;
-    struct ly_set *mods = NULL;
-    struct lyd_node *oper = NULL, *subroot, *next, *node;
+    struct llly_set *mods = NULL;
+    struct lllyd_node *oper = NULL, *subroot, *next, *node;
     void *p;
     int index = 0;
-    struct lyxml_elem *iter, *elem;
+    struct lllyxml_elem *iter, *elem;
 
     opterr = 0;
 #ifndef NDEBUG
@@ -317,13 +317,13 @@ main_ni(int argc, char* argv[])
             break;
         case 'd':
             if (!strcmp(optarg, "all")) {
-                options_dflt = (options_dflt & ~LYP_WD_MASK) | LYP_WD_ALL;
+                options_dflt = (options_dflt & ~LLLYP_WD_MASK) | LLLYP_WD_ALL;
             } else if (!strcmp(optarg, "all-tagged")) {
-                options_dflt = (options_dflt & ~LYP_WD_MASK) | LYP_WD_ALL_TAG;
+                options_dflt = (options_dflt & ~LLLYP_WD_MASK) | LLLYP_WD_ALL_TAG;
             } else if (!strcmp(optarg, "trim")) {
-                options_dflt = (options_dflt & ~LYP_WD_MASK) | LYP_WD_TRIM;
+                options_dflt = (options_dflt & ~LLLYP_WD_MASK) | LLLYP_WD_TRIM;
             } else if (!strcmp(optarg, "implicit-tagged")) {
-                options_dflt = (options_dflt & ~LYP_WD_MASK) | LYP_WD_IMPL_TAG;
+                options_dflt = (options_dflt & ~LLLYP_WD_MASK) | LLLYP_WD_IMPL_TAG;
             } else {
                 fprintf(stderr, "yanglint error: unknown default mode %s\n", optarg);
                 help(1);
@@ -332,27 +332,27 @@ main_ni(int argc, char* argv[])
             break;
         case 'f':
             if (!strcasecmp(optarg, "tree")) {
-                outformat_s = LYS_OUT_TREE;
+                outformat_s = LLLYS_OUT_TREE;
                 outformat_d = 0;
             } else if (!strcasecmp(optarg, "tree-rfc")) {
-                outformat_s = LYS_OUT_TREE;
-                outoptions_s |= LYS_OUTOPT_TREE_RFC;
+                outformat_s = LLLYS_OUT_TREE;
+                outoptions_s |= LLLYS_OUTOPT_TREE_RFC;
                 outformat_d = 0;
             } else if (!strcasecmp(optarg, "yin")) {
-                outformat_s = LYS_OUT_YIN;
+                outformat_s = LLLYS_OUT_YIN;
                 outformat_d = 0;
             } else if (!strcasecmp(optarg, "yang")) {
-                outformat_s = LYS_OUT_YANG;
+                outformat_s = LLLYS_OUT_YANG;
                 outformat_d = 0;
             } else if (!strcasecmp(optarg, "jsons")) {
-                outformat_s = LYS_OUT_JSON;
+                outformat_s = LLLYS_OUT_JSON;
                 outformat_d = 0;
             } else if (!strcasecmp(optarg, "xml")) {
                 outformat_s = 0;
-                outformat_d = LYD_XML;
+                outformat_d = LLLYD_XML;
             } else if (!strcasecmp(optarg, "json")) {
                 outformat_s = 0;
-                outformat_d = LYD_JSON;
+                outformat_d = LLLYD_JSON;
             } else {
                 fprintf(stderr, "yanglint error: unknown output format %s\n", optarg);
                 help(1);
@@ -381,13 +381,13 @@ main_ni(int argc, char* argv[])
 
             break;
         case 'g':
-            outoptions_s |= LYS_OUTOPT_TREE_GROUPING;
+            outoptions_s |= LLLYS_OUTOPT_TREE_GROUPING;
             break;
         case 'u':
-            outoptions_s |= LYS_OUTOPT_TREE_USES;
+            outoptions_s |= LLLYS_OUTOPT_TREE_USES;
             break;
         case 'n':
-            outoptions_s |= LYS_OUTOPT_TREE_NO_LEAFREF;
+            outoptions_s |= LLLYS_OUTOPT_TREE_NO_LEAFREF;
             break;
         case 'P':
             outtarget_s = optarg;
@@ -404,17 +404,17 @@ main_ni(int argc, char* argv[])
             ret = EXIT_SUCCESS;
             goto cleanup;
         case 'i':
-            options_ctx |= LY_CTX_ALLIMPLEMENTED;
+            options_ctx |= LLLY_CTX_ALLIMPLEMENTED;
             break;
         case 'D':
-            if (options_ctx & LY_CTX_DISABLE_SEARCHDIRS) {
+            if (options_ctx & LLLY_CTX_DISABLE_SEARCHDIRS) {
                 fprintf(stderr, "yanglint error: -D specified too many times.\n");
                 goto cleanup;
-            } else if (options_ctx & LY_CTX_DISABLE_SEARCHDIR_CWD) {
-                options_ctx &= ~LY_CTX_DISABLE_SEARCHDIR_CWD;
-                options_ctx |= LY_CTX_DISABLE_SEARCHDIRS;
+            } else if (options_ctx & LLLY_CTX_DISABLE_SEARCHDIR_CWD) {
+                options_ctx &= ~LLLY_CTX_DISABLE_SEARCHDIR_CWD;
+                options_ctx |= LLLY_CTX_DISABLE_SEARCHDIRS;
             } else {
-                options_ctx |= LY_CTX_DISABLE_SEARCHDIR_CWD;
+                options_ctx |= LLLY_CTX_DISABLE_SEARCHDIR_CWD;
             }
             break;
         case 'l':
@@ -443,47 +443,47 @@ main_ni(int argc, char* argv[])
                 goto cleanup;
             }
             if (!searchpaths) {
-                searchpaths = ly_set_new();
+                searchpaths = llly_set_new();
             }
-            ly_set_add(searchpaths, optarg, 0);
+            llly_set_add(searchpaths, optarg, 0);
             break;
         case 'r':
         case 'O':
-            if (oper_file || (options_parser & LYD_OPT_NOEXTDEPS)) {
+            if (oper_file || (options_parser & LLLYD_OPT_NOEXTDEPS)) {
                 fprintf(stderr, "yanglint error: The operational datastore (-O) cannot be set multiple times.\n");
                 goto cleanup;
             }
             if (optarg[0] == '!') {
                 /* ignore extenral dependencies to the operational datastore */
-                options_parser |= LYD_OPT_NOEXTDEPS;
+                options_parser |= LLLYD_OPT_NOEXTDEPS;
             } else {
                 /* external file with the operational datastore */
                 oper_file = optarg;
             }
             break;
         case 's':
-            options_parser |= LYD_OPT_STRICT;
+            options_parser |= LLLYD_OPT_STRICT;
             break;
         case 't':
             if (!strcmp(optarg, "auto")) {
-                options_parser = (options_parser & ~LYD_OPT_TYPEMASK);
+                options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK);
                 autodetection = 1;
             } else if (!strcmp(optarg, "config")) {
-                options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_CONFIG;
+                options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_CONFIG;
             } else if (!strcmp(optarg, "get")) {
-                options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_GET;
+                options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_GET;
             } else if (!strcmp(optarg, "getconfig")) {
-                options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_GETCONFIG;
+                options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_GETCONFIG;
             } else if (!strcmp(optarg, "edit")) {
-                options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_EDIT;
+                options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_EDIT;
             } else if (!strcmp(optarg, "data")) {
-                options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_DATA_NO_YANGLIB;
+                options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_DATA_NO_YANGLIB;
             } else if (!strcmp(optarg, "rpc")) {
-                options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPC;
+                options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPC;
             } else if (!strcmp(optarg, "rpcreply")) {
-                options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPCREPLY;
+                options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPCREPLY;
             } else if (!strcmp(optarg, "notif")) {
-                options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_NOTIF;
+                options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_NOTIF;
             } else {
                 fprintf(stderr, "yanglint error: unknown data tree type %s\n", optarg);
                 help(1);
@@ -503,19 +503,19 @@ main_ni(int argc, char* argv[])
             ptr = optarg;
             while (ptr[0]) {
                 if (!strncmp(ptr, "dict", 4)) {
-                    u |= LY_LDGDICT;
+                    u |= LLLY_LDGDICT;
                     ptr += 4;
                 } else if (!strncmp(ptr, "yang", 4)) {
-                    u |= LY_LDGYANG;
+                    u |= LLLY_LDGYANG;
                     ptr += 4;
                 } else if (!strncmp(ptr, "yin", 3)) {
-                    u |= LY_LDGYIN;
+                    u |= LLLY_LDGYIN;
                     ptr += 3;
                 } else if (!strncmp(ptr, "xpath", 5)) {
-                    u |= LY_LDGXPATH;
+                    u |= LLLY_LDGXPATH;
                     ptr += 5;
                 } else if (!strncmp(ptr, "diff", 4)) {
-                    u |= LY_LDGDIFF;
+                    u |= LLLY_LDGDIFF;
                     ptr += 4;
                 }
 
@@ -527,7 +527,7 @@ main_ni(int argc, char* argv[])
                     ++ptr;
                 }
             }
-            ly_verb_dbg(u);
+            llly_verb_dbg(u);
             break;
 #endif
         case 'y':
@@ -535,9 +535,9 @@ main_ni(int argc, char* argv[])
             if (ptr) {
                 ptr++;
                 if (!strcmp(ptr, "xml")) {
-                    ylformat = LYD_XML;
+                    ylformat = LLLYD_XML;
                 } else if (!strcmp(ptr, "json")) {
-                    ylformat = LYD_JSON;
+                    ylformat = LLLYD_JSON;
                 } else {
                     fprintf(stderr, "yanglint error: yang-library file in an unknown format \"%s\".\n", ptr);
                     goto cleanup;
@@ -549,7 +549,7 @@ main_ni(int argc, char* argv[])
             ylpath = optarg;
 
             /* use internal ietf-yang-library schema */
-            options_ctx &= ~LY_CTX_NOYANGLIBRARY;
+            options_ctx &= ~LLLY_CTX_NOYANGLIBRARY;
             break;
         default:
             help(1);
@@ -568,26 +568,26 @@ main_ni(int argc, char* argv[])
         fprintf(stderr, "yanglint error: missing <file> to process\n");
         goto cleanup;
     }
-    if (outformat_s && outformat_s != LYS_OUT_TREE && (optind + 1) < argc) {
+    if (outformat_s && outformat_s != LLLYS_OUT_TREE && (optind + 1) < argc) {
         /* we have multiple schemas to be printed as YIN or YANG */
         fprintf(stderr, "yanglint error: too many schemas to convert and store.\n");
         goto cleanup;
     }
     if (outoptions_s || outtarget_s || outline_length_s) {
-        if (outformat_d || (outformat_s && outformat_s != LYS_OUT_TREE)) {
+        if (outformat_d || (outformat_s && outformat_s != LLLYS_OUT_TREE)) {
             /* we have --tree-print-grouping with other output format than tree */
             fprintf(stderr,
                     "yanglint warning: --tree options take effect only in case of the tree output format.\n");
         }
     }
     if (merge) {
-        if (autodetection || (options_parser & (LYD_OPT_RPC | LYD_OPT_RPCREPLY | LYD_OPT_NOTIF))) {
+        if (autodetection || (options_parser & (LLLYD_OPT_RPC | LLLYD_OPT_RPCREPLY | LLLYD_OPT_NOTIF))) {
             fprintf(stderr, "yanglint warning: merging not allowed, ignoring option -m.\n");
             merge = 0;
         } else {
             /* first, files will be parsed as trusted to allow missing data, then the data trees will be merged
              * and the result will be validated */
-            options_parser |= LYD_OPT_TRUSTED;
+            options_parser |= LLLYD_OPT_TRUSTED;
         }
     }
     if (!outformat_d && options_dflt) {
@@ -598,24 +598,24 @@ main_ni(int argc, char* argv[])
         /* we have options for printing data tree, but output is schema */
         fprintf(stderr, "yanglint warning: data parser options are ignored when printing schema.\n");
     }
-    if (oper_file && (!autodetection && !(options_parser & (LYD_OPT_RPC | LYD_OPT_RPCREPLY | LYD_OPT_NOTIF)))) {
+    if (oper_file && (!autodetection && !(options_parser & (LLLYD_OPT_RPC | LLLYD_OPT_RPCREPLY | LLLYD_OPT_NOTIF)))) {
         fprintf(stderr, "yanglint warning: operational datastore applies only to RPCs or Notifications.\n");
         /* ignore operational datastore file */
         oper_file = NULL;
     }
-    if ((options_parser & LYD_OPT_TYPEMASK) == LYD_OPT_DATA) {
+    if ((options_parser & LLLYD_OPT_TYPEMASK) == LLLYD_OPT_DATA) {
         /* add option to ignore ietf-yang-library data for implicit data type */
-        options_parser |= LYD_OPT_DATA_NO_YANGLIB;
+        options_parser |= LLLYD_OPT_DATA_NO_YANGLIB;
     }
 
     /* set callback for printing libyang messages */
-    ly_set_log_clb(libyang_verbclb, 1);
+    llly_set_log_clb(libyang_verbclb, 1);
 
     /* create libyang context */
     if (ylpath) {
-        ctx = ly_ctx_new_ylpath(searchpaths ? (const char*)searchpaths->set.g[0] : NULL, ylpath, ylformat, options_ctx);
+        ctx = llly_ctx_new_ylpath(searchpaths ? (const char*)searchpaths->set.g[0] : NULL, ylpath, ylformat, options_ctx);
     } else {
-        ctx = ly_ctx_new(NULL, options_ctx);
+        ctx = llly_ctx_new(NULL, options_ctx);
     }
     if (!ctx) {
         goto cleanup;
@@ -624,15 +624,15 @@ main_ni(int argc, char* argv[])
     /* set searchpaths */
     if (searchpaths) {
         for (u = 0; u < searchpaths->number; u++) {
-            ly_ctx_set_searchdir(ctx, (const char*)searchpaths->set.g[u]);
+            llly_ctx_set_searchdir(ctx, (const char*)searchpaths->set.g[u]);
         }
         index = u + 1;
     }
 
     /* derefered setting of verbosity in libyang after context initiation */
-    ly_verb(verbose);
+    llly_verb(verbose);
 
-    mods = ly_set_new();
+    mods = llly_set_new();
 
 
     /* divide input files */
@@ -648,16 +648,16 @@ main_ni(int argc, char* argv[])
                 fprintf(stdout, "Validating %s schema file.\n", argv[optind + i]);
             }
             dir = strdup(argv[optind + i]);
-            ly_ctx_set_searchdir(ctx, dirname(dir));
-            mod = lys_parse_path(ctx, argv[optind + i], informat_s);
-            ly_ctx_unset_searchdirs(ctx, index);
+            llly_ctx_set_searchdir(ctx, dirname(dir));
+            mod = lllys_parse_path(ctx, argv[optind + i], informat_s);
+            llly_ctx_unset_searchdirs(ctx, index);
             free(dir);
             if (!mod) {
                 goto cleanup;
             }
-            ly_set_add(mods, (void *)mod, 0);
+            llly_set_add(mods, (void *)mod, 0);
         } else {
-            if (autodetection && informat_d != LYD_XML) {
+            if (autodetection && informat_d != LLLYD_XML) {
                 /* data file content autodetection is possible only for XML input */
                 fprintf(stderr, "yanglint error: data type autodetection is applicable only to XML files.\n");
                 goto cleanup;
@@ -673,7 +673,7 @@ main_ni(int argc, char* argv[])
             }
             data_item->filename = argv[optind + i];
             data_item->format = informat_d;
-            data_item->type = options_parser & LYD_OPT_TYPEMASK;
+            data_item->type = options_parser & LLLYD_OPT_TYPEMASK;
             data_item->tree = NULL;
             data_item->xml = NULL;
             data_item->next = NULL;
@@ -687,7 +687,7 @@ main_ni(int argc, char* argv[])
 
     /* enable specified features, if not specified, all the module's features are enabled */
     u = 4; /* skip internal libyang modules */
-    while ((mod = ly_ctx_get_module_iter(ctx, &u))) {
+    while ((mod = llly_ctx_get_module_iter(ctx, &u))) {
         for (i = 0; i < featsize; i++) {
             if (!strcmp(feat[i], mod->name)) {
                 /* parse features spec */
@@ -697,7 +697,7 @@ main_ni(int argc, char* argv[])
                     if (verbose >= 2) {
                         fprintf(stdout, "Enabling feature %s in module %s.\n", ptr, mod->name);
                     }
-                    if (lys_features_enable(mod, ptr)) {
+                    if (lllys_features_enable(mod, ptr)) {
                         fprintf(stderr, "Feature %s not defined in module %s.\n", ptr, mod->name);
                     }
                 }
@@ -709,26 +709,26 @@ main_ni(int argc, char* argv[])
             if (verbose >= 2) {
                 fprintf(stdout, "Enabling all features in module %s.\n", mod->name);
             }
-            lys_features_enable(mod, "*");
+            lllys_features_enable(mod, "*");
         }
     }
 
     /* convert (print) to FORMAT */
     if (outformat_s) {
-        if (outformat_s == LYS_OUT_JSON && mods->number > 1) {
+        if (outformat_s == LLLYS_OUT_JSON && mods->number > 1) {
             fputs("[", out);
         }
         for (u = 0; u < mods->number; u++) {
             if (u) {
-                if (outformat_s == LYS_OUT_JSON) {
+                if (outformat_s == LLLYS_OUT_JSON) {
                     fputs(",\n", out);
                 } else {
                     fputs("\n", out);
                 }
             }
-            lys_print_file(out, (struct lys_module *)mods->set.g[u], outformat_s, outtarget_s, outline_length_s, outoptions_s);
+            lllys_print_file(out, (struct lllys_module *)mods->set.g[u], outformat_s, outtarget_s, outline_length_s, outoptions_s);
         }
-        if (outformat_s == LYS_OUT_JSON) {
+        if (outformat_s == LLLYS_OUT_JSON) {
             if (mods->number > 1) {
                 fputs("]\n", out);
             } else if (mods->number == 1) {
@@ -736,7 +736,7 @@ main_ni(int argc, char* argv[])
             }
         }
     } else if (data) {
-        ly_errno = 0;
+        llly_errno = 0;
 
         /* prepare operational datastore when specified for RPC/Notification */
         if (oper_file) {
@@ -747,7 +747,7 @@ main_ni(int argc, char* argv[])
                 fprintf(stderr, "yanglint error: The operational data are expected in XML or JSON format.\n");
                 goto cleanup;
             }
-            oper = lyd_parse_path(ctx, oper_file, informat_d, LYD_OPT_DATA_NO_YANGLIB | LYD_OPT_TRUSTED);
+            oper = lllyd_parse_path(ctx, oper_file, informat_d, LLLYD_OPT_DATA_NO_YANGLIB | LLLYD_OPT_TRUSTED);
             if (!oper) {
                 fprintf(stderr, "yanglint error: Failed to parse the operational datastore file for RPC/Notification validation.\n");
                 goto cleanup;
@@ -755,12 +755,12 @@ main_ni(int argc, char* argv[])
         }
 
         for (data_item = data, data_prev = NULL; data_item; data_prev = data_item, data_item = data_item->next) {
-            /* parse data file - via LYD_OPT_TRUSTED postpone validation when all data are loaded and merged */
+            /* parse data file - via LLLYD_OPT_TRUSTED postpone validation when all data are loaded and merged */
             if (autodetection) {
-                /* erase option not covered by LYD_OPT_TYPEMASK, but used according to the type */
-                options_parser &= ~LYD_OPT_DATA_NO_YANGLIB;
+                /* erase option not covered by LLLYD_OPT_TYPEMASK, but used according to the type */
+                options_parser &= ~LLLYD_OPT_DATA_NO_YANGLIB;
                 /* automatically detect data type from the data top level */
-                data_item->xml = lyxml_parse_path(ctx, data_item->filename, 0);
+                data_item->xml = lllyxml_parse_path(ctx, data_item->filename, 0);
                 if (!data_item->xml) {
                     fprintf(stderr, "yanglint error: parsing XML data for data type autodetection failed.\n");
                     goto cleanup;
@@ -771,44 +771,44 @@ main_ni(int argc, char* argv[])
                     if (verbose >= 2) {
                         fprintf(stdout, "Parsing %s as complete datastore.\n", data_item->filename);
                     }
-                    options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_DATA_NO_YANGLIB;
-                    data_item->type = LYD_OPT_DATA;
+                    options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_DATA_NO_YANGLIB;
+                    data_item->type = LLLYD_OPT_DATA;
                 } else if (!strcmp(data_item->xml->name, "config")) {
                     if (verbose >= 2) {
                         fprintf(stdout, "Parsing %s as config data.\n", data_item->filename);
                     }
-                    options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_CONFIG;
-                    data_item->type = LYD_OPT_CONFIG;
+                    options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_CONFIG;
+                    data_item->type = LLLYD_OPT_CONFIG;
                 } else if (!strcmp(data_item->xml->name, "get-reply")) {
                     if (verbose >= 2) {
                         fprintf(stdout, "Parsing %s as <get> reply data.\n", data_item->filename);
                     }
-                    options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_GET;
-                    data_item->type = LYD_OPT_GET;
+                    options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_GET;
+                    data_item->type = LLLYD_OPT_GET;
                 } else if (!strcmp(data_item->xml->name, "get-config-reply")) {
                     if (verbose >= 2) {
                         fprintf(stdout, "Parsing %s as <get-config> reply data.\n", data_item->filename);
                     }
-                    options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_GETCONFIG;
-                    data_item->type = LYD_OPT_GETCONFIG;
+                    options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_GETCONFIG;
+                    data_item->type = LLLYD_OPT_GETCONFIG;
                 } else if (!strcmp(data_item->xml->name, "edit-config")) {
                     if (verbose >= 2) {
                         fprintf(stdout, "Parsing %s as <edit-config> data.\n", data_item->filename);
                     }
-                    options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_EDIT;
-                    data_item->type = LYD_OPT_EDIT;
+                    options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_EDIT;
+                    data_item->type = LLLYD_OPT_EDIT;
                 } else if (!strcmp(data_item->xml->name, "rpc")) {
                     if (verbose >= 2) {
                         fprintf(stdout, "Parsing %s as <rpc> data.\n", data_item->filename);
                     }
-                    options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPC;
-                    data_item->type = LYD_OPT_RPC;
+                    options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPC;
+                    data_item->type = LLLYD_OPT_RPC;
                 } else if (!strcmp(data_item->xml->name, "rpc-reply")) {
                     if (verbose >= 2) {
                         fprintf(stdout, "Parsing %s as <rpc-reply> data.\n", data_item->filename);
                     }
 
-                    data_item->type = LYD_OPT_RPCREPLY;
+                    data_item->type = LLLYD_OPT_RPCREPLY;
                     if (!data_item->next || (data_prev && !data_prev->tree)) {
                         fprintf(stderr, "RPC reply (%s) must be paired with the original RPC, see help.\n", data_item->filename);
                         goto cleanup;
@@ -819,12 +819,12 @@ main_ni(int argc, char* argv[])
                     if (verbose >= 2) {
                         fprintf(stdout, "Parsing %s as <notification> data.\n", data_item->filename);
                     }
-                    options_parser = (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_NOTIF;
-                    data_item->type = LYD_OPT_NOTIF;
+                    options_parser = (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_NOTIF;
+                    data_item->type = LLLYD_OPT_NOTIF;
 
                     /* ignore eventTime element if present */
                     while (data_item->xml->child && !strcmp(data_item->xml->child->name, "eventTime")) {
-                        lyxml_free(ctx, data_item->xml->child);
+                        lllyxml_free(ctx, data_item->xml->child);
                     }
                 } else {
                     fprintf(stderr, "yanglint error: invalid top-level element \"%s\" for data type autodetection.\n",
@@ -832,37 +832,37 @@ main_ni(int argc, char* argv[])
                     goto cleanup;
                 }
 
-                data_item->tree = lyd_parse_xml(ctx, &data_item->xml->child, options_parser, oper);
-                if (data_prev && data_prev->type == LYD_OPT_RPCREPLY) {
+                data_item->tree = lllyd_parse_xml(ctx, &data_item->xml->child, options_parser, oper);
+                if (data_prev && data_prev->type == LLLYD_OPT_RPCREPLY) {
 parse_reply:
                     /* check result of the RPC parsing, we are going to do another parsing in this step */
-                    if (ly_errno) {
+                    if (llly_errno) {
                         goto cleanup;
                     }
 
                     /* check that we really have RPC for the reply */
-                    if (data_item->type != LYD_OPT_RPC) {
+                    if (data_item->type != LLLYD_OPT_RPC) {
                         fprintf(stderr, "yanglint error: RPC reply (%s) must be paired with the original RPC, see help.\n", data_prev->filename);
                         goto cleanup;
                     }
 
-                    if (data_prev->format == LYD_XML) {
+                    if (data_prev->format == LLLYD_XML) {
                         /* ignore <ok> and <rpc-error> elements if present */
                         u = 0;
-                        LY_TREE_FOR_SAFE(data_prev->xml->child, iter, elem) {
+                        LLLY_TREE_FOR_SAFE(data_prev->xml->child, iter, elem) {
                             if (!strcmp(data_prev->xml->child->name, "ok")) {
                                 if (u) {
                                     /* rpc-error or ok already present */
                                     u = 0x8; /* error flag */
                                 } else {
-                                    u = 0x1 | 0x4; /* <ok> flag with lyxml_free() flag */
+                                    u = 0x1 | 0x4; /* <ok> flag with lllyxml_free() flag */
                                 }
                             } else if (!strcmp(data_prev->xml->child->name, "rpc-error")) {
                                 if (u && (u & 0x1)) {
                                     /* ok already present, rpc-error can be present multiple times */
                                     u = 0x8; /* error flag */
                                 } else {
-                                    u = 0x2 | 0x4; /* <rpc-error> flag with lyxml_free() flag */
+                                    u = 0x2 | 0x4; /* <rpc-error> flag with lllyxml_free() flag */
                                 }
                             }
 
@@ -870,25 +870,25 @@ parse_reply:
                                 fprintf(stderr, "yanglint error: Invalid RPC reply (%s) content.\n", data_prev->filename);
                                 goto cleanup;
                             } else if (u & 0x4) {
-                                lyxml_free(ctx, data_prev->xml->child);
-                                u &= ~0x4; /* unset lyxml_free() flag */
+                                lllyxml_free(ctx, data_prev->xml->child);
+                                u &= ~0x4; /* unset lllyxml_free() flag */
                             }
                         }
 
                         /* finally, parse RPC reply from the previous step */
-                        data_prev->tree = lyd_parse_xml(ctx, &data_prev->xml->child,
-                                                        (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPCREPLY, data_item->tree, oper);
-                    } else { /* LYD_JSON */
-                        data_prev->tree = lyd_parse_path(ctx, data_prev->filename, data_item->format,
-                                                         (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPCREPLY, data_item->tree, oper);
+                        data_prev->tree = lllyd_parse_xml(ctx, &data_prev->xml->child,
+                                                        (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPCREPLY, data_item->tree, oper);
+                    } else { /* LLLYD_JSON */
+                        data_prev->tree = lllyd_parse_path(ctx, data_prev->filename, data_item->format,
+                                                         (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPCREPLY, data_item->tree, oper);
                     }
                 }
-            } else if ((options_parser & LYD_OPT_TYPEMASK) == LYD_OPT_RPCREPLY) {
+            } else if ((options_parser & LLLYD_OPT_TYPEMASK) == LLLYD_OPT_RPCREPLY) {
                 if (data_prev && !data_prev->tree) {
                     /* now we should have RPC for the preceding RPC reply */
-                    data_item->tree = lyd_parse_path(ctx, data_item->filename, data_item->format,
-                                                     (options_parser & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPC, oper);
-                    data_item->type = LYD_OPT_RPC;
+                    data_item->tree = lllyd_parse_path(ctx, data_item->filename, data_item->format,
+                                                     (options_parser & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPC, oper);
+                    data_item->type = LLLYD_OPT_RPC;
                     goto parse_reply;
                 } else {
                     /* now we have RPC reply which will be parsed in next step together with its RPC */
@@ -896,16 +896,16 @@ parse_reply:
                         fprintf(stderr, "yanglint error: RPC reply (%s) must be paired with the original RPC, see help.\n", data_item->filename);
                         goto cleanup;
                     }
-                    if (data_item->format == LYD_XML) {
+                    if (data_item->format == LLLYD_XML) {
                         /* create rpc-reply container to unify handling with autodetection */
                         data_item->xml = calloc(1, sizeof *data_item->xml);
                         if (!data_item->xml) {
                             fprintf(stderr, "yanglint error: Memory allocation failed failed.\n");
                             goto cleanup;
                         }
-                        data_item->xml->name = lydict_insert(ctx, "rpc-reply", 9);
+                        data_item->xml->name = lllydict_insert(ctx, "rpc-reply", 9);
                         data_item->xml->prev = data_item->xml;
-                        data_item->xml->child = lyxml_parse_path(ctx, data_item->filename, LYXML_PARSE_MULTIROOT | LYXML_PARSE_NOMIXEDCONTENT);
+                        data_item->xml->child = lllyxml_parse_path(ctx, data_item->filename, LLLYXML_PARSE_MULTIROOT | LLLYXML_PARSE_NOMIXEDCONTENT);
                         if (data_item->xml->child) {
                             data_item->xml->child->parent = data_item->xml;
                         }
@@ -913,9 +913,9 @@ parse_reply:
                     continue;
                 }
             } else {
-                data_item->tree = lyd_parse_path(ctx, data_item->filename, data_item->format, options_parser, oper);
+                data_item->tree = lllyd_parse_path(ctx, data_item->filename, data_item->format, options_parser, oper);
             }
-            if (ly_errno) {
+            if (llly_errno) {
                 goto cleanup;
             }
 
@@ -924,7 +924,7 @@ parse_reply:
                     data->tree = data_item->tree;
                 } else if (data_item->tree) {
                     /* merge results */
-                    if (lyd_merge(data->tree, data_item->tree, LYD_OPT_DESTRUCT | LYD_OPT_EXPLICIT)) {
+                    if (lllyd_merge(data->tree, data_item->tree, LLLYD_OPT_DESTRUCT | LLLYD_OPT_EXPLICIT)) {
                         fprintf(stderr, "yanglint error: merging multiple data trees failed.\n");
                         goto cleanup;
                     }
@@ -935,32 +935,32 @@ parse_reply:
 
         if (merge) {
             /* validate the merged data tree, do not trust the input, invalidate all the data first */
-            LY_TREE_FOR(data->tree, subroot) {
-                LY_TREE_DFS_BEGIN(subroot, next, node) {
-                    node->validity = LYD_VAL_OK;
+            LLLY_TREE_FOR(data->tree, subroot) {
+                LLLY_TREE_DFS_BEGIN(subroot, next, node) {
+                    node->validity = LLLYD_VAL_OK;
                     switch (node->schema->nodetype) {
-                    case LYS_LEAFLIST:
-                    case LYS_LEAF:
-                        if (((struct lys_node_leaf *)node->schema)->type.base == LY_TYPE_LEAFREF) {
-                            node->validity |= LYD_VAL_LEAFREF;
+                    case LLLYS_LEAFLIST:
+                    case LLLYS_LEAF:
+                        if (((struct lllys_node_leaf *)node->schema)->type.base == LLLY_TYPE_LEAFREF) {
+                            node->validity |= LLLYD_VAL_LEAFREF;
                         }
                         break;
-                    case LYS_LIST:
-                        node->validity |= LYD_VAL_UNIQUE;
+                    case LLLYS_LIST:
+                        node->validity |= LLLYD_VAL_UNIQUE;
                         /* falls through */
-                    case LYS_CONTAINER:
-                    case LYS_NOTIF:
-                    case LYS_RPC:
-                    case LYS_ACTION:
-                        node->validity |= LYD_VAL_MAND;
+                    case LLLYS_CONTAINER:
+                    case LLLYS_NOTIF:
+                    case LLLYS_RPC:
+                    case LLLYS_ACTION:
+                        node->validity |= LLLYD_VAL_MAND;
                         break;
                     default:
                         break;
                     }
-                    LY_TREE_DFS_END(subroot, next, node)
+                    LLLY_TREE_DFS_END(subroot, next, node)
                 }
             }
-            if (lyd_validate(&data->tree, options_parser & ~LYD_OPT_TRUSTED, ctx)) {
+            if (lllyd_validate(&data->tree, options_parser & ~LLLYD_OPT_TRUSTED, ctx)) {
                 goto cleanup;
             }
         }
@@ -971,43 +971,43 @@ parse_reply:
                 if (!merge && verbose >= 2) {
                     fprintf(stdout, "File %s:\n", data_item->filename);
                 }
-                if (outformat_d == LYD_XML && envelope) {
+                if (outformat_d == LLLYD_XML && envelope) {
                     switch (data_item->type) {
-                    case LYD_OPT_DATA:
+                    case LLLYD_OPT_DATA:
                         envelope_s = "data";
                         break;
-                    case LYD_OPT_CONFIG:
+                    case LLLYD_OPT_CONFIG:
                         envelope_s = "config";
                         break;
-                    case LYD_OPT_GET:
+                    case LLLYD_OPT_GET:
                         envelope_s = "get-reply";
                         break;
-                    case LYD_OPT_GETCONFIG:
+                    case LLLYD_OPT_GETCONFIG:
                         envelope_s = "get-config-reply";
                         break;
-                    case LYD_OPT_EDIT:
+                    case LLLYD_OPT_EDIT:
                         envelope_s = "edit-config";
                         break;
-                    case LYD_OPT_RPC:
+                    case LLLYD_OPT_RPC:
                         envelope_s = "rpc";
                         break;
-                    case LYD_OPT_RPCREPLY:
+                    case LLLYD_OPT_RPCREPLY:
                         envelope_s = "rpc-reply";
                         break;
-                    case LYD_OPT_NOTIF:
+                    case LLLYD_OPT_NOTIF:
                         envelope_s = "notification";
                         break;
                     }
                     fprintf(out, "<%s>\n", envelope_s);
-                    if (data_item->type == LYD_OPT_RPC && data_item->tree->schema->nodetype != LYS_RPC) {
+                    if (data_item->type == LLLYD_OPT_RPC && data_item->tree->schema->nodetype != LLLYS_RPC) {
                         /* action */
                         fprintf(out, "<action xmlns=\"urn:ietf:params:xml:ns:yang:1\">\n");
                     }
                 }
-                lyd_print_file(out, (data_item->type == LYD_OPT_RPCREPLY) ? data_item->tree->child : data_item->tree,
-                               outformat_d, LYP_WITHSIBLINGS | LYP_FORMAT | options_dflt);
+                lllyd_print_file(out, (data_item->type == LLLYD_OPT_RPCREPLY) ? data_item->tree->child : data_item->tree,
+                               outformat_d, LLLYP_WITHSIBLINGS | LLLYP_FORMAT | options_dflt);
                 if (envelope_s) {
-                    if (data_item->type == LYD_OPT_RPC && data_item->tree->schema->nodetype != LYS_RPC) {
+                    if (data_item->type == LLLYD_OPT_RPC && data_item->tree->schema->nodetype != LLLYS_RPC) {
                         fprintf(out, "</action>\n");
                     }
                     fprintf(out, "</%s>\n", envelope_s);
@@ -1030,20 +1030,20 @@ cleanup:
     if (out && out != stdout) {
         fclose(out);
     }
-    ly_set_free(mods);
-    ly_set_free(searchpaths);
+    llly_set_free(mods);
+    llly_set_free(searchpaths);
     for (i = 0; i < featsize; i++) {
         free(feat[i]);
     }
     free(feat);
     for (; data; data = data_item) {
         data_item = data->next;
-        lyxml_free(ctx, data->xml);
-        lyd_free_withsiblings(data->tree);
+        lllyxml_free(ctx, data->xml);
+        lllyd_free_withsiblings(data->tree);
         free(data);
     }
-    lyd_free_withsiblings(oper);
-    ly_ctx_destroy(ctx, NULL);
+    lllyd_free_withsiblings(oper);
+    llly_ctx_destroy(ctx, NULL);
 
     return ret;
 }

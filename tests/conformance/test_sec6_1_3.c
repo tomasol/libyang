@@ -26,12 +26,12 @@
 
 #define TEST_DIR "sec6_1_3"
 #define TEST_NAME test_sec6_1_3
-#define TEST_SCHEMA_FORMAT LYS_YANG
+#define TEST_SCHEMA_FORMAT LLLYS_YANG
 #define TEST_SCHEMA_COUNT 2
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *node;
+    struct llly_ctx *ctx;
+    struct lllyd_node *node;
 };
 
 static int
@@ -46,7 +46,7 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         return -1;
@@ -60,8 +60,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free(st->node);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free(st->node);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -73,13 +73,13 @@ TEST_QUOTING(void **state)
 {
     struct state *st = (*state);
     char buf[1024];
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     char *dsc="Test for special characters: { } ; space /* multiple\nline comment */ // comment";
     char *ref="Test for special characters: { } ; space /* multiple line comment */ // comment";
     char *contact="\"\" \\\\ \\  \n\t  \\n\\t ";
 
     sprintf(buf, TESTS_DIR "/conformance/" TEST_DIR "/mod1.yang");
-    mod = lys_parse_path(st->ctx, buf, TEST_SCHEMA_FORMAT);
+    mod = lllys_parse_path(st->ctx, buf, TEST_SCHEMA_FORMAT);
     assert_ptr_not_equal(mod, NULL);
     assert_string_equal(mod->dsc, dsc);
     assert_string_equal(mod->ref, ref);
@@ -92,14 +92,14 @@ TEST_ESCAPE_CHARACTER_IN_DOUBLE_QUOTING(void **state)
 {
     struct state *st = (*state);
     char buf[1024];
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     char *dsc="a\n b";
     char *ref="a\t\n\tb";
     char *org="a\t  \t\n  \t\tb";
     char *contact="a  \t\t\n\tb";
 
     sprintf(buf, TESTS_DIR "/conformance/" TEST_DIR "/mod5.yang");
-    mod = lys_parse_path(st->ctx, buf, TEST_SCHEMA_FORMAT);
+    mod = lllys_parse_path(st->ctx, buf, TEST_SCHEMA_FORMAT);
     assert_ptr_not_equal(mod, NULL);
     assert_string_equal(mod->dsc, dsc);
     assert_string_equal(mod->ref, ref);
@@ -112,11 +112,11 @@ TEST_DOUBLE_QUOTING(void **state)
 {
     struct state *st = (*state);
     char buf[1024];
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     char *pattern="This is example text,\nwhich is formatted.";
 
     sprintf(buf, TESTS_DIR "/conformance/" TEST_DIR "/mod2.yang");
-    mod = lys_parse_path(st->ctx, buf, TEST_SCHEMA_FORMAT);
+    mod = lllys_parse_path(st->ctx, buf, TEST_SCHEMA_FORMAT);
     assert_ptr_not_equal(mod, NULL);
     assert_string_equal(mod->dsc, pattern);
     assert_string_equal(mod->ref, pattern);
@@ -129,12 +129,12 @@ TEST_ILLEGAL_STRING(void **state)
 {
     struct state *st = (*state);
     char buf[1024];
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     int i;
 
     for(i=0; i<TEST_SCHEMA_COUNT; i++) {
         sprintf(buf, TESTS_DIR "/conformance/" TEST_DIR "/mod%d.yang",i+3);
-        mod = lys_parse_path(st->ctx, buf, TEST_SCHEMA_FORMAT);
+        mod = lllys_parse_path(st->ctx, buf, TEST_SCHEMA_FORMAT);
         assert_ptr_equal(mod, NULL);
     }
 }

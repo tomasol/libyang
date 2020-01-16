@@ -22,9 +22,9 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    const struct lys_module *mod;
-    struct lyd_node *dt;
+    struct llly_ctx *ctx;
+    const struct lllys_module *mod;
+    struct lllyd_node *dt;
     char *xml;
 };
 
@@ -41,14 +41,14 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
     }
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, schemafile, LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, schemafile, LLLYS_IN_YIN);
     if (!st->mod) {
         fprintf(stderr, "Failed to load data model \"%s\".\n", schemafile);
         goto error;
@@ -57,7 +57,7 @@ setup_f(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -69,8 +69,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->dt);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st->xml);
     free(st);
     (*state) = NULL;
@@ -85,10 +85,10 @@ test_parse(void **state)
     const char *xml = "<topleaf xmlns=\"urn:libyang:tests:emptycont\">X</topleaf>"
                       "<top xmlns=\"urn:libyang:tests:emptycont\"><a>A</a><b><b1>B</b1></b><c><c1>C</c1></c></top>";
 
-    st->dt = lyd_parse_mem(st->ctx, xml, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, xml, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(st->xml, xml);
 }
 
@@ -99,10 +99,10 @@ test_parse_noautodel(void **state)
     const char *xml = "<topleaf xmlns=\"urn:libyang:tests:emptycont\">X</topleaf>"
                       "<top xmlns=\"urn:libyang:tests:emptycont\"><b><b1>B</b1></b><c><c1>C</c1></c></top>";
 
-    st->dt = lyd_parse_mem(st->ctx, xml, LYD_XML, LYD_OPT_CONFIG | LYD_OPT_WHENAUTODEL);
+    st->dt = lllyd_parse_mem(st->ctx, xml, LLLYD_XML, LLLYD_OPT_CONFIG | LLLYD_OPT_WHENAUTODEL);
     assert_null(st->dt);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_NOWHEN);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_NOWHEN);
 }
 
 static void
@@ -113,19 +113,19 @@ test_parse_autodel(void **state)
                       "<top xmlns=\"urn:libyang:tests:emptycont\"><a>A</a></top>";
 
     /* all is fine, b container present */
-    st->dt = lyd_parse_mem(st->ctx, xml, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, xml, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, LYP_WITHSIBLINGS | LYP_WD_ALL);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, LLLYP_WITHSIBLINGS | LLLYP_WD_ALL);
     assert_string_equal(st->xml, "<topleaf xmlns=\"urn:libyang:tests:emptycont\">X</topleaf><top xmlns=\"urn:libyang:tests:emptycont\"><a>A</a><b/></top>");
 
     /* no need for the autodel flag, b container must always be autodeleted */
     assert_string_equal(st->dt->schema->name, "topleaf");
     st->dt = st->dt->next;
-    lyd_free(st->dt->prev);
+    lllyd_free(st->dt->prev);
 
-    assert_int_equal(lyd_validate(&st->dt, LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&st->dt, LLLYD_OPT_CONFIG, NULL), 0);
     free(st->xml);
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, LYP_WITHSIBLINGS | LYP_WD_ALL);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, LLLYP_WITHSIBLINGS | LLLYP_WD_ALL);
     assert_string_equal(st->xml, "<top xmlns=\"urn:libyang:tests:emptycont\"><a>A</a></top>");
 }
 

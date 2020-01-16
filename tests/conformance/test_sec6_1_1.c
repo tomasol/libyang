@@ -23,14 +23,14 @@
 
 #define TEST_NAME test_sec6_1_1
 #define TEST_SCHEMA "sec6_1_1/mod.yang"
-#define TEST_SCHEMA_FORMAT LYS_YANG
+#define TEST_SCHEMA_FORMAT LLLYS_YANG
 #define TEST_SCHEMA_LOAD_FAIL 0
 #define TEST_DATA ""
 #define TEST_DATA_LOAD_FAIL 0
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *node;
+    struct llly_ctx *ctx;
+    struct lllyd_node *node;
 };
 
 static int
@@ -45,7 +45,7 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         return -1;
@@ -59,8 +59,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free(st->node);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free(st->node);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -71,9 +71,9 @@ static void
 TEST_NAME(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
-    mod = lys_parse_path(st->ctx, TESTS_DIR "/conformance/" TEST_SCHEMA, TEST_SCHEMA_FORMAT);
+    mod = lllys_parse_path(st->ctx, TESTS_DIR "/conformance/" TEST_SCHEMA, TEST_SCHEMA_FORMAT);
     if (TEST_SCHEMA_LOAD_FAIL) {
         assert_ptr_equal(mod, NULL);
     } else {
@@ -81,7 +81,7 @@ TEST_NAME(void **state)
     }
 
     if (TEST_DATA[0]) {
-        st->node = lyd_parse_path(st->ctx, TESTS_DIR "/conformance/" TEST_DATA, LYD_XML, LYD_OPT_CONFIG);
+        st->node = lllyd_parse_path(st->ctx, TESTS_DIR "/conformance/" TEST_DATA, LLLYD_XML, LLLYD_OPT_CONFIG);
         if (TEST_DATA_LOAD_FAIL) {
             assert_ptr_not_equal(st->node, NULL);
         } else {

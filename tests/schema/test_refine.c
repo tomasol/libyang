@@ -33,7 +33,7 @@
 #define MOD_COUNT 7
 #define YANG_MOD_IDX(idx) (idx)
 
-struct ly_ctx *ctx;
+struct llly_ctx *ctx;
 
 static int
 setup_ctx_yang(void **state)
@@ -42,7 +42,7 @@ setup_ctx_yang(void **state)
     assert_non_null(*state);
     memcpy(*state, SCHEMA_FOLDER_YANG, strlen(SCHEMA_FOLDER_YANG) + 1);
 
-    ctx = ly_ctx_new(NULL, 0);
+    ctx = llly_ctx_new(NULL, 0);
     if (!ctx) {
         return -1;
     }
@@ -54,7 +54,7 @@ static int
 teardown_ctx(void **state)
 {
     free(*state);
-    ly_ctx_destroy(ctx, NULL);
+    llly_ctx_destroy(ctx, NULL);
 
     return 0;
 }
@@ -66,12 +66,12 @@ test_refine(void **state)
 {
     int length;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     strcpy(path + length, "/refgrp-m1.yang");
-    if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+    if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
         fail();
     }
 }
@@ -79,7 +79,7 @@ test_refine(void **state)
 int
 main(void)
 {
-    ly_verb(LY_LLWRN);
+    llly_verb(LLLY_LLWRN);
     const struct CMUnitTest cmut[] = {
         cmocka_unit_test_setup_teardown(test_refine, setup_ctx_yang, teardown_ctx),
     };

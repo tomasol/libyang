@@ -24,20 +24,20 @@
 int main(int argc, char *argv[])
 {
 	int fd, i;
-	struct ly_ctx *ctx = NULL;
+	struct llly_ctx *ctx = NULL;
 	char buf[30];
-	struct lyd_node *data = NULL, *next;
-	const struct lys_module *mod;
+	struct lllyd_node *data = NULL, *next;
+	const struct lllys_module *mod;
 
 	/* libyang context */
-        ctx = ly_ctx_new(NULL, 0);
+        ctx = llly_ctx_new(NULL, 0);
         if (!ctx) {
                 fprintf(stderr, "Failed to create context.\n");
                 return 1;
         }
 
         /* schema */
-        if (!(mod = lys_parse_path(ctx, argv[1], LYS_IN_YIN))) {
+        if (!(mod = lllys_parse_path(ctx, argv[1], LLLYS_IN_YIN))) {
                 fprintf(stderr, "Failed to load data model.\n");
                 goto cleanup;
         }
@@ -47,27 +47,27 @@ int main(int argc, char *argv[])
 	fd = open("./addloop_result.xml", O_WRONLY | O_CREAT, 0666);
 	data = NULL;
 	for(i = 1; i <= 5000; i++) {
-		next = lyd_new(NULL, mod, "ptest1");
+		next = lllyd_new(NULL, mod, "ptest1");
 		// if (i == 2091) {sprintf(buf, "%d", 1);} else {
 		sprintf(buf, "%d", i);//}
-		lyd_new_leaf(next, mod, "index", buf);
-		lyd_new_leaf(next, mod, "p1", buf);
+		lllyd_new_leaf(next, mod, "index", buf);
+		lllyd_new_leaf(next, mod, "p1", buf);
 		if (!data) {
 			data = next;
 		} else {
-			lyd_insert_after(data->prev, next);
+			lllyd_insert_after(data->prev, next);
 		}
-		if (lyd_validate(&data, LYD_OPT_CONFIG, NULL)) {
+		if (lllyd_validate(&data, LLLYD_OPT_CONFIG, NULL)) {
 			goto cleanup;
 		}
-		//lyd_print_fd(fd, data, LYD_XML);
+		//lllyd_print_fd(fd, data, LLLYD_XML);
 	}
-	lyd_print_fd(fd, data, LYD_XML, LYP_WITHSIBLINGS | LYP_FORMAT);
+	lllyd_print_fd(fd, data, LLLYD_XML, LLLYP_WITHSIBLINGS | LLLYP_FORMAT);
 	close(fd);
 
 cleanup:
-	lyd_free_withsiblings(data);
-	ly_ctx_destroy(ctx, NULL);
+	lllyd_free_withsiblings(data);
+	llly_ctx_destroy(ctx, NULL);
 
 	return 0;
 }

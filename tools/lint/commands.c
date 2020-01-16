@@ -31,7 +31,7 @@
 
 COMMAND commands[];
 extern int done;
-extern struct ly_ctx *ctx;
+extern struct llly_ctx *ctx;
 
 void
 cmd_add_help(void)
@@ -80,20 +80,20 @@ cmd_print_help(void)
 void
 cmd_data_help(void)
 {
-    printf("data [-(-s)trict] [-t TYPE] [-d DEFAULTS] [-o <output-file>] [-f (xml | json | lyb)] [-F (xml | json | lyb)]\n");
+    printf("data [-(-s)trict] [-t TYPE] [-d DEFAULTS] [-o <output-file>] [-f (xml | json | lllyb)] [-F (xml | json | lllyb)]\n");
     printf("     [-r <running-file-name>] <data-file-name> [<RPC/action-data-file-name> | <yang-data name>]\n\n");
     printf("Accepted TYPEs:\n");
     printf("\tauto       - resolve data type (one of the following) automatically (as pyang does),\n");
     printf("\t             this option is applicable only in case of XML input data.\n");
-    printf("\tdata       - LYD_OPT_DATA (default value) - complete datastore including status data.\n");
-    printf("\tconfig     - LYD_OPT_CONFIG - complete configuration datastore.\n");
-    printf("\tget        - LYD_OPT_GET - <get> operation result.\n");
-    printf("\tgetconfig  - LYD_OPT_GETCONFIG - <get-config> operation result.\n");
-    printf("\tedit       - LYD_OPT_EDIT - <edit-config>'s data (content of its <config> element).\n");
-    printf("\trpc        - LYD_OPT_RPC - NETCONF RPC message.\n");
-    printf("\trpcreply   - LYD_OPT_RPCREPLY (last parameter mandatory in this case)\n");
-    printf("\tnotif      - LYD_OPT_NOTIF - NETCONF Notification message.\n");
-    printf("\tyangdata   - LYD_OPT_DATA_TEMPLATE - yang-data extension (last parameter mandatory in this case)\n\n");
+    printf("\tdata       - LLLYD_OPT_DATA (default value) - complete datastore including status data.\n");
+    printf("\tconfig     - LLLYD_OPT_CONFIG - complete configuration datastore.\n");
+    printf("\tget        - LLLYD_OPT_GET - <get> operation result.\n");
+    printf("\tgetconfig  - LLLYD_OPT_GETCONFIG - <get-config> operation result.\n");
+    printf("\tedit       - LLLYD_OPT_EDIT - <edit-config>'s data (content of its <config> element).\n");
+    printf("\trpc        - LLLYD_OPT_RPC - NETCONF RPC message.\n");
+    printf("\trpcreply   - LLLYD_OPT_RPCREPLY (last parameter mandatory in this case)\n");
+    printf("\tnotif      - LLLYD_OPT_NOTIF - NETCONF Notification message.\n");
+    printf("\tyangdata   - LLLYD_OPT_DATA_TEMPLATE - yang-data extension (last parameter mandatory in this case)\n\n");
     printf("Accepted DEFAULTS:\n");
     printf("\tall        - add missing default nodes\n");
     printf("\tall-tagged - add missing default nodes and mark all the default nodes with the attribute.\n");
@@ -117,13 +117,13 @@ cmd_xpath_help(void)
     printf("Accepted TYPEs:\n");
     printf("\tauto       - resolve data type (one of the following) automatically (as pyang does),\n");
     printf("\t             this option is applicable only in case of XML input data.\n");
-    printf("\tconfig     - LYD_OPT_CONFIG\n");
-    printf("\tget        - LYD_OPT_GET\n");
-    printf("\tgetconfig  - LYD_OPT_GETCONFIG\n");
-    printf("\tedit       - LYD_OPT_EDIT\n");
-    printf("\trpc        - LYD_OPT_RPC\n");
-    printf("\trpcreply   - LYD_OPT_RPCREPLY (last parameter mandatory in this case)\n");
-    printf("\tnotif      - LYD_OPT_NOTIF\n\n");
+    printf("\tconfig     - LLLYD_OPT_CONFIG\n");
+    printf("\tget        - LLLYD_OPT_GET\n");
+    printf("\tgetconfig  - LLLYD_OPT_GETCONFIG\n");
+    printf("\tedit       - LLLYD_OPT_EDIT\n");
+    printf("\trpc        - LLLYD_OPT_RPC\n");
+    printf("\trpcreply   - LLLYD_OPT_RPCREPLY (last parameter mandatory in this case)\n");
+    printf("\tnotif      - LLLYD_OPT_NOTIF\n\n");
     printf("Option -x:\n");
     printf("\tIf RPC/action/notification/RPC reply (for TYPEs 'rpc', 'rpcreply', and 'notif') includes\n");
     printf("\tan XPath expression (when/must) that needs access to the configuration data, you can provide\n");
@@ -167,7 +167,7 @@ cmd_debug_help(void)
 
 #endif
 
-LYS_INFORMAT
+LLLYS_INFORMAT
 get_schema_format(const char *path)
 {
     char *ptr;
@@ -175,16 +175,16 @@ get_schema_format(const char *path)
     if ((ptr = strrchr(path, '.')) != NULL) {
         ++ptr;
         if (!strcmp(ptr, "yin")) {
-            return LYS_IN_YIN;
+            return LLLYS_IN_YIN;
         } else if (!strcmp(ptr, "yang")) {
-            return LYS_IN_YANG;
+            return LLLYS_IN_YANG;
         } else {
             fprintf(stderr, "Input file in an unknown format \"%s\".\n", ptr);
-            return LYS_IN_UNKNOWN;
+            return LLLYS_IN_UNKNOWN;
         }
     } else {
         fprintf(stdout, "Input file \"%s\" without extension - unknown format.\n", path);
-        return LYS_IN_UNKNOWN;
+        return LLLYS_IN_UNKNOWN;
     }
 }
 
@@ -194,8 +194,8 @@ cmd_add(const char *arg)
     int path_len, ret = 1, index = 0;
     char *path, *dir, *s, *arg_ptr;
     const char * const *searchpaths;
-    const struct lys_module *model;
-    LYS_INFORMAT format = LYS_IN_UNKNOWN;
+    const struct lllys_module *model;
+    LLLYS_INFORMAT format = LLLYS_IN_UNKNOWN;
 
     if (strlen(arg) < 5) {
         cmd_add_help();
@@ -206,7 +206,7 @@ cmd_add(const char *arg)
 
     for (s = strstr(arg_ptr, "-i"); s ; s = strstr(s + 2, "-i")) {
         if (s[2] == '\0' || s[2] == ' ') {
-            ly_ctx_set_allimplemented(ctx);
+            llly_ctx_set_allimplemented(ctx);
             s[0] = s[1] = ' ';
         }
     }
@@ -222,22 +222,22 @@ cmd_add(const char *arg)
     }
     path = strndup(arg_ptr, path_len);
 
-    searchpaths = ly_ctx_get_searchdirs(ctx);
+    searchpaths = llly_ctx_get_searchdirs(ctx);
     if (searchpaths) {
         for (index = 0; searchpaths[index]; index++);
     }
 
     while (path) {
         format = get_schema_format(path);
-        if (format == LYS_IN_UNKNOWN) {
+        if (format == LLLYS_IN_UNKNOWN) {
             free(path);
             goto cleanup;
         }
 
         dir = strdup(path);
-        ly_ctx_set_searchdir(ctx, dirname(dir));
-        model = lys_parse_path(ctx, path, format);
-        ly_ctx_unset_searchdirs(ctx, index);
+        llly_ctx_set_searchdir(ctx, dirname(dir));
+        model = lllys_parse_path(ctx, path, format);
+        llly_ctx_unset_searchdirs(ctx, index);
         free(path);
         free(dir);
 
@@ -263,7 +263,7 @@ cmd_add(const char *arg)
             path = NULL;
         }
     }
-    if (format == LYS_IN_UNKNOWN) {
+    if (format == LLLYS_IN_UNKNOWN) {
         /* no schema on input */
         cmd_add_help();
         goto cleanup;
@@ -272,7 +272,7 @@ cmd_add(const char *arg)
 
 cleanup:
     free(s);
-    ly_ctx_unset_allimplemented(ctx);
+    llly_ctx_unset_allimplemented(ctx);
 
     return ret;
 }
@@ -282,7 +282,7 @@ cmd_load(const char *arg)
 {
     int name_len, ret = 1;
     char *name, *s, *arg_ptr;
-    const struct lys_module *model;
+    const struct lllys_module *model;
 
     if (strlen(arg) < 6) {
         cmd_load_help();
@@ -293,7 +293,7 @@ cmd_load(const char *arg)
 
     for (s = strstr(arg_ptr, "-i"); s ; s = strstr(s + 2, "-i")) {
         if (s[2] == '\0' || s[2] == ' ') {
-            ly_ctx_set_allimplemented(ctx);
+            llly_ctx_set_allimplemented(ctx);
             s[0] = s[1] = ' ';
         }
     }
@@ -310,7 +310,7 @@ cmd_load(const char *arg)
     name = strndup(arg_ptr, name_len);
 
     while (name) {
-        model = ly_ctx_load_module(ctx, name, NULL);
+        model = llly_ctx_load_module(ctx, name, NULL);
         free(name);
         if (!model) {
             /* libyang printed the error messages */
@@ -338,7 +338,7 @@ cmd_load(const char *arg)
 
 cleanup:
     free(s);
-    ly_ctx_unset_allimplemented(ctx);
+    llly_ctx_unset_allimplemented(ctx);
 
     return ret;
 }
@@ -349,8 +349,8 @@ cmd_print(const char *arg)
     int c, argc, option_index, ret = 1, tree_ll = 0, tree_opts = 0;
     char **argv = NULL, *ptr, *target_path = NULL, *model_name, *revision;
     const char *out_path = NULL;
-    const struct lys_module *module;
-    LYS_OUTFORMAT format = LYS_OUT_TREE;
+    const struct lllys_module *module;
+    LLLYS_OUTFORMAT format = LLLYS_OUT_TREE;
     FILE *output = stdout;
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
@@ -396,18 +396,18 @@ cmd_print(const char *arg)
             goto cleanup;
         case 'f':
             if (!strcmp(optarg, "yang")) {
-                format = LYS_OUT_YANG;
+                format = LLLYS_OUT_YANG;
             } else if (!strcmp(optarg, "yin")) {
-                format = LYS_OUT_YIN;
+                format = LLLYS_OUT_YIN;
             } else if (!strcmp(optarg, "tree")) {
-                format = LYS_OUT_TREE;
+                format = LLLYS_OUT_TREE;
             } else if (!strcmp(optarg, "tree-rfc")) {
-                format = LYS_OUT_TREE;
-                tree_opts |= LYS_OUTOPT_TREE_RFC;
+                format = LLLYS_OUT_TREE;
+                tree_opts |= LLLYS_OUTOPT_TREE_RFC;
             } else if (!strcmp(optarg, "info")) {
-                format = LYS_OUT_INFO;
+                format = LLLYS_OUT_INFO;
             } else if (!strcmp(optarg, "jsons")) {
-                format = LYS_OUT_JSON;
+                format = LLLYS_OUT_JSON;
             } else {
                 fprintf(stderr, "Unknown output format \"%s\".\n", optarg);
                 goto cleanup;
@@ -421,13 +421,13 @@ cmd_print(const char *arg)
             out_path = optarg;
             break;
         case 'g':
-            tree_opts |= LYS_OUTOPT_TREE_GROUPING;
+            tree_opts |= LLLYS_OUTOPT_TREE_GROUPING;
             break;
         case 'u':
-            tree_opts |= LYS_OUTOPT_TREE_USES;
+            tree_opts |= LLLYS_OUTOPT_TREE_USES;
             break;
         case 'n':
-            tree_opts |= LYS_OUTOPT_TREE_NO_LEAFREF;
+            tree_opts |= LLLYS_OUTOPT_TREE_NO_LEAFREF;
             break;
         case 'P':
             target_path = optarg;
@@ -448,7 +448,7 @@ cmd_print(const char *arg)
     }
 
     /* tree fromat with or without gropings */
-    if ((tree_opts || tree_ll) && format != LYS_OUT_TREE) {
+    if ((tree_opts || tree_ll) && format != LLLYS_OUT_TREE) {
         fprintf(stderr, "--tree options take effect only in case of the tree output format.\n");
     }
 
@@ -461,10 +461,10 @@ cmd_print(const char *arg)
         ++revision;
     }
 
-    module = ly_ctx_get_module(ctx, model_name, revision, 0);
+    module = llly_ctx_get_module(ctx, model_name, revision, 0);
     if (!module) {
         /* not a module, try to find it as a submodule */
-        module = (const struct lys_module *)ly_ctx_get_submodule(ctx, NULL, NULL, model_name, revision);
+        module = (const struct lllys_module *)llly_ctx_get_submodule(ctx, NULL, NULL, model_name, revision);
     }
 
     if (!module) {
@@ -484,8 +484,8 @@ cmd_print(const char *arg)
         }
     }
 
-    ret = lys_print_file(output, module, format, target_path, tree_ll, tree_opts);
-    if (format == LYS_OUT_JSON) {
+    ret = lllys_print_file(output, module, format, target_path, tree_ll, tree_opts);
+    if (format == LLLYS_OUT_JSON) {
         fputs("\n", output);
     }
 
@@ -500,7 +500,7 @@ cleanup:
     return ret;
 }
 
-static LYD_FORMAT
+static LLLYD_FORMAT
 detect_data_format(char *filepath)
 {
     size_t len;
@@ -509,43 +509,43 @@ detect_data_format(char *filepath)
     len = strlen(filepath);
     for (; isspace(filepath[len - 1]); len--, filepath[len] = '\0'); /* remove trailing whitespaces */
     if (len >= 5 && !strcmp(&filepath[len - 4], ".xml")) {
-        return LYD_XML;
+        return LLLYD_XML;
     } else if (len >= 6 && !strcmp(&filepath[len - 5], ".json")) {
-        return LYD_JSON;
-    } else if (len >= 5 && !strcmp(&filepath[len - 4], ".lyb")) {
-        return LYD_LYB;
+        return LLLYD_JSON;
+    } else if (len >= 5 && !strcmp(&filepath[len - 4], ".lllyb")) {
+        return LLLYD_LYB;
     } else {
-        return LYD_UNKNOWN;
+        return LLLYD_UNKNOWN;
     }
 }
 
 static int
-parse_data(char *filepath, LYD_FORMAT informat, int *options, struct lyd_node *val_tree, const char *rpc_act_file,
-           struct lyd_node **result)
+parse_data(char *filepath, LLLYD_FORMAT informat, int *options, struct lllyd_node *val_tree, const char *rpc_act_file,
+           struct lllyd_node **result)
 {
-    struct lyxml_elem *xml = NULL;
-    struct lyd_node *data = NULL, *rpc_act = NULL;
+    struct lllyxml_elem *xml = NULL;
+    struct lllyd_node *data = NULL, *rpc_act = NULL;
     int opts = *options;
 
-    if (informat == LYD_UNKNOWN) {
+    if (informat == LLLYD_UNKNOWN) {
         /* detect input format according to file suffix */
         informat = detect_data_format(filepath);
     }
-    if (informat == LYD_UNKNOWN) {
-        fprintf(stderr, "Unable to resolve format of the input file, please add \".xml\", \".json\", or \".lyb\" suffix.\n");
+    if (informat == LLLYD_UNKNOWN) {
+        fprintf(stderr, "Unable to resolve format of the input file, please add \".xml\", \".json\", or \".lllyb\" suffix.\n");
         return EXIT_FAILURE;
     }
 
-    ly_errno = LY_SUCCESS;
+    llly_errno = LLLY_SUCCESS;
 
-    if ((opts & LYD_OPT_TYPEMASK) == LYD_OPT_TYPEMASK) {
+    if ((opts & LLLYD_OPT_TYPEMASK) == LLLYD_OPT_TYPEMASK) {
         /* automatically detect data type from the data top level */
-        if (informat != LYD_XML) {
+        if (informat != LLLYD_XML) {
             fprintf(stderr, "Only XML data can be automatically explored.\n");
             return EXIT_FAILURE;
         }
 
-        xml = lyxml_parse_path(ctx, filepath, 0);
+        xml = lllyxml_parse_path(ctx, filepath, 0);
         if (!xml) {
             fprintf(stderr, "Failed to parse XML data for automatic type detection.\n");
             return EXIT_FAILURE;
@@ -555,96 +555,96 @@ parse_data(char *filepath, LYD_FORMAT informat, int *options, struct lyd_node *v
 
         if (!strcmp(xml->name, "data")) {
             fprintf(stdout, "Parsing %s as complete datastore.\n", filepath);
-            opts = (opts & ~LYD_OPT_TYPEMASK) | LYD_OPT_DATA_ADD_YANGLIB;
+            opts = (opts & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_DATA_ADD_YANGLIB;
         } else if (!strcmp(xml->name, "config")) {
             fprintf(stdout, "Parsing %s as config data.\n", filepath);
-            opts = (opts & ~LYD_OPT_TYPEMASK) | LYD_OPT_CONFIG;
+            opts = (opts & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_CONFIG;
         } else if (!strcmp(xml->name, "get-reply")) {
             fprintf(stdout, "Parsing %s as <get> reply data.\n", filepath);
-            opts = (opts & ~LYD_OPT_TYPEMASK) | LYD_OPT_GET;
+            opts = (opts & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_GET;
         } else if (!strcmp(xml->name, "get-config-reply")) {
             fprintf(stdout, "Parsing %s as <get-config> reply data.\n", filepath);
-            opts = (opts & ~LYD_OPT_TYPEMASK) | LYD_OPT_GETCONFIG;
+            opts = (opts & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_GETCONFIG;
         } else if (!strcmp(xml->name, "edit-config")) {
             fprintf(stdout, "Parsing %s as <edit-config> data.\n", filepath);
-            opts = (opts & ~LYD_OPT_TYPEMASK) | LYD_OPT_EDIT;
+            opts = (opts & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_EDIT;
         } else if (!strcmp(xml->name, "rpc")) {
             fprintf(stdout, "Parsing %s as <rpc> data.\n", filepath);
-            opts = (opts & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPC;
+            opts = (opts & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPC;
         } else if (!strcmp(xml->name, "rpc-reply")) {
             if (!rpc_act_file) {
                 fprintf(stderr, "RPC/action reply data require additional argument (file with the RPC/action).\n");
-                lyxml_free(ctx, xml);
+                lllyxml_free(ctx, xml);
                 return EXIT_FAILURE;
             }
             fprintf(stdout, "Parsing %s as <rpc-reply> data.\n", filepath);
-            opts = (opts & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPCREPLY;
-            rpc_act = lyd_parse_path(ctx, rpc_act_file, informat, LYD_OPT_RPC, val_tree);
+            opts = (opts & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPCREPLY;
+            rpc_act = lllyd_parse_path(ctx, rpc_act_file, informat, LLLYD_OPT_RPC, val_tree);
             if (!rpc_act) {
                 fprintf(stderr, "Failed to parse RPC/action.\n");
-                lyxml_free(ctx, xml);
+                lllyxml_free(ctx, xml);
                 return EXIT_FAILURE;
             }
         } else if (!strcmp(xml->name, "notification")) {
             fprintf(stdout, "Parsing %s as <notification> data.\n", filepath);
-            opts = (opts & ~LYD_OPT_TYPEMASK) | LYD_OPT_NOTIF;
+            opts = (opts & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_NOTIF;
         } else if (!strcmp(xml->name, "yang-data")) {
             fprintf(stdout, "Parsing %s as <yang-data> data.\n", filepath);
-            opts = (opts & ~LYD_OPT_TYPEMASK) | LYD_OPT_DATA_TEMPLATE;
+            opts = (opts & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_DATA_TEMPLATE;
             if (!rpc_act_file) {
                 fprintf(stderr, "YANG-DATA require additional argument (name instance of yang-data extension).\n");
-                lyxml_free(ctx, xml);
+                lllyxml_free(ctx, xml);
                 return EXIT_FAILURE;
             }
         } else {
             fprintf(stderr, "Invalid top-level element for automatic data type recognition.\n");
-            lyxml_free(ctx, xml);
+            lllyxml_free(ctx, xml);
             return EXIT_FAILURE;
         }
 
-        if (opts & LYD_OPT_RPCREPLY) {
-            data = lyd_parse_xml(ctx, &xml->child, opts, rpc_act, val_tree);
-        } else if (opts & (LYD_OPT_RPC | LYD_OPT_NOTIF)) {
-            data = lyd_parse_xml(ctx, &xml->child, opts, val_tree);
-        } else if (opts & LYD_OPT_DATA_TEMPLATE) {
-            data = lyd_parse_xml(ctx, &xml->child, opts, rpc_act_file);
+        if (opts & LLLYD_OPT_RPCREPLY) {
+            data = lllyd_parse_xml(ctx, &xml->child, opts, rpc_act, val_tree);
+        } else if (opts & (LLLYD_OPT_RPC | LLLYD_OPT_NOTIF)) {
+            data = lllyd_parse_xml(ctx, &xml->child, opts, val_tree);
+        } else if (opts & LLLYD_OPT_DATA_TEMPLATE) {
+            data = lllyd_parse_xml(ctx, &xml->child, opts, rpc_act_file);
         } else {
-            data = lyd_parse_xml(ctx, &xml->child, opts);
+            data = lllyd_parse_xml(ctx, &xml->child, opts);
         }
-        lyxml_free(ctx, xml);
+        lllyxml_free(ctx, xml);
     } else {
-        if (opts & LYD_OPT_RPCREPLY) {
+        if (opts & LLLYD_OPT_RPCREPLY) {
             if (!rpc_act_file) {
                 fprintf(stderr, "RPC/action reply data require additional argument (file with the RPC/action).\n");
                 return EXIT_FAILURE;
             }
-            rpc_act = lyd_parse_path(ctx, rpc_act_file, informat, LYD_OPT_RPC, val_tree);
+            rpc_act = lllyd_parse_path(ctx, rpc_act_file, informat, LLLYD_OPT_RPC, val_tree);
             if (!rpc_act) {
                 fprintf(stderr, "Failed to parse RPC/action.\n");
                 return EXIT_FAILURE;
             }
-            data = lyd_parse_path(ctx, filepath, informat, opts, rpc_act, val_tree);
-        } else if (opts & (LYD_OPT_RPC | LYD_OPT_NOTIF)) {
-            data = lyd_parse_path(ctx, filepath, informat, opts, val_tree);
-        } else if (opts & LYD_OPT_DATA_TEMPLATE) {
+            data = lllyd_parse_path(ctx, filepath, informat, opts, rpc_act, val_tree);
+        } else if (opts & (LLLYD_OPT_RPC | LLLYD_OPT_NOTIF)) {
+            data = lllyd_parse_path(ctx, filepath, informat, opts, val_tree);
+        } else if (opts & LLLYD_OPT_DATA_TEMPLATE) {
             if (!rpc_act_file) {
                 fprintf(stderr, "YANG-DATA require additional argument (name instance of yang-data extension).\n");
                 return EXIT_FAILURE;
             }
-            data = lyd_parse_path(ctx, filepath, informat, opts, rpc_act_file);
+            data = lllyd_parse_path(ctx, filepath, informat, opts, rpc_act_file);
         } else {
-            if (!(opts & LYD_OPT_TYPEMASK)) {
+            if (!(opts & LLLYD_OPT_TYPEMASK)) {
                 /* automatically add yang-library data */
-                opts |= LYD_OPT_DATA_ADD_YANGLIB;
+                opts |= LLLYD_OPT_DATA_ADD_YANGLIB;
             }
-            data = lyd_parse_path(ctx, filepath, informat, opts);
+            data = lllyd_parse_path(ctx, filepath, informat, opts);
         }
     }
-    lyd_free_withsiblings(rpc_act);
+    lllyd_free_withsiblings(rpc_act);
 
-    if (ly_errno) {
+    if (llly_errno) {
         fprintf(stderr, "Failed to parse data.\n");
-        lyd_free_withsiblings(data);
+        lllyd_free_withsiblings(data);
         return EXIT_FAILURE;
     }
 
@@ -660,8 +660,8 @@ cmd_data(const char *arg)
     int options = 0, printopt = 0;
     char **argv = NULL, *ptr;
     const char *out_path = NULL;
-    struct lyd_node *data = NULL, *val_tree = NULL;
-    LYD_FORMAT outformat = LYD_UNKNOWN, informat = LYD_UNKNOWN;
+    struct lllyd_node *data = NULL, *val_tree = NULL;
+    LLLYD_FORMAT outformat = LLLYD_UNKNOWN, informat = LLLYD_UNKNOWN;
     FILE *output = stdout;
     static struct option long_options[] = {
         {"defaults", required_argument, 0, 'd'},
@@ -702,13 +702,13 @@ cmd_data(const char *arg)
         switch (c) {
         case 'd':
             if (!strcmp(optarg, "all")) {
-                printopt = (printopt & ~LYP_WD_MASK) | LYP_WD_ALL;
+                printopt = (printopt & ~LLLYP_WD_MASK) | LLLYP_WD_ALL;
             } else if (!strcmp(optarg, "all-tagged")) {
-                printopt = (printopt & ~LYP_WD_MASK) | LYP_WD_ALL_TAG;
+                printopt = (printopt & ~LLLYP_WD_MASK) | LLLYP_WD_ALL_TAG;
             } else if (!strcmp(optarg, "trim")) {
-                printopt = (printopt & ~LYP_WD_MASK) | LYP_WD_TRIM;
+                printopt = (printopt & ~LLLYP_WD_MASK) | LLLYP_WD_TRIM;
             } else if (!strcmp(optarg, "implicit-tagged")) {
-                printopt = (printopt & ~LYP_WD_MASK) | LYP_WD_IMPL_TAG;
+                printopt = (printopt & ~LLLYP_WD_MASK) | LLLYP_WD_IMPL_TAG;
             }
             break;
         case 'h':
@@ -717,11 +717,11 @@ cmd_data(const char *arg)
             goto cleanup;
         case 'f':
             if (!strcmp(optarg, "xml")) {
-                outformat = LYD_XML;
+                outformat = LLLYD_XML;
             } else if (!strcmp(optarg, "json")) {
-                outformat = LYD_JSON;
-            } else if (!strcmp(optarg, "lyb")) {
-                outformat = LYD_LYB;
+                outformat = LLLYD_JSON;
+            } else if (!strcmp(optarg, "lllyb")) {
+                outformat = LLLYD_LYB;
             } else {
                 fprintf(stderr, "Unknown output format \"%s\".\n", optarg);
                 goto cleanup;
@@ -729,11 +729,11 @@ cmd_data(const char *arg)
             break;
         case 'F':
             if (!strcmp(optarg, "xml")) {
-                informat = LYD_XML;
+                informat = LLLYD_XML;
             } else if (!strcmp(optarg, "json")) {
-                informat = LYD_JSON;
-            } else if (!strcmp(optarg, "lyb")) {
-                informat = LYD_LYB;
+                informat = LLLYD_JSON;
+            } else if (!strcmp(optarg, "lllyb")) {
+                informat = LLLYD_LYB;
             } else {
                 fprintf(stderr, "Unknown input format \"%s\".\n", optarg);
                 goto cleanup;
@@ -747,16 +747,16 @@ cmd_data(const char *arg)
             out_path = optarg;
             break;
         case 'r':
-            if (val_tree || (options & LYD_OPT_NOEXTDEPS)) {
+            if (val_tree || (options & LLLYD_OPT_NOEXTDEPS)) {
                 fprintf(stderr, "The running datastore (-r) cannot be set multiple times.\n");
                 goto cleanup;
             }
             if (optarg[0] == '!') {
                 /* ignore extenral dependencies to the running datastore */
-                options |= LYD_OPT_NOEXTDEPS;
+                options |= LLLYD_OPT_NOEXTDEPS;
             } else {
                 /* external file with the running datastore */
-                val_tree = lyd_parse_path(ctx, optarg, LYD_XML, LYD_OPT_DATA_NO_YANGLIB);
+                val_tree = lllyd_parse_path(ctx, optarg, LLLYD_XML, LLLYD_OPT_DATA_NO_YANGLIB);
                 if (!val_tree) {
                     fprintf(stderr, "Failed to parse the additional data tree for validation.\n");
                     goto cleanup;
@@ -764,30 +764,30 @@ cmd_data(const char *arg)
             }
             break;
         case 's':
-            options |= LYD_OPT_STRICT;
-            options |= LYD_OPT_OBSOLETE;
+            options |= LLLYD_OPT_STRICT;
+            options |= LLLYD_OPT_OBSOLETE;
             break;
         case 't':
             if (!strcmp(optarg, "auto")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_TYPEMASK;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_TYPEMASK;
             } else if (!strcmp(optarg, "data")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_DATA;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_DATA;
             } else if (!strcmp(optarg, "config")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_CONFIG;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_CONFIG;
             } else if (!strcmp(optarg, "get")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_GET;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_GET;
             } else if (!strcmp(optarg, "getconfig")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_GETCONFIG;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_GETCONFIG;
             } else if (!strcmp(optarg, "edit")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_EDIT;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_EDIT;
             } else if (!strcmp(optarg, "rpc")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPC;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPC;
             } else if (!strcmp(optarg, "rpcreply")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPCREPLY;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPCREPLY;
             } else if (!strcmp(optarg, "notif")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_NOTIF;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_NOTIF;
             } else if (!strcmp(optarg, "yangdata")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_DATA_TEMPLATE;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_DATA_TEMPLATE;
             } else {
                 fprintf(stderr, "Invalid parser option \"%s\".\n", optarg);
                 cmd_data_help();
@@ -818,11 +818,11 @@ cmd_data(const char *arg)
         }
     }
 
-    if (outformat != LYD_UNKNOWN) {
-        if (options & LYD_OPT_RPCREPLY) {
-            lyd_print_file(output, data->child, outformat, LYP_WITHSIBLINGS | LYP_FORMAT | printopt);
+    if (outformat != LLLYD_UNKNOWN) {
+        if (options & LLLYD_OPT_RPCREPLY) {
+            lllyd_print_file(output, data->child, outformat, LLLYP_WITHSIBLINGS | LLLYP_FORMAT | printopt);
         } else {
-            lyd_print_file(output, data, outformat, LYP_WITHSIBLINGS | LYP_FORMAT | printopt);
+            lllyd_print_file(output, data, outformat, LLLYP_WITHSIBLINGS | LLLYP_FORMAT | printopt);
         }
     }
 
@@ -836,8 +836,8 @@ cleanup:
         fclose(output);
     }
 
-    lyd_free_withsiblings(val_tree);
-    lyd_free_withsiblings(data);
+    lllyd_free_withsiblings(val_tree);
+    lllyd_free_withsiblings(data);
 
     return ret;
 }
@@ -849,10 +849,10 @@ cmd_xpath(const char *arg)
     char **argv = NULL, *ptr, *expr = NULL;
     unsigned int i, j;
     int options = 0;
-    LYD_FORMAT informat = LYD_UNKNOWN;
-    struct lyd_node *data = NULL, *node, *val_tree = NULL;
-    struct lyd_node_leaf_list *key;
-    struct ly_set *set;
+    LLLYD_FORMAT informat = LLLYD_UNKNOWN;
+    struct lllyd_node *data = NULL, *node, *val_tree = NULL;
+    struct lllyd_node_leaf_list *key;
+    struct llly_set *set;
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"expr", required_argument, 0, 'e'},
@@ -915,23 +915,23 @@ cmd_xpath(const char *arg)
             break;
         case 't':
             if (!strcmp(optarg, "auto")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_TYPEMASK;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_TYPEMASK;
             } else if (!strcmp(optarg, "config")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_CONFIG;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_CONFIG;
             } else if (!strcmp(optarg, "get")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_GET;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_GET;
             } else if (!strcmp(optarg, "getconfig")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_GETCONFIG;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_GETCONFIG;
             } else if (!strcmp(optarg, "edit")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_EDIT;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_EDIT;
             } else if (!strcmp(optarg, "rpc")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPC;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPC;
             } else if (!strcmp(optarg, "rpcreply")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_RPCREPLY;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_RPCREPLY;
             } else if (!strcmp(optarg, "notif")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_NOTIF;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_NOTIF;
             } else if (!strcmp(optarg, "yangdata")) {
-                options = (options & ~LYD_OPT_TYPEMASK) | LYD_OPT_DATA_TEMPLATE;
+                options = (options & ~LLLYD_OPT_TYPEMASK) | LLLYD_OPT_DATA_TEMPLATE;
             } else {
                 fprintf(stderr, "Invalid parser option \"%s\".\n", optarg);
                 cmd_data_help();
@@ -939,7 +939,7 @@ cmd_xpath(const char *arg)
             }
             break;
         case 'x':
-            val_tree = lyd_parse_path(ctx, optarg, LYD_XML, LYD_OPT_CONFIG);
+            val_tree = lllyd_parse_path(ctx, optarg, LLLYD_XML, LLLYD_OPT_CONFIG);
             if (!val_tree) {
                 fprintf(stderr, "Failed to parse the additional data tree for validation.\n");
                 goto cleanup;
@@ -965,7 +965,7 @@ cmd_xpath(const char *arg)
         goto cleanup;
     }
 
-    if (!(set = lyd_find_path(data, expr))) {
+    if (!(set = lllyd_find_path(data, expr))) {
         goto cleanup;
     }
 
@@ -977,22 +977,22 @@ cmd_xpath(const char *arg)
         for (i = 0; i < set->number; ++i) {
             node = set->set.d[i];
             switch (node->schema->nodetype) {
-            case LYS_CONTAINER:
+            case LLLYS_CONTAINER:
                 printf("\tContainer ");
                 break;
-            case LYS_LEAF:
+            case LLLYS_LEAF:
                 printf("\tLeaf ");
                 break;
-            case LYS_LEAFLIST:
+            case LLLYS_LEAFLIST:
                 printf("\tLeaflist ");
                 break;
-            case LYS_LIST:
+            case LLLYS_LIST:
                 printf("\tList ");
                 break;
-            case LYS_ANYXML:
+            case LLLYS_ANYXML:
                 printf("\tAnyxml ");
                 break;
-            case LYS_ANYDATA:
+            case LLLYS_ANYDATA:
                 printf("\tAnydata ");
                 break;
             default:
@@ -1000,17 +1000,17 @@ cmd_xpath(const char *arg)
                 break;
             }
             printf("\"%s\"", node->schema->name);
-            if (node->schema->nodetype & (LYS_LEAF | LYS_LEAFLIST)) {
-                printf(" (val: %s)", ((struct lyd_node_leaf_list *)node)->value_str);
-            } else if (node->schema->nodetype == LYS_LIST) {
-                key = (struct lyd_node_leaf_list *)node->child;
+            if (node->schema->nodetype & (LLLYS_LEAF | LLLYS_LEAFLIST)) {
+                printf(" (val: %s)", ((struct lllyd_node_leaf_list *)node)->value_str);
+            } else if (node->schema->nodetype == LLLYS_LIST) {
+                key = (struct lllyd_node_leaf_list *)node->child;
                 printf(" (");
-                for (j = 0; j < ((struct lys_node_list *)node->schema)->keys_size; ++j) {
+                for (j = 0; j < ((struct lllys_node_list *)node->schema)->keys_size; ++j) {
                     if (j) {
                         printf(" ");
                     }
                     printf("\"%s\": %s", key->schema->name, key->value_str);
-                    key = (struct lyd_node_leaf_list *)key->next;
+                    key = (struct lllyd_node_leaf_list *)key->next;
                 }
                 printf(")");
             }
@@ -1019,41 +1019,41 @@ cmd_xpath(const char *arg)
     }
     printf("\n");
 
-    ly_set_free(set);
+    llly_set_free(set);
     ret = 0;
 
 cleanup:
     free(*argv);
     free(argv);
 
-    lyd_free_withsiblings(data);
+    lllyd_free_withsiblings(data);
 
     return ret;
 }
 
 int
-print_list(FILE *out, struct ly_ctx *ctx, LYD_FORMAT outformat)
+print_list(FILE *out, struct llly_ctx *ctx, LLLYD_FORMAT outformat)
 {
-    struct lyd_node *ylib;
+    struct lllyd_node *ylib;
     uint32_t idx = 0, has_modules = 0;
     uint8_t u;
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
-    if (outformat != LYD_UNKNOWN) {
-        ylib = ly_ctx_info(ctx);
+    if (outformat != LLLYD_UNKNOWN) {
+        ylib = llly_ctx_info(ctx);
         if (!ylib) {
             fprintf(stderr, "Getting context info (ietf-yang-library data) failed.\n");
             return 1;
         }
 
-        lyd_print_file(out, ylib, outformat, LYP_WITHSIBLINGS | LYP_FORMAT);
-        lyd_free_withsiblings(ylib);
+        lllyd_print_file(out, ylib, outformat, LLLYP_WITHSIBLINGS | LLLYP_FORMAT);
+        lllyd_free_withsiblings(ylib);
         return 0;
     }
 
     /* iterate schemas in context and provide just the basic info */
     fprintf(out, "List of the loaded models:\n");
-    while ((mod = ly_ctx_get_module_iter(ctx, &idx))) {
+    while ((mod = llly_ctx_get_module_iter(ctx, &idx))) {
         has_modules++;
 
         /* conformance print */
@@ -1097,7 +1097,7 @@ cmd_list(const char *arg)
 {
     char **argv = NULL, *ptr;
     int c, argc, option_index;
-    LYD_FORMAT outformat = LYD_UNKNOWN;
+    LLLYD_FORMAT outformat = LLLYD_UNKNOWN;
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"format", required_argument, 0, 'f'},
@@ -1136,9 +1136,9 @@ cmd_list(const char *arg)
             return 0;
         case 'f':
             if (!strcmp(optarg, "xml")) {
-                outformat = LYD_XML;
+                outformat = LLLYD_XML;
             } else if (!strcmp(optarg, "json")) {
-                outformat = LYD_JSON;
+                outformat = LLLYD_JSON;
             } else {
                 fprintf(stderr, "Unknown output format \"%s\".\n", optarg);
                 goto error;
@@ -1170,7 +1170,7 @@ cmd_feature(const char *arg)
     char **argv = NULL, *ptr, *model_name, *revision, *feat_names = NULL;
     const char **names;
     uint8_t *states;
-    const struct lys_module *module;
+    const struct lllys_module *module;
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"enable", required_argument, 0, 'e'},
@@ -1243,10 +1243,10 @@ cmd_feature(const char *arg)
         ++revision;
     }
 
-    module = ly_ctx_get_module(ctx, model_name, revision, 0);
+    module = llly_ctx_get_module(ctx, model_name, revision, 0);
     if (!module) {
         /* not a module, try to find it as a submodule */
-        module = (const struct lys_module *)ly_ctx_get_submodule(ctx, NULL, NULL, model_name, revision);
+        module = (const struct lllys_module *)llly_ctx_get_submodule(ctx, NULL, NULL, model_name, revision);
     }
 
     if (module == NULL) {
@@ -1261,7 +1261,7 @@ cmd_feature(const char *arg)
     if (!task) {
         printf("%s features:\n", module->name);
 
-        names = lys_features_list(module, &states);
+        names = lllys_features_list(module, &states);
 
         /* get the max len */
         max_len = 0;
@@ -1281,8 +1281,8 @@ cmd_feature(const char *arg)
     } else {
         feat_names = strtok(feat_names, ",");
         while (feat_names) {
-            if (((task == 1) && lys_features_enable(module, feat_names))
-                    || ((task == 2) && lys_features_disable(module, feat_names))) {
+            if (((task == 1) && lllys_features_enable(module, feat_names))
+                    || ((task == 2) && lllys_features_disable(module, feat_names))) {
                 fprintf(stderr, "Feature \"%s\" not found.\n", feat_names);
                 ret = 1;
             }
@@ -1307,7 +1307,7 @@ cmd_searchpath(const char *arg)
 
     for (path = strchr(arg, ' '); path && (path[0] == ' '); ++path);
     if (!path || (path[0] == '\0')) {
-        searchpaths = ly_ctx_get_searchdirs(ctx);
+        searchpaths = llly_ctx_get_searchdirs(ctx);
         if (searchpaths) {
             for (index = 0; searchpaths[index]; index++) {
                 fprintf(stdout, "%s\n", searchpaths[index]);
@@ -1321,7 +1321,7 @@ cmd_searchpath(const char *arg)
         cmd_searchpath_help();
         return 0;
     } else if (!strncmp(path, "--clear", 7) && (path[7] == '\0' || path[7] == ' ')) {
-        ly_ctx_unset_searchdirs(ctx, -1);
+        llly_ctx_unset_searchdirs(ctx, -1);
         return 0;
     }
 
@@ -1334,7 +1334,7 @@ cmd_searchpath(const char *arg)
         return 1;
     }
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
 
     return 0;
 }
@@ -1345,30 +1345,30 @@ cmd_clear(const char *arg)
     int i, options = 0;
     char *ylpath;
     const char * const *searchpaths;
-    struct ly_ctx *ctx_new;
-    LYD_FORMAT format;
+    struct llly_ctx *ctx_new;
+    LLLYD_FORMAT format;
 
     /* get optional yang library file name */
     for (i = 5; arg[i] && isspace(arg[i]); i++);
     if (arg[i]) {
         if (arg[i] == '-' && arg[i + 1] == 'e') {
-            options = LY_CTX_NOYANGLIBRARY;
+            options = LLLY_CTX_NOYANGLIBRARY;
             goto create_empty;
         } else {
             ylpath = strdup(&arg[i]);
             format = detect_data_format(ylpath);
-            if (format == LYD_UNKNOWN) {
+            if (format == LLLYD_UNKNOWN) {
                 free(ylpath);
                 fprintf(stderr, "Unable to resolve format of the yang library file, please add \".xml\" or \".json\" suffix.\n");
                 goto create_empty;
             }
-            searchpaths = ly_ctx_get_searchdirs(ctx);
-            ctx_new = ly_ctx_new_ylpath(searchpaths ? searchpaths[0] : NULL, ylpath, format, 0);
+            searchpaths = llly_ctx_get_searchdirs(ctx);
+            ctx_new = llly_ctx_new_ylpath(searchpaths ? searchpaths[0] : NULL, ylpath, format, 0);
             free(ylpath);
         }
     } else {
 create_empty:
-        ctx_new = ly_ctx_new(NULL, options);
+        ctx_new = llly_ctx_new(NULL, options);
     }
 
     if (!ctx_new) {
@@ -1377,7 +1377,7 @@ create_empty:
     }
 
     /* final switch */
-    ly_ctx_destroy(ctx, NULL);
+    llly_ctx_destroy(ctx, NULL);
     ctx = ctx_new;
 
     return 0;
@@ -1394,24 +1394,24 @@ cmd_verb(const char *arg)
 
     verb = arg + 5;
     if (!strcmp(verb, "error") || !strcmp(verb, "0")) {
-        ly_verb(LY_LLERR);
+        llly_verb(LLLY_LLERR);
 #ifndef NDEBUG
-        ly_verb_dbg(0);
+        llly_verb_dbg(0);
 #endif
     } else if (!strcmp(verb, "warning") || !strcmp(verb, "1")) {
-        ly_verb(LY_LLWRN);
+        llly_verb(LLLY_LLWRN);
 #ifndef NDEBUG
-        ly_verb_dbg(0);
+        llly_verb_dbg(0);
 #endif
     } else if (!strcmp(verb, "verbose")  || !strcmp(verb, "2")) {
-        ly_verb(LY_LLVRB);
+        llly_verb(LLLY_LLVRB);
 #ifndef NDEBUG
-        ly_verb_dbg(0);
+        llly_verb_dbg(0);
 #endif
     } else if (!strcmp(verb, "debug")  || !strcmp(verb, "3")) {
-        ly_verb(LY_LLDBG);
+        llly_verb(LLLY_LLDBG);
 #ifndef NDEBUG
-        ly_verb_dbg(LY_LDGDICT | LY_LDGYANG | LY_LDGYIN | LY_LDGXPATH | LY_LDGDIFF);
+        llly_verb_dbg(LLLY_LDGDICT | LLLY_LDGYANG | LLLY_LDGYIN | LLLY_LDGXPATH | LLLY_LDGDIFF);
 #endif
     } else {
         fprintf(stderr, "Unknown verbosity \"%s\"\n", verb);
@@ -1443,21 +1443,21 @@ cmd_debug(const char *arg)
         for (end = beg; (end[0] && !isspace(end[0])); ++end);
 
         if (!strncmp(beg, "dict", end - beg)) {
-            grps |= LY_LDGDICT;
+            grps |= LLLY_LDGDICT;
         } else if (!strncmp(beg, "yang", end - beg)) {
-            grps |= LY_LDGYANG;
+            grps |= LLLY_LDGYANG;
         } else if (!strncmp(beg, "yin", end - beg)) {
-            grps |= LY_LDGYIN;
+            grps |= LLLY_LDGYIN;
         } else if (!strncmp(beg, "xpath", end - beg)) {
-            grps |= LY_LDGXPATH;
+            grps |= LLLY_LDGXPATH;
         } else if (!strncmp(beg, "diff", end - beg)) {
-            grps |= LY_LDGDIFF;
+            grps |= LLLY_LDGDIFF;
         } else {
             fprintf(stderr, "Unknown debug group \"%.*s\"\n", (int)(end - beg), beg);
             return 1;
         }
     }
-    ly_verb_dbg(grps);
+    llly_verb_dbg(grps);
 
     return 0;
 }

@@ -22,11 +22,11 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx1;
-    struct ly_ctx *ctx2;
-    struct lyd_node *dt1;
-    struct lyd_node *dt2;
-    struct lyd_node *dt3;
+    struct llly_ctx *ctx1;
+    struct llly_ctx *ctx2;
+    struct lllyd_node *dt1;
+    struct lllyd_node *dt2;
+    struct lllyd_node *dt3;
 };
 static int
 setup_f(void **state)
@@ -40,8 +40,8 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx1 = ly_ctx_new(NULL, 0);
-    st->ctx2 = ly_ctx_new(NULL, 0);
+    st->ctx1 = llly_ctx_new(NULL, 0);
+    st->ctx2 = llly_ctx_new(NULL, 0);
     if (!st->ctx1 || !st->ctx2) {
         fprintf(stderr, "Failed to create context.\n");
         return -1;
@@ -55,11 +55,11 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free(st->dt1);
-    lyd_free(st->dt2);
-    lyd_free(st->dt3);
-    ly_ctx_destroy(st->ctx1, NULL);
-    ly_ctx_destroy(st->ctx2, NULL);
+    lllyd_free(st->dt1);
+    lllyd_free(st->dt2);
+    lllyd_free(st->dt3);
+    llly_ctx_destroy(st->ctx1, NULL);
+    llly_ctx_destroy(st->ctx2, NULL);
 
     free(st);
     (*state) = NULL;
@@ -71,7 +71,7 @@ static void
 test_dup_to_ctx(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *sch = "module x {"
                     "  namespace urn:x;"
                     "  prefix x;"
@@ -80,29 +80,29 @@ test_dup_to_ctx(void **state)
 
     /* case 1 - schema is only in the first context, duplicating data into the second context is supposed to
      *          fail because of missing schema */
-    mod = lys_parse_mem(st->ctx1, sch, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->dt1 = lyd_parse_mem(st->ctx1, data, LYD_XML, LYD_OPT_CONFIG);
+    st->dt1 = lllyd_parse_mem(st->ctx1, data, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt1, NULL);
 
-    st->dt2 = lyd_dup_to_ctx(st->dt1, 1, st->ctx2);
+    st->dt2 = lllyd_dup_to_ctx(st->dt1, 1, st->ctx2);
     assert_ptr_equal(st->dt2, NULL);
-    assert_int_equal(ly_errno, LY_EINVAL);
-    assert_string_equal(ly_errmsg(st->ctx2),
+    assert_int_equal(llly_errno, LLLY_EINVAL);
+    assert_string_equal(llly_errmsg(st->ctx2),
                         "Target context does not contain schema node for the data node being duplicated (x:x).");
 
     /* case 2 - with the schema present in both contexts, duplication should succeed */
-    mod = lys_parse_mem(st->ctx2, sch, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx2, sch, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->dt2 = lyd_dup_to_ctx(st->dt1, 1, st->ctx2);
+    st->dt2 = lllyd_dup_to_ctx(st->dt1, 1, st->ctx2);
     assert_ptr_not_equal(st->dt2, NULL);
     /* the values are the same, but they are stored in different contexts */
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt1)->value_str,
-                        ((struct lyd_node_leaf_list *)st->dt2)->value_str);
-    assert_ptr_not_equal(((struct lyd_node_leaf_list *)st->dt1)->value_str,
-                        ((struct lyd_node_leaf_list *)st->dt2)->value_str);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt1)->value_str,
+                        ((struct lllyd_node_leaf_list *)st->dt2)->value_str);
+    assert_ptr_not_equal(((struct lllyd_node_leaf_list *)st->dt1)->value_str,
+                        ((struct lllyd_node_leaf_list *)st->dt2)->value_str);
     /* and the schema nodes are the same, but comes from a different contexts */
     assert_int_equal(st->dt1->schema->nodetype, st->dt2->schema->nodetype);
     assert_string_equal(st->dt1->schema->name, st->dt2->schema->name);
@@ -115,7 +115,7 @@ static void
 test_dup_to_ctx_bits(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *sch = "module x {"
                     "  namespace urn:x;"
                     "  prefix x;"
@@ -126,29 +126,29 @@ test_dup_to_ctx_bits(void **state)
     const char *data = "<x xmlns=\"urn:x\">enable</x>";
     char *printed = NULL;
 
-    mod = lys_parse_mem(st->ctx1, sch, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx2, sch, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx2, sch, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->dt1 = lyd_parse_mem(st->ctx1, data, LYD_XML, LYD_OPT_CONFIG);
+    st->dt1 = lllyd_parse_mem(st->ctx1, data, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt1, NULL);
 
-    st->dt2 = lyd_dup_to_ctx(st->dt1, 1, st->ctx2);
+    st->dt2 = lllyd_dup_to_ctx(st->dt1, 1, st->ctx2);
     assert_ptr_not_equal(st->dt2, NULL);
     /* the values are the same, but they are stored in different contexts */
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt1)->value_str,
-                        ((struct lyd_node_leaf_list *)st->dt2)->value_str);
-    assert_ptr_not_equal(((struct lyd_node_leaf_list *)st->dt1)->value_str,
-                         ((struct lyd_node_leaf_list *)st->dt2)->value_str);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt1)->value_str,
+                        ((struct lllyd_node_leaf_list *)st->dt2)->value_str);
+    assert_ptr_not_equal(((struct lllyd_node_leaf_list *)st->dt1)->value_str,
+                         ((struct lllyd_node_leaf_list *)st->dt2)->value_str);
     /* check the value data */
-    assert_ptr_not_equal(((struct lyd_node_leaf_list *)st->dt1)->value.bit,
-                         ((struct lyd_node_leaf_list *)st->dt2)->value.bit);
-    assert_ptr_not_equal(((struct lyd_node_leaf_list *)st->dt1)->value.bit[1],
-                         ((struct lyd_node_leaf_list *)st->dt2)->value.bit[1]);
+    assert_ptr_not_equal(((struct lllyd_node_leaf_list *)st->dt1)->value.bit,
+                         ((struct lllyd_node_leaf_list *)st->dt2)->value.bit);
+    assert_ptr_not_equal(((struct lllyd_node_leaf_list *)st->dt1)->value.bit[1],
+                         ((struct lllyd_node_leaf_list *)st->dt2)->value.bit[1]);
     /* first bit is not set, so the value pointer is NULL in both cases */
-    assert_ptr_equal(((struct lyd_node_leaf_list *)st->dt1)->value.bit[0], NULL);
-    assert_ptr_equal(((struct lyd_node_leaf_list *)st->dt2)->value.bit[0], NULL);
+    assert_ptr_equal(((struct lllyd_node_leaf_list *)st->dt1)->value.bit[0], NULL);
+    assert_ptr_equal(((struct lllyd_node_leaf_list *)st->dt2)->value.bit[0], NULL);
     /* and the schema nodes are the same, but comes from a different contexts */
     assert_int_equal(st->dt1->schema->nodetype, st->dt2->schema->nodetype);
     assert_string_equal(st->dt1->schema->name, st->dt2->schema->name);
@@ -158,12 +158,12 @@ test_dup_to_ctx_bits(void **state)
 
     /* valgrind test - remove the first context and the access the duplicated data
      *                 supposed to be in the second context */
-    lyd_free(st->dt1);
-    ly_ctx_destroy(st->ctx1, NULL);
+    lllyd_free(st->dt1);
+    llly_ctx_destroy(st->ctx1, NULL);
     st->dt1 = NULL;
     st->ctx1 = NULL;
 
-    lyd_print_mem(&printed, st->dt2, LYD_XML, 0);
+    lllyd_print_mem(&printed, st->dt2, LLLYD_XML, 0);
     assert_string_equal(printed, data);
 
     free(printed);
@@ -173,7 +173,7 @@ static void
 test_dup_to_ctx_leafrefs(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *sch = "module x {"
                     "  namespace urn:x;"
                     "  prefix x;"
@@ -183,30 +183,30 @@ test_dup_to_ctx_leafrefs(void **state)
     const char *data = "<x xmlns=\"urn:x\"><b>hello</b><a>hello</a></x>";
     char *printed = NULL;
 
-    mod = lys_parse_mem(st->ctx1, sch, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx2, sch, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx2, sch, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->dt1 = lyd_parse_mem(st->ctx1, data, LYD_XML, LYD_OPT_CONFIG);
+    st->dt1 = lllyd_parse_mem(st->ctx1, data, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt1, NULL);
 
-    st->dt2 = lyd_dup_to_ctx(st->dt1, 1, st->ctx2);
+    st->dt2 = lllyd_dup_to_ctx(st->dt1, 1, st->ctx2);
     assert_ptr_not_equal(st->dt2, NULL);
 
     /* the result is not valid - the leafref is not resolved */
-    assert_int_not_equal(((struct lyd_node_leaf_list *)st->dt2->child)->value_type, LY_TYPE_LEAFREF);
-    assert_int_equal(lyd_validate(&st->dt2, LYD_OPT_CONFIG, st->ctx2), 0);
-    assert_ptr_equal(((struct lyd_node_leaf_list *)st->dt2->child)->value_type, LY_TYPE_LEAFREF);
+    assert_int_not_equal(((struct lllyd_node_leaf_list *)st->dt2->child)->value_type, LLLY_TYPE_LEAFREF);
+    assert_int_equal(lllyd_validate(&st->dt2, LLLYD_OPT_CONFIG, st->ctx2), 0);
+    assert_ptr_equal(((struct lllyd_node_leaf_list *)st->dt2->child)->value_type, LLLY_TYPE_LEAFREF);
 
     /* the values are the same, but they are stored in different contexts */
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt1->child)->value_str,
-                        ((struct lyd_node_leaf_list *)st->dt2->child)->value_str);
-    assert_ptr_not_equal(((struct lyd_node_leaf_list *)st->dt1->child)->value_str,
-                         ((struct lyd_node_leaf_list *)st->dt2->child)->value_str);
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt1->child)->value_str,
+                        ((struct lllyd_node_leaf_list *)st->dt2->child)->value_str);
+    assert_ptr_not_equal(((struct lllyd_node_leaf_list *)st->dt1->child)->value_str,
+                         ((struct lllyd_node_leaf_list *)st->dt2->child)->value_str);
     /* check the value data */
-    assert_ptr_not_equal(((struct lyd_node_leaf_list *)st->dt1->child)->value.leafref,
-                         ((struct lyd_node_leaf_list *)st->dt2->child)->value.leafref);
+    assert_ptr_not_equal(((struct lllyd_node_leaf_list *)st->dt1->child)->value.leafref,
+                         ((struct lllyd_node_leaf_list *)st->dt2->child)->value.leafref);
     /* and the schema nodes are the same, but comes from a different contexts */
     assert_int_equal(st->dt1->child->schema->nodetype, st->dt2->child->schema->nodetype);
     assert_string_equal(st->dt1->child->schema->name, st->dt2->child->schema->name);
@@ -216,12 +216,12 @@ test_dup_to_ctx_leafrefs(void **state)
 
     /* valgrind test - remove the first context and the access the duplicated data
      *                 supposed to be in the second context */
-    lyd_free(st->dt1);
-    ly_ctx_destroy(st->ctx1, NULL);
+    lllyd_free(st->dt1);
+    llly_ctx_destroy(st->ctx1, NULL);
     st->dt1 = NULL;
     st->ctx1 = NULL;
 
-    lyd_print_mem(&printed, st->dt2, LYD_XML, 0);
+    lllyd_print_mem(&printed, st->dt2, LLLYD_XML, 0);
     assert_string_equal(printed, data);
 
     free(printed);

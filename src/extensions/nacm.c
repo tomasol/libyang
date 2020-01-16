@@ -25,7 +25,7 @@
 /**
  * @brief Storage for ID used to check plugin API version compatibility.
  */
-LYEXT_VERSION_CHECK
+LLLYEXT_VERSION_CHECK
 
 /**
  * @brief Callback to check that the NACM extension can be instantiated inside the provided node
@@ -33,21 +33,21 @@ LYEXT_VERSION_CHECK
  * @param[in] parent The parent of the instantiated extension.
  * @param[in] parent_type The type of the structure provided as \p parent.
  * @param[in] substmt_type libyang does not store all the extension instances in the structures where they are
- *                         instantiated in the module. In some cases (see #LYEXT_SUBSTMT) they are stored in parent
+ *                         instantiated in the module. In some cases (see #LLLYEXT_SUBSTMT) they are stored in parent
  *                         structure and marked with flag to know in which substatement of the parent the extension
  *                         was originally instantiated.
  * @return 0 - ok
  *         1 - error
  */
-int nacm_position(const void *parent, LYEXT_PAR parent_type, LYEXT_SUBSTMT UNUSED(substmt_type))
+int nacm_position(const void *parent, LLLYEXT_PAR parent_type, LLLYEXT_SUBSTMT UNUSED(substmt_type))
 {
-    if (parent_type != LYEXT_PAR_NODE) {
+    if (parent_type != LLLYEXT_PAR_NODE) {
         return 1;
     }
 
-    if (((struct lys_node*)parent)->nodetype &
-            (LYS_CONTAINER | LYS_LEAF | LYS_LEAFLIST | LYS_LIST | LYS_CHOICE | LYS_ANYDATA | LYS_AUGMENT | LYS_CASE |
-             LYS_USES | LYS_RPC | LYS_ACTION | LYS_NOTIF )) {
+    if (((struct lllys_node*)parent)->nodetype &
+            (LLLYS_CONTAINER | LLLYS_LEAF | LLLYS_LEAFLIST | LLLYS_LIST | LLLYS_CHOICE | LLLYS_ANYDATA | LLLYS_AUGMENT | LLLYS_CASE |
+             LLLYS_USES | LLLYS_RPC | LLLYS_ACTION | LLLYS_NOTIF )) {
         return 0;
     } else {
         return 1;
@@ -64,13 +64,13 @@ int nacm_position(const void *parent, LYEXT_PAR parent_type, LYEXT_SUBSTMT UNUSE
  *         1 - no (do not process the node's children)
  *         2 - no, but continue with children
  */
-int nacm_inherit(struct lys_ext_instance *UNUSED(ext), struct lys_node *node)
+int nacm_inherit(struct lllys_ext_instance *UNUSED(ext), struct lllys_node *node)
 {
     /* libyang already checks if there is explicit instance of the extension already present,
      * in such a case the extension is never inherited and we don't need to check it here */
 
     /* inherit into all the schema nodes that can be instantiated in data trees */
-    if (node->nodetype & (LYS_CONTAINER | LYS_LEAF | LYS_LEAFLIST | LYS_LIST | LYS_ANYDATA | LYS_ACTION | LYS_NOTIF )) {
+    if (node->nodetype & (LLLYS_CONTAINER | LLLYS_LEAF | LLLYS_LEAFLIST | LLLYS_LIST | LLLYS_ANYDATA | LLLYS_ACTION | LLLYS_NOTIF )) {
         return 0;
     } else {
         return 2;
@@ -88,20 +88,20 @@ int nacm_inherit(struct lys_ext_instance *UNUSED(ext), struct lys_node *node)
  *         1 - error
  */
 int
-nacm_cardinality(struct lys_ext_instance *ext)
+nacm_cardinality(struct lllys_ext_instance *ext)
 {
-    struct lys_ext_instance **extlist;
+    struct lllys_ext_instance **extlist;
     uint8_t extsize, i, c;
     char *path;
 
-    if (ext->flags & LYEXT_OPT_PLUGIN1) {
+    if (ext->flags & LLLYEXT_OPT_PLUGIN1) {
         /* already checked */
-        ext->flags &= ~LYEXT_OPT_PLUGIN1;
+        ext->flags &= ~LLLYEXT_OPT_PLUGIN1;
         return 0;
     }
 
-    extlist = ((struct lys_node *)ext->parent)->ext;
-    extsize = ((struct lys_node *)ext->parent)->ext_size;
+    extlist = ((struct lllys_node *)ext->parent)->ext;
+    extsize = ((struct lllys_node *)ext->parent)->ext_size;
 
     for (i = c = 0; i < extsize; i++) {
         if (extlist[i]->def == ext->def) {
@@ -110,15 +110,15 @@ nacm_cardinality(struct lys_ext_instance *ext)
              * in schema nodes */
             if (extlist[i] != ext) {
                 /* do not mark the instance being checked */
-                extlist[i]->flags |= LYEXT_OPT_PLUGIN1;
+                extlist[i]->flags |= LLLYEXT_OPT_PLUGIN1;
             }
             c++;
         }
     }
 
     if (c > 1) {
-        path = lys_path((struct lys_node *)(ext->parent), LYS_PATH_FIRST_PREFIX);
-        LYEXT_LOG(ext->module->ctx, LY_LLERR, "NACM", "Extension nacm:%s can appear only once, but %d instances found in %s.",
+        path = lllys_path((struct lllys_node *)(ext->parent), LLLYS_PATH_FIRST_PREFIX);
+        LLLYEXT_LOG(ext->module->ctx, LLLY_LLERR, "NACM", "Extension nacm:%s can appear only once, but %d instances found in %s.",
                   ext->def->name, c, path);
         free(path);
         return 1;
@@ -130,9 +130,9 @@ nacm_cardinality(struct lys_ext_instance *ext)
 /**
  * @brief Plugin for the NACM's default-deny-write extension
  */
-struct lyext_plugin nacm_deny_write = {
-    .type = LYEXT_FLAG,
-    .flags = LYEXT_OPT_INHERIT,
+struct lllyext_plugin nacm_deny_write = {
+    .type = LLLYEXT_FLAG,
+    .flags = LLLYEXT_OPT_INHERIT,
     .check_position = &nacm_position,
     .check_result = &nacm_cardinality,
     .check_inherit = &nacm_inherit
@@ -141,9 +141,9 @@ struct lyext_plugin nacm_deny_write = {
 /**
  * @brief Plugin for the NACM's default-deny-all extension
  */
-struct lyext_plugin nacm_deny_all = {
-    .type = LYEXT_FLAG,
-    .flags = LYEXT_OPT_INHERIT,
+struct lllyext_plugin nacm_deny_all = {
+    .type = LLLYEXT_FLAG,
+    .flags = LLLYEXT_OPT_INHERIT,
     .check_position = &nacm_position,
     .check_result = &nacm_cardinality,
     .check_inherit = &nacm_inherit
@@ -154,7 +154,7 @@ struct lyext_plugin nacm_deny_all = {
  *
  * MANDATORY object for all libyang extension plugins, the name must match the <name>.so
  */
-struct lyext_plugin_list nacm[] = {
+struct lllyext_plugin_list nacm[] = {
     {"ietf-netconf-acm", "2012-02-22", "default-deny-write", &nacm_deny_write},
     {"ietf-netconf-acm", "2012-02-22", "default-deny-all", &nacm_deny_all},
     {NULL, NULL, NULL, NULL} /* terminating item */

@@ -35,9 +35,9 @@
 static int
 setup_ctx_yin(void **state)
 {
-    struct ly_ctx *ctx;
+    struct llly_ctx *ctx;
 
-    ctx = ly_ctx_new(SCHEMA_FOLDER_YIN, 0);
+    ctx = llly_ctx_new(SCHEMA_FOLDER_YIN, 0);
     assert_non_null(ctx);
 
     *state = ctx;
@@ -47,9 +47,9 @@ setup_ctx_yin(void **state)
 static int
 setup_ctx_yang(void **state)
 {
-    struct ly_ctx *ctx;
+    struct llly_ctx *ctx;
 
-    ctx = ly_ctx_new(SCHEMA_FOLDER_YANG, 0);
+    ctx = llly_ctx_new(SCHEMA_FOLDER_YANG, 0);
     assert_non_null(ctx);
 
     *state = ctx;
@@ -59,7 +59,7 @@ setup_ctx_yang(void **state)
 static int
 teardown_ctx(void **state)
 {
-    ly_ctx_destroy(*state, NULL);
+    llly_ctx_destroy(*state, NULL);
 
     return 0;
 }
@@ -67,8 +67,8 @@ teardown_ctx(void **state)
 static void
 test_fullset(void **state)
 {
-    struct ly_ctx *ctx = *state;
-    const struct lys_module *mod;
+    struct llly_ctx *ctx = *state;
+    const struct lllys_module *mod;
     char *buf = NULL;
 
     const char *tree_alldisabled = "module: features\n"
@@ -116,34 +116,34 @@ test_fullset(void **state)
 "     +--:(ch3)\n"
 "        +--rw ch3?   string\n";
 
-    mod = ly_ctx_load_module(ctx, "features", NULL);
+    mod = llly_ctx_load_module(ctx, "features", NULL);
     assert_non_null(mod);
 
-    lys_print_mem(&buf, mod, LYS_OUT_TREE, NULL, 0, 0);
+    lllys_print_mem(&buf, mod, LLLYS_OUT_TREE, NULL, 0, 0);
     assert_non_null(buf);
     assert_string_equal(buf, tree_alldisabled);
     free(buf); buf = NULL;
 
-    lys_features_enable(mod, "a");
-    lys_print_mem(&buf, mod, LYS_OUT_TREE, NULL, 0, 0);
+    lllys_features_enable(mod, "a");
+    lllys_print_mem(&buf, mod, LLLYS_OUT_TREE, NULL, 0, 0);
     assert_non_null(buf);
     assert_string_equal(buf, tree_a);
     free(buf); buf = NULL;
 
-    lys_features_enable(mod, "b");
-    lys_print_mem(&buf, mod, LYS_OUT_TREE, NULL, 0, 0);
+    lllys_features_enable(mod, "b");
+    lllys_print_mem(&buf, mod, LLLYS_OUT_TREE, NULL, 0, 0);
     assert_non_null(buf);
     assert_string_equal(buf, tree_ab);
     free(buf); buf = NULL;
 
-    lys_features_enable(mod, "aa");
-    lys_print_mem(&buf, mod, LYS_OUT_TREE, NULL, 0, 0);
+    lllys_features_enable(mod, "aa");
+    lllys_print_mem(&buf, mod, LLLYS_OUT_TREE, NULL, 0, 0);
     assert_non_null(buf);
     assert_string_equal(buf, tree_abaa);
     free(buf); buf = NULL;
 
-    lys_features_disable(mod, "a"); /* aa is also disabled by disabling a */
-    lys_print_mem(&buf, mod, LYS_OUT_TREE, NULL, 0, 0);
+    lllys_features_disable(mod, "a"); /* aa is also disabled by disabling a */
+    lllys_print_mem(&buf, mod, LLLYS_OUT_TREE, NULL, 0, 0);
     assert_non_null(buf);
     assert_string_equal(buf, tree_b);
     free(buf); buf = NULL;
@@ -152,7 +152,7 @@ test_fullset(void **state)
 static void
 test_circle1(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *yang = "module features {\n"
 "  yang-version 1.1;\n"
 "  namespace \"urn:features\";\n"
@@ -161,27 +161,27 @@ test_circle1(void **state)
 "  feature b { if-feature c; }\n"
 "  feature c { if-feature \"a or b\"; }}";
 
-    assert_null(lys_parse_mem(ctx, yang, LYS_IN_YANG));
-    assert_int_equal(ly_vecode(ctx), LYVE_CIRC_FEATURES);
+    assert_null(lllys_parse_mem(ctx, yang, LLLYS_IN_YANG));
+    assert_int_equal(llly_vecode(ctx), LLLYVE_CIRC_FEATURES);
 }
 
 static void
 test_circle2(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *yang = "module features {\n"
 "  namespace \"urn:features\";\n"
 "  prefix f;\n"
 "  feature a { if-feature \"a\"; }}";
 
-    assert_null(lys_parse_mem(ctx, yang, LYS_IN_YANG));
-    assert_int_equal(ly_vecode(ctx), LYVE_CIRC_FEATURES);
+    assert_null(lllys_parse_mem(ctx, yang, LLLYS_IN_YANG));
+    assert_int_equal(llly_vecode(ctx), LLLYVE_CIRC_FEATURES);
 }
 
 static void
 test_inval_expr1(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *yang = "module features {\n"
 "  yang-version 1.1;\n"
 "  namespace \"urn:features\";\n"
@@ -190,14 +190,14 @@ test_inval_expr1(void **state)
 "  feature b;\n"
 "  feature c { if-feature \"a xor b\"; }}";
 
-    assert_null(lys_parse_mem(ctx, yang, LYS_IN_YANG));
-    assert_int_equal(ly_vecode(ctx), LYVE_INARG);
+    assert_null(lllys_parse_mem(ctx, yang, LLLYS_IN_YANG));
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INARG);
 }
 
 static void
 test_inval_expr2(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *yang = "module features {\n"
 "  yang-version 1.1;\n"
 "  namespace \"urn:features\";\n"
@@ -206,14 +206,14 @@ test_inval_expr2(void **state)
 "  feature b;\n"
 "  feature c { if-feature \"\"; }}";
 
-    assert_null(lys_parse_mem(ctx, yang, LYS_IN_YANG));
-    assert_int_equal(ly_vecode(ctx), LYVE_INARG);
+    assert_null(lllys_parse_mem(ctx, yang, LLLYS_IN_YANG));
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INARG);
 }
 
 static void
 test_inval_expr3(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *yang = "module features {\n"
 "  yang-version 1.1;\n"
 "  namespace \"urn:features\";\n"
@@ -222,14 +222,14 @@ test_inval_expr3(void **state)
 "  feature b;\n"
 "  feature c { if-feature \"x\"; }}";
 
-    assert_null(lys_parse_mem(ctx, yang, LYS_IN_YANG));
-    assert_int_equal(ly_vecode(ctx), LYVE_INRESOLV);
+    assert_null(lllys_parse_mem(ctx, yang, LLLYS_IN_YANG));
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INRESOLV);
 }
 
 static void
 test_inval_expr4(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *yang = "module features {\n"
 "  yang-version 1.1;\n"
 "  namespace \"urn:features\";\n"
@@ -238,14 +238,14 @@ test_inval_expr4(void **state)
 "  feature b;\n"
 "  feature c { if-feature \"a b\"; }}";
 
-    assert_null(lys_parse_mem(ctx, yang, LYS_IN_YANG));
-    assert_int_equal(ly_vecode(ctx), LYVE_INARG);
+    assert_null(lllys_parse_mem(ctx, yang, LLLYS_IN_YANG));
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INARG);
 }
 
 static void
 test_inval_expr5(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *yang = "module features {\n"
 "  namespace \"urn:features\";\n"
 "  prefix f;\n"
@@ -253,8 +253,8 @@ test_inval_expr5(void **state)
 "  feature b;\n"
 "  feature c { if-feature \"a and b\"; }}";
 
-    assert_null(lys_parse_mem(ctx, yang, LYS_IN_YANG));
-    assert_int_equal(ly_vecode(ctx), LYVE_INARG);
+    assert_null(lllys_parse_mem(ctx, yang, LLLYS_IN_YANG));
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INARG);
 }
 
 int

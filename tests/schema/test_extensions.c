@@ -33,7 +33,7 @@
 #define SCHEMA_FOLDER_YANG TESTS_DIR"/schema/yang/files"
 
 struct state {
-    struct ly_ctx *ctx;
+    struct llly_ctx *ctx;
     int fd;
     char *str1;
     char *str2;
@@ -51,7 +51,7 @@ setup_ctx(void **state, const char *searchdir)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(searchdir, 0);
+    st->ctx = llly_ctx_new(searchdir, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
@@ -62,7 +62,7 @@ setup_ctx(void **state, const char *searchdir)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -86,7 +86,7 @@ teardown_ctx(void **state)
 {
     struct state *st = (*state);
 
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     if (st->fd >= 0) {
         close(st->fd);
     }
@@ -102,7 +102,7 @@ static void
 test_module_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -156,10 +156,10 @@ test_module_sub_yin(void **state)
                     "  <e:a/>\n  <e:b x=\"one\"/>\n  <e:c>\n    <e:y>one</e:y>\n  </e:c>\n"
                     "</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -168,7 +168,7 @@ static void
 test_module_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1 {\n"
                     "    e:a;\n    e:b \"one\";\n    e:c \"one\";\n"
@@ -209,10 +209,10 @@ test_module_sub_yang(void **state)
                     "  }\n\n"
                     "  e:a;\n  e:b \"one\";\n  e:c \"one\";\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -221,7 +221,7 @@ static void
 test_container_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -251,10 +251,10 @@ test_container_sub_yin(void **state)
                     "    </reference>\n"
                     "  </container>\n</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -263,7 +263,7 @@ static void
 test_container_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  namespace \"urn:ext\";\n  prefix x;\n\n"
                     "  import ext-def {\n    prefix e;\n  }\n\n"
@@ -281,10 +281,10 @@ test_container_sub_yang(void **state)
                     "      e:a;\n      e:b \"one\";\n      e:c \"one\";\n"
                     "    }\n  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -293,7 +293,7 @@ static void
 test_leaf_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -389,10 +389,10 @@ test_leaf_sub_yin(void **state)
                     "    </default>\n"
                     "  </leaf>\n</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -401,7 +401,7 @@ static void
 test_leaf_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -466,10 +466,10 @@ test_leaf_sub_yang(void **state)
                     "      e:a;\n      e:b \"one\";\n      e:c \"one\";\n"
                     "    }\n  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -478,7 +478,7 @@ static void
 test_leaflist_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -602,10 +602,10 @@ test_leaflist_sub_yin(void **state)
                     "    </default>\n"
                     "  </leaf-list>\n</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -614,7 +614,7 @@ static void
 test_leaflist_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -698,10 +698,10 @@ test_leaflist_sub_yang(void **state)
                     "      e:a;\n      e:b \"one\";\n      e:c \"one\";\n"
                     "    }\n  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -710,7 +710,7 @@ static void
 test_list_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -780,10 +780,10 @@ test_list_sub_yin(void **state)
                     "    </leaf>\n"
                     "  </list>\n</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -792,7 +792,7 @@ static void
 test_list_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -840,10 +840,10 @@ test_list_sub_yang(void **state)
                     "        }\n      }\n"
                     "    }\n  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -852,7 +852,7 @@ static void
 test_anydata_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -911,10 +911,10 @@ test_anydata_sub_yin(void **state)
                     "    </reference>\n"
                     "  </anyxml>\n</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -923,7 +923,7 @@ static void
 test_anydata_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -964,10 +964,10 @@ test_anydata_sub_yang(void **state)
                     "      e:a;\n      e:b \"one\";\n      e:c \"one\";\n"
                     "    }\n  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -976,7 +976,7 @@ static void
 test_choice_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -1068,10 +1068,10 @@ test_choice_sub_yin(void **state)
                     "    </leaf>\n"
                     "  </choice>\n</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -1080,7 +1080,7 @@ static void
 test_choice_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -1144,10 +1144,10 @@ test_choice_sub_yang(void **state)
                     "              e:a;\n              e:b \"one\";\n              e:c \"one\";\n"
                     "            }\n          }\n        }\n      }\n    }\n  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -1156,7 +1156,7 @@ static void
 test_uses_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -1294,18 +1294,18 @@ test_uses_sub_yin(void **state)
                     "    </augment>\n"
                     "  </uses>\n"
                     "</module>\n";
-    struct lys_node *uses;
+    struct lllys_node *uses;
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 
     /* check applied refine's substatements' extensions */
     uses = mod->data->prev;
-    assert_int_equal(uses->nodetype, LYS_USES);
+    assert_int_equal(uses->nodetype, LLLYS_USES);
 
     assert_int_equal(uses->child->ext_size, 15); /* number of extensions in c */
     assert_int_equal(uses->child->next->ext_size, 3); /* number of extensions in l */
@@ -1317,7 +1317,7 @@ static void
 test_uses_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -1410,18 +1410,18 @@ test_uses_sub_yang(void **state)
                     "      }\n      leaf a {\n"
                     "        type int8;\n"
                     "      }\n    }\n  }\n}\n";
-    struct lys_node *uses;
+    struct lllys_node *uses;
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 
     /* check applied refine's substatements' extensions */
     uses = mod->data->prev;
-    assert_int_equal(uses->nodetype, LYS_USES);
+    assert_int_equal(uses->nodetype, LLLYS_USES);
 
     assert_int_equal(uses->child->ext_size, 15); /* number of extensions in c */
     assert_int_equal(uses->child->next->ext_size, 3); /* number of extensions in l */
@@ -1433,7 +1433,7 @@ static void
 test_extension_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -1467,10 +1467,10 @@ test_extension_sub_yin(void **state)
                     "    <e:a/>\n    <e:b x=\"one\"/>\n    <e:c>\n      <e:y>one</e:y>\n    </e:c>\n"
                     "  </e:a>\n</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -1479,7 +1479,7 @@ static void
 test_extension_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -1503,10 +1503,10 @@ test_extension_sub_yang(void **state)
                     "    e:a;\n    e:b \"one\";\n    e:c \"one\";\n"
                     "  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -1515,7 +1515,7 @@ static void
 test_rpc_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -1580,10 +1580,10 @@ test_rpc_sub_yin(void **state)
                     "    </output>\n"
                     "  </rpc>\n</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -1592,7 +1592,7 @@ static void
 test_rpc_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -1636,10 +1636,10 @@ test_rpc_sub_yang(void **state)
                     "        type int8;\n"
                     "      }\n    }\n  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -1648,7 +1648,7 @@ static void
 test_notif_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -1695,10 +1695,10 @@ test_notif_sub_yin(void **state)
                     "    </leaf>\n"
                     "  </notification>\n</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -1707,7 +1707,7 @@ static void
 test_notif_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -1737,10 +1737,10 @@ test_notif_sub_yang(void **state)
                     "      type int8;\n"
                     "    }\n  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -1749,7 +1749,7 @@ static void
 test_deviation_sub_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod, *dev;
+    const struct lllys_module *mod, *dev;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -1832,15 +1832,15 @@ test_deviation_sub_yin(void **state)
                     "    </deviate>\n"
                     "  </deviation>\n"
                     "</module>\n";
-    struct lys_node *node;
+    struct lllys_node *node;
 
-    mod = ly_ctx_load_module(st->ctx, "ext-def", NULL);
+    mod = llly_ctx_load_module(st->ctx, "ext-def", NULL);
     assert_ptr_not_equal(mod, NULL);
 
-    dev = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    dev = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(dev, NULL);
 
-    lys_print_mem(&st->str1, dev, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, dev, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 
@@ -1853,7 +1853,7 @@ test_deviation_sub_yin(void **state)
     /* l2 is now first and instead of 5 extensions it now has only 3 */
     node = mod->data;
     assert_string_equal(node->name, "l2");
-    assert_int_equal(node->flags & LYS_MAND_MASK, LYS_MAND_FALSE);
+    assert_int_equal(node->flags & LLLYS_MAND_MASK, LLLYS_MAND_FALSE);
     assert_int_equal(node->ext_size, 3);
 
     /* ll1 has 13 extensions (10 from substatements) */
@@ -1878,7 +1878,7 @@ test_deviation_sub_yin(void **state)
     assert_int_equal(node->ext_size, 0);
 
     /* revert deviations */
-    ly_ctx_remove_module(dev, NULL);
+    llly_ctx_remove_module(dev, NULL);
 
     /* l1 is reconnected at the end of data nodes */
     assert_string_equal(mod->data->prev->name, "l1");
@@ -1886,7 +1886,7 @@ test_deviation_sub_yin(void **state)
     /* l2 is back true and contains again the 5 extensions */
     node = mod->data;
     assert_string_equal(node->name, "l2");
-    assert_int_equal(node->flags & LYS_MAND_MASK, LYS_MAND_TRUE);
+    assert_int_equal(node->flags & LLLYS_MAND_MASK, LLLYS_MAND_TRUE);
     assert_int_equal(node->ext_size, 5);
 
     /* ll1 has no extension again */
@@ -1915,7 +1915,7 @@ static void
 test_deviation_sub_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod, *dev;
+    const struct lllys_module *mod, *dev;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -1973,15 +1973,15 @@ test_deviation_sub_yang(void **state)
                     "      unique \"val1\" {\n"
                     "        e:a;\n        e:b \"one\";\n        e:c \"one\";\n"
                     "      }\n    }\n  }\n}\n";
-    struct lys_node *node;
+    struct lllys_node *node;
 
-    mod = ly_ctx_load_module(st->ctx, "ext-def", NULL);
+    mod = llly_ctx_load_module(st->ctx, "ext-def", NULL);
     assert_ptr_not_equal(mod, NULL);
 
-    dev = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    dev = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(dev, NULL);
 
-    lys_print_mem(&st->str1, dev, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, dev, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 
@@ -1994,7 +1994,7 @@ test_deviation_sub_yang(void **state)
     /* l2 is now first and instead of 5 extensions it now has only 3 */
     node = mod->data;
     assert_string_equal(node->name, "l2");
-    assert_int_equal(node->flags & LYS_MAND_MASK, LYS_MAND_FALSE);
+    assert_int_equal(node->flags & LLLYS_MAND_MASK, LLLYS_MAND_FALSE);
     assert_int_equal(node->ext_size, 3);
 
     /* ll1 has 13 extensions (10 from substatements) */
@@ -2019,7 +2019,7 @@ test_deviation_sub_yang(void **state)
     assert_int_equal(node->ext_size, 0);
 
     /* revert deviations */
-    ly_ctx_remove_module(dev, NULL);
+    llly_ctx_remove_module(dev, NULL);
 
     /* l1 is reconnected at the end of data nodes */
     assert_string_equal(mod->data->prev->name, "l1");
@@ -2027,7 +2027,7 @@ test_deviation_sub_yang(void **state)
     /* l2 is back true and contains again the 5 extensions */
     node = mod->data;
     assert_string_equal(node->name, "l2");
-    assert_int_equal(node->flags & LYS_MAND_MASK, LYS_MAND_TRUE);
+    assert_int_equal(node->flags & LLLYS_MAND_MASK, LLLYS_MAND_TRUE);
     assert_int_equal(node->ext_size, 5);
 
     /* ll1 has no extension again */
@@ -2056,7 +2056,7 @@ static void
 test_complex_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -2151,10 +2151,10 @@ test_complex_yin(void **state)
                     "  <feature name=\"f\"/>\n"
                     "</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -2163,7 +2163,7 @@ static void
 test_complex_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -2228,10 +2228,10 @@ test_complex_yang(void **state)
                     "    revision 2016-02-16;\n  }\n\n"
                     "  feature f;\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -2240,7 +2240,7 @@ static void
 test_complex_arrays_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -2338,10 +2338,10 @@ test_complex_arrays_yin(void **state)
                     "  <feature name=\"f2\"/>\n"
                     "</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin);
 }
@@ -2350,7 +2350,7 @@ static void
 test_complex_arrays_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -2434,10 +2434,10 @@ test_complex_arrays_yang(void **state)
                     "  feature f1;\n\n"
                     "  feature f2;\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang);
 }
@@ -2446,7 +2446,7 @@ static void
 test_complex_mand_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -2598,29 +2598,29 @@ test_complex_mand_yin(void **state)
                     "  </e:complex-mand>\n"
                     "</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin1, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin1, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yin2, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin2, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yin3, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin3, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yin4, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin4, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yin5, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin5, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yin6, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin6, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yin7, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin7, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yin8, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin8, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yin9, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin9, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
 
-    mod = lys_parse_mem(st->ctx, yin_correct, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin_correct, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yin_correct);
 }
@@ -2629,7 +2629,7 @@ static void
 test_complex_mand_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang1 = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -2725,29 +2725,29 @@ test_complex_mand_yang(void **state)
                     "    must \"1\";\n"
                     "  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang1, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang1, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yang2, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang2, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yang3, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang3, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yang4, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang4, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yang5, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang5, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yang6, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang6, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yang7, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang7, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yang8, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang8, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    mod = lys_parse_mem(st->ctx, yang9, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang9, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
 
-    mod = lys_parse_mem(st->ctx, yang_correct, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang_correct, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(st->str1, NULL);
     assert_string_equal(st->str1, yang_correct);
 }
@@ -2756,7 +2756,7 @@ static void
 test_complex_many_instace_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                     "<module name=\"ext\"\n"
                     "        xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"\n"
@@ -3096,88 +3096,88 @@ test_complex_many_instace_yin(void **state)
                     "  </e:complex>\n"
                     "</module>\n";
 
-    mod = lys_parse_mem(st->ctx, yin1, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin1, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin2, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin2, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin3, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin3, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin4, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin4, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin5, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin5, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin6, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin6, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin7, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin7, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin8, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin8, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin9, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin9, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin9, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin9, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin10, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin10, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin11, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin11, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin12, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin12, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin13, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin13, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin14, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin14, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin15, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin15, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin16, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin16, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin17, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin17, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin18, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin18, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin19, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin19, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin20, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin20, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin21, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin21, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin22, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin22, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin23, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin23, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yin24, LYS_IN_YIN);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yin24, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 static void
 test_complex_many_instace_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang1 = "module ext {\n"
                     "  yang-version 1.1;\n"
                     "  namespace \"urn:ext\";\n"
@@ -3398,88 +3398,88 @@ test_complex_many_instace_yang(void **state)
                     "    revision 2016-03-30;\n"
                     "  }\n}\n";
 
-    mod = lys_parse_mem(st->ctx, yang1, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang1, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang2, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang2, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang3, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang3, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang4, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang4, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang5, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang5, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang6, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang6, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang7, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang7, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang8, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang8, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang9, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang9, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang9, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang9, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang10, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang10, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang11, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang11, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang12, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang12, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang13, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang13, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang14, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang14, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang15, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang15, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang16, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang16, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang17, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang17, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang18, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang18, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang19, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang19, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang20, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang20, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang21, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang21, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang22, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang22, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang23, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang23, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
-    mod = lys_parse_mem(st->ctx, yang24, LYS_IN_YANG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
+    mod = lllys_parse_mem(st->ctx, yang24, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 static void
 test_complex_arrays_str_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin[17];
     int i;
 
@@ -3810,10 +3810,10 @@ test_complex_arrays_str_yin(void **state)
 
     for (i = 0; i < 17; ++i) {
         printf("module ext%d ... ", i + 1);
-        mod = lys_parse_mem(st->ctx, yin[i], LYS_IN_YIN);
+        mod = lllys_parse_mem(st->ctx, yin[i], LLLYS_IN_YIN);
         assert_ptr_not_equal(mod, NULL);
 
-        lys_print_mem(&st->str1, mod, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&st->str1, mod, LLLYS_OUT_YIN, NULL, 0, 0);
         assert_ptr_not_equal(st->str1, NULL);
         assert_string_equal(st->str1, yin[i]);
         free(st->str1);
@@ -3826,7 +3826,7 @@ static void
 test_complex_arrays_str_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang[17];
     int i;
 
@@ -4045,10 +4045,10 @@ test_complex_arrays_str_yang(void **state)
 
     for (i = 0; i < 17; ++i) {
         printf("module ext%d ... ", i + 1);
-        mod = lys_parse_mem(st->ctx, yang[i], LYS_IN_YANG);
+        mod = lllys_parse_mem(st->ctx, yang[i], LLLYS_IN_YANG);
         assert_ptr_not_equal(mod, NULL);
 
-        lys_print_mem(&st->str1, mod, LYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&st->str1, mod, LLLYS_OUT_YANG, NULL, 0, 0);
         assert_ptr_not_equal(st->str1, NULL);
         assert_string_equal(st->str1, yang[i]);
         free(st->str1);
@@ -4061,7 +4061,7 @@ void
 test_extension_yang_data_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin[8];
     int i;
 
@@ -4197,14 +4197,14 @@ test_extension_yang_data_yin(void **state)
 
     for(i = 0; i < 5; ++i) {
         printf("module ext%d ... ", i + 1);
-        mod = lys_parse_mem(st->ctx, yin[i], LYS_IN_YIN);
+        mod = lllys_parse_mem(st->ctx, yin[i], LLLYS_IN_YIN);
         assert_ptr_equal(mod, NULL);
         printf("OK\n");
     }
 
     for(i = 5; i < 8; ++i) {
         printf("module ext%d ... ", i + 1);
-        mod = lys_parse_mem(st->ctx, yin[i], LYS_IN_YIN);
+        mod = lllys_parse_mem(st->ctx, yin[i], LLLYS_IN_YIN);
         assert_ptr_not_equal(mod, NULL);
         printf("OK\n");
     }
@@ -4214,7 +4214,7 @@ void
 test_extension_yang_data_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yang[8];
     int i;
 
@@ -4327,14 +4327,14 @@ test_extension_yang_data_yang(void **state)
 
     for(i = 0; i < 5; ++i) {
         printf("module ext%d ... ", i + 1);
-        mod = lys_parse_mem(st->ctx, yang[i], LYS_IN_YANG);
+        mod = lllys_parse_mem(st->ctx, yang[i], LLLYS_IN_YANG);
         assert_ptr_equal(mod, NULL);
         printf("OK\n");
     }
 
     for(; i < 8; ++i) {
         printf("module ext%d ... ", i + 1);
-        mod = lys_parse_mem(st->ctx, yang[i], LYS_IN_YANG);
+        mod = lllys_parse_mem(st->ctx, yang[i], LLLYS_IN_YANG);
         assert_ptr_not_equal(mod, NULL);
         printf("OK\n");
     }

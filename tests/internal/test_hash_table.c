@@ -42,7 +42,7 @@ setup_f(void **state)
 {
     (void)state;
 
-    ht = lyht_new(8, sizeof(int), val_equal, NULL, 0);
+    ht = lllyht_new(8, sizeof(int), val_equal, NULL, 0);
     if (!ht) {
         fprintf(stderr, "Failed to create hash table.\n");
         return -1;
@@ -56,7 +56,7 @@ setup_f_resize(void **state)
 {
     (void)state;
 
-    ht = lyht_new(8, sizeof(int), val_equal, NULL, 1);
+    ht = lllyht_new(8, sizeof(int), val_equal, NULL, 1);
     if (!ht) {
         fprintf(stderr, "Failed to create hash table.\n");
         return -1;
@@ -70,7 +70,7 @@ teardown_f(void **state)
 {
     (void)state;
 
-    lyht_free(ht);
+    lllyht_free(ht);
     return 0;
 }
 
@@ -81,11 +81,11 @@ test_simple(void **state)
     (void)state;
 
     i = 2;
-    assert_int_equal(lyht_insert(ht, &i, i, NULL), 0);
-    assert_int_equal(lyht_find(ht, &i, i, NULL), 0);
-    assert_int_equal(lyht_remove(ht, &i, i), 0);
-    assert_int_equal(lyht_find(ht, &i, i, NULL), 1);
-    assert_int_equal(lyht_remove(ht, &i, i), 1);
+    assert_int_equal(lllyht_insert(ht, &i, i, NULL), 0);
+    assert_int_equal(lllyht_find(ht, &i, i, NULL), 0);
+    assert_int_equal(lllyht_remove(ht, &i, i), 0);
+    assert_int_equal(lllyht_find(ht, &i, i, NULL), 1);
+    assert_int_equal(lllyht_remove(ht, &i, i), 1);
 }
 
 static void
@@ -95,34 +95,34 @@ test_half_full(void **state)
     (void)state;
 
     i = 0;
-    assert_int_equal(lyht_insert(ht, &i, i, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &i, i, NULL), 0);
     j = 2;
-    assert_int_equal(lyht_insert(ht, &j, j, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &j, j, NULL), 0);
     k = 4;
-    assert_int_equal(lyht_insert(ht, &k, k, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &k, k, NULL), 0);
     l = 6;
-    assert_int_equal(lyht_insert(ht, &l, l, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &l, l, NULL), 0);
 
-    assert_int_equal(lyht_find(ht, &i, i, NULL), 0);
-    assert_int_equal(lyht_find(ht, &j, j, NULL), 0);
-    assert_int_equal(lyht_find(ht, &k, k, NULL), 0);
-    assert_int_equal(lyht_find(ht, &l, l, NULL), 0);
+    assert_int_equal(lllyht_find(ht, &i, i, NULL), 0);
+    assert_int_equal(lllyht_find(ht, &j, j, NULL), 0);
+    assert_int_equal(lllyht_find(ht, &k, k, NULL), 0);
+    assert_int_equal(lllyht_find(ht, &l, l, NULL), 0);
 
-    assert_int_equal(lyht_remove(ht, &j, j), 0);
-    assert_int_equal(lyht_remove(ht, &k, k), 0);
+    assert_int_equal(lllyht_remove(ht, &j, j), 0);
+    assert_int_equal(lllyht_remove(ht, &k, k), 0);
 
-    assert_int_equal(lyht_find(ht, &i, i, NULL), 0);
-    assert_int_equal(lyht_find(ht, &j, j, NULL), 1);
-    assert_int_equal(lyht_find(ht, &k, k, NULL), 1);
-    assert_int_equal(lyht_find(ht, &l, l, NULL), 0);
+    assert_int_equal(lllyht_find(ht, &i, i, NULL), 0);
+    assert_int_equal(lllyht_find(ht, &j, j, NULL), 1);
+    assert_int_equal(lllyht_find(ht, &k, k, NULL), 1);
+    assert_int_equal(lllyht_find(ht, &l, l, NULL), 0);
 
-    assert_int_equal(lyht_remove(ht, &i, i), 0);
-    assert_int_equal(lyht_remove(ht, &l, l), 0);
+    assert_int_equal(lllyht_remove(ht, &i, i), 0);
+    assert_int_equal(lllyht_remove(ht, &l, l), 0);
 
-    assert_int_equal(lyht_find(ht, &i, i, NULL), 1);
-    assert_int_equal(lyht_find(ht, &j, j, NULL), 1);
-    assert_int_equal(lyht_find(ht, &k, k, NULL), 1);
-    assert_int_equal(lyht_find(ht, &l, l, NULL), 1);
+    assert_int_equal(lllyht_find(ht, &i, i, NULL), 1);
+    assert_int_equal(lllyht_find(ht, &j, j, NULL), 1);
+    assert_int_equal(lllyht_find(ht, &k, k, NULL), 1);
+    assert_int_equal(lllyht_find(ht, &l, l, NULL), 1);
 }
 
 static void
@@ -133,43 +133,43 @@ test_resize(void **state)
     (void)state;
 
     for (i = 2; i < 8; ++i) {
-        assert_int_equal(lyht_insert(ht, &i, i, NULL), 0);
+        assert_int_equal(lllyht_insert(ht, &i, i, NULL), 0);
     }
 
     assert_int_equal(ht->size, 16);
 
     for (i = 0; i < 2; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, 0);
     }
     for (; i < 8; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, 1);
         assert_int_equal(rec->hash, i);
     }
     for (; i < 16; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, 0);
     }
 
     for (i = 0; i < 2; ++i) {
-        assert_int_equal(lyht_find(ht, &i, i, NULL), 1);
+        assert_int_equal(lllyht_find(ht, &i, i, NULL), 1);
     }
     for (; i < 8; ++i) {
-        assert_int_equal(lyht_find(ht, &i, i, NULL), 0);
+        assert_int_equal(lllyht_find(ht, &i, i, NULL), 0);
     }
 
     for (i = 0; i < 2; ++i) {
-        assert_int_equal(lyht_remove(ht, &i, i), 1);
+        assert_int_equal(lllyht_remove(ht, &i, i), 1);
     }
     for (; i < 8; ++i) {
-        assert_int_equal(lyht_remove(ht, &i, i), 0);
+        assert_int_equal(lllyht_remove(ht, &i, i), 0);
     }
 
     assert_int_equal(ht->size, 8);
 
     for (i = 0; i < 8; ++i) {
-        assert_int_equal(lyht_find(ht, &i, i, NULL), 1);
+        assert_int_equal(lllyht_find(ht, &i, i, NULL), 1);
     }
 }
 
@@ -183,88 +183,88 @@ test_collisions(void **state)
     (void)state;
 
     for (i = 2; i < 6; ++i) {
-        assert_int_equal(lyht_insert(ht, &i, 2, NULL), 0);
+        assert_int_equal(lllyht_insert(ht, &i, 2, NULL), 0);
     }
 
     /* check all records */
     for (i = 0; i < 2; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, 0);
     }
-    rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+    rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
     assert_int_equal(rec->hits, 4);
     assert_int_equal(GET_REC_VAL(rec), i);
     ++i;
     for (; i < 6; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, 1);
         assert_int_equal(GET_REC_VAL(rec), i);
     }
     for (; i < 8; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, 0);
     }
 
     i = 4;
-    assert_int_equal(lyht_remove(ht, &i, 2), 0);
+    assert_int_equal(lllyht_remove(ht, &i, 2), 0);
 
-    rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+    rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
     assert_int_equal(rec->hits, -1);
 
     i = 2;
-    assert_int_equal(lyht_remove(ht, &i, 2), 0);
+    assert_int_equal(lllyht_remove(ht, &i, 2), 0);
 
     /* check all records */
     for (i = 0; i < 2; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, 0);
     }
-    rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+    rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
     assert_int_equal(rec->hits, 2);
     assert_int_equal(GET_REC_VAL(rec), 5);
     ++i;
-    rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+    rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
     assert_int_equal(rec->hits, 1);
     assert_int_equal(GET_REC_VAL(rec), 3);
     ++i;
     for (; i < 6; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, -1);
     }
     for (; i < 8; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, 0);
     }
 
     for (i = 0; i < 3; ++i) {
-        assert_int_equal(lyht_find(ht, &i, 2, NULL), 1);
+        assert_int_equal(lllyht_find(ht, &i, 2, NULL), 1);
     }
-    assert_int_equal(lyht_find(ht, &i, 2, NULL), 0);
+    assert_int_equal(lllyht_find(ht, &i, 2, NULL), 0);
     ++i;
-    assert_int_equal(lyht_find(ht, &i, 2, NULL), 1);
+    assert_int_equal(lllyht_find(ht, &i, 2, NULL), 1);
     ++i;
-    assert_int_equal(lyht_find(ht, &i, 2, NULL), 0);
+    assert_int_equal(lllyht_find(ht, &i, 2, NULL), 0);
     ++i;
     for (; i < 8; ++i) {
-        assert_int_equal(lyht_find(ht, &i, 2, NULL), 1);
+        assert_int_equal(lllyht_find(ht, &i, 2, NULL), 1);
     }
 
     i = 3;
-    assert_int_equal(lyht_remove(ht, &i, 2), 0);
+    assert_int_equal(lllyht_remove(ht, &i, 2), 0);
     i = 5;
-    assert_int_equal(lyht_remove(ht, &i, 2), 0);
+    assert_int_equal(lllyht_remove(ht, &i, 2), 0);
 
     /* check all records */
     for (i = 0; i < 2; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, 0);
     }
     for (; i < 6; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, -1);
     }
     for (; i < 8; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, 0);
     }
 }
@@ -277,36 +277,36 @@ test_invalid_move(void **state)
 
     (void)state;
 
-    assert_int_equal(lyht_insert(ht, &a[0], 0, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[0], 0, NULL), 0);
 
-    assert_int_equal(lyht_insert(ht, &a[1], 1, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[2], 2, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[3], 3, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[1], 1, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[2], 2, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[3], 3, NULL), 0);
 
-    assert_int_equal(lyht_insert(ht, &a[4], 0, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[4], 0, NULL), 0);
 
-    assert_int_equal(lyht_remove(ht, &a[1], 1), 0);
-    assert_int_equal(lyht_remove(ht, &a[2], 2), 0);
-    assert_int_equal(lyht_remove(ht, &a[3], 3), 0);
+    assert_int_equal(lllyht_remove(ht, &a[1], 1), 0);
+    assert_int_equal(lllyht_remove(ht, &a[2], 2), 0);
+    assert_int_equal(lllyht_remove(ht, &a[3], 3), 0);
 
-    assert_int_equal(lyht_insert(ht, &a[5], 5, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[6], 6, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[7], 7, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[5], 5, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[6], 6, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[7], 7, NULL), 0);
 
     /* these are the invalid values */
     for (i = 1; i < 4; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
         assert_int_equal(rec->hits, -1);
     }
 
     /* if all the values were being moved correctly, this succeeds */
-    assert_int_equal(lyht_insert(ht, &a[8], 0, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[8], 0, NULL), 0);
 
-    rec = lyht_get_rec(ht->recs, ht->rec_size, 0);
+    rec = lllyht_get_rec(ht->recs, ht->rec_size, 0);
     assert_int_equal(rec->hits, 3);
-    rec = lyht_get_rec(ht->recs, ht->rec_size, 1);
+    rec = lllyht_get_rec(ht->recs, ht->rec_size, 1);
     assert_int_equal(rec->hits, 1);
-    rec = lyht_get_rec(ht->recs, ht->rec_size, 2);
+    rec = lllyht_get_rec(ht->recs, ht->rec_size, 2);
     assert_int_equal(rec->hits, 1);
 }
 
@@ -321,36 +321,36 @@ test_invalid_move2(void **state)
         a[i] = i;
     }
 
-    assert_int_equal(lyht_insert(ht, &a[6], 6, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[7], 7, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[0], 0, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[1], 1, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[8 + 6], 6, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[6], 6, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[7], 7, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[0], 0, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[1], 1, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[8 + 6], 6, NULL), 0);
 
-    assert_int_equal(lyht_remove(ht, &a[7], 7), 0);
+    assert_int_equal(lllyht_remove(ht, &a[7], 7), 0);
 
-    assert_int_equal(lyht_insert(ht, &a[2 * 8 + 6], 6, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[2 * 8 + 6], 6, NULL), 0);
 
-    assert_int_equal(lyht_remove(ht, &a[0], 0), 0);
-    assert_int_equal(lyht_remove(ht, &a[1], 1), 0);
-    assert_int_equal(lyht_remove(ht, &a[8 + 6], 6), 0);
+    assert_int_equal(lllyht_remove(ht, &a[0], 0), 0);
+    assert_int_equal(lllyht_remove(ht, &a[1], 1), 0);
+    assert_int_equal(lllyht_remove(ht, &a[8 + 6], 6), 0);
 
-    assert_int_equal(lyht_insert(ht, &a[4], 4, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[5], 5, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[4], 4, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[5], 5, NULL), 0);
 
-    assert_int_equal(lyht_insert(ht, &a[8 + 3], 3, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[8 + 3], 3, NULL), 0);
 
-    assert_int_equal(lyht_remove(ht, &a[2 * 8 + 6], 6), 0);
-    assert_int_equal(lyht_remove(ht, &a[4], 4), 0);
-    assert_int_equal(lyht_remove(ht, &a[5], 5), 0);
-    assert_int_equal(lyht_remove(ht, &a[6], 6), 0);
+    assert_int_equal(lllyht_remove(ht, &a[2 * 8 + 6], 6), 0);
+    assert_int_equal(lllyht_remove(ht, &a[4], 4), 0);
+    assert_int_equal(lllyht_remove(ht, &a[5], 5), 0);
+    assert_int_equal(lllyht_remove(ht, &a[6], 6), 0);
 
-    assert_int_equal(lyht_insert(ht, &a[0], 0, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[1], 1, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[2], 2, NULL), 0);
-    assert_int_equal(lyht_insert(ht, &a[3], 3, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[0], 0, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[1], 1, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[2], 2, NULL), 0);
+    assert_int_equal(lllyht_insert(ht, &a[3], 3, NULL), 0);
 
-    assert_int_equal(lyht_find(ht, &a[8 + 3], 3, NULL), 0);
+    assert_int_equal(lllyht_find(ht, &a[8 + 3], 3, NULL), 0);
 }
 
 int main(void)
@@ -364,7 +364,7 @@ int main(void)
         cmocka_unit_test_setup_teardown(test_invalid_move2, setup_f, teardown_f),
     };
 
-    /*ly_verb(LY_LLDBG);
-    ly_verb_dbg(LY_LDGHASH);*/
+    /*llly_verb(LLLY_LLDBG);
+    llly_verb_dbg(LLLY_LDGHASH);*/
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

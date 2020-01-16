@@ -30,10 +30,10 @@
 
 #define TMP_TEMPLATE "/tmp/libyang-XXXXXX"
 
-struct ly_ctx *ctx = NULL;
-struct lyd_node *root = NULL;
+struct llly_ctx *ctx = NULL;
+struct lllyd_node *root = NULL;
 
-const char *lys_module_a = \
+const char *lllys_module_a = \
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>           \
 <module name=\"a\"                                    \
         xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"   \
@@ -89,7 +89,7 @@ const char *lys_module_a = \
 </module>                                             \
 ";
 
-char lys_module_b[] =
+char lllys_module_b[] =
 "module b {\
     namespace \"urn:b\";\
     prefix b_mod;\
@@ -129,7 +129,7 @@ char lys_module_b[] =
     }\
 }";
 
-const char *lys_module_a_with_typo = \
+const char *lllys_module_a_with_typo = \
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>           \
 <module_typo name=\"a\"                                    \
         xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\"   \
@@ -331,7 +331,7 @@ setup_f(void **state)
     (void) state; /* unused */
     char *yang_folder = TESTS_DIR"/api/files";
 
-    ctx = ly_ctx_new(yang_folder, 0);
+    ctx = llly_ctx_new(yang_folder, 0);
     if (!ctx) {
         return -1;
     }
@@ -344,9 +344,9 @@ teardown_f(void **state)
 {
     (void) state; /* unused */
     if (root)
-        lyd_free(root);
+        lllyd_free(root);
     if (ctx)
-        ly_ctx_destroy(ctx, NULL);
+        llly_ctx_destroy(ctx, NULL);
 
     return 0;
 }
@@ -355,15 +355,15 @@ static void
 test_lys_parse_mem(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
+    const struct lllys_module *module;
     char *yang_folder = TESTS_DIR"/api/files";
 
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
 
     module = NULL;
     ctx = NULL;
-    ctx = ly_ctx_new(yang_folder, 0);
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    ctx = llly_ctx_new(yang_folder, 0);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
@@ -371,13 +371,13 @@ test_lys_parse_mem(void **state)
     assert_string_equal("a", module->name);
 
     module = NULL;
-    module = lys_parse_mem(ctx, lys_module_a_with_typo, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a_with_typo, yang_format);
     if (module) {
         fail();
     }
 
     module = NULL;
-    module = lys_parse_mem(ctx, lys_module_b, LYS_IN_YANG);
+    module = lllys_parse_mem(ctx, lllys_module_b, LLLYS_IN_YANG);
     if (!module) {
         fail();
     }
@@ -385,7 +385,7 @@ test_lys_parse_mem(void **state)
     assert_string_equal("b", module->name);
 
     module = NULL;
-    ly_ctx_destroy(ctx, NULL);
+    llly_ctx_destroy(ctx, NULL);
     ctx = NULL;
 }
 
@@ -393,20 +393,20 @@ static void
 test_lys_parse_fd(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
+    const struct lllys_module *module;
     char *yang_folder = TESTS_DIR"/api/files";
     char *yin_file = TESTS_DIR"/api/files/a.yin";
     char *yang_file = TESTS_DIR"/api/files/b.yang";
     int fd = -1;
 
-    ctx = ly_ctx_new(yang_folder, 0);
+    ctx = llly_ctx_new(yang_folder, 0);
 
     fd = open(yin_file, O_RDONLY);
     if (fd == -1) {
         fail();
     }
 
-    module = lys_parse_fd(ctx, fd, LYS_IN_YIN);
+    module = lllys_parse_fd(ctx, fd, LLLYS_IN_YIN);
     if (!module) {
         fail();
     }
@@ -419,7 +419,7 @@ test_lys_parse_fd(void **state)
         fail();
     }
 
-    module = lys_parse_fd(ctx, fd, LYS_IN_YANG);
+    module = lllys_parse_fd(ctx, fd, LLLYS_IN_YANG);
     if (!module) {
         fail();
     }
@@ -427,12 +427,12 @@ test_lys_parse_fd(void **state)
     close(fd);
     assert_string_equal("b", module->name);
 
-    module = lys_parse_mem(ctx, lys_module_a, LYS_IN_YIN);
+    module = lllys_parse_mem(ctx, lllys_module_a, LLLYS_IN_YIN);
     if (module) {
         fail();
     }
 
-    ly_ctx_destroy(ctx, NULL);
+    llly_ctx_destroy(ctx, NULL);
     ctx = NULL;
 }
 
@@ -440,7 +440,7 @@ static void
 test_lys_parse_path(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
+    const struct lllys_module *module;
     char *yang_folder = TESTS_DIR"/api/files";
     char *yin_file = TESTS_DIR"/api/files/a.yin";
     char *yang_file = TESTS_DIR"/api/files/b.yang";
@@ -458,22 +458,22 @@ test_lys_parse_path(void **state)
     }
     close(fd);
 
-    ctx = ly_ctx_new(yang_folder, 0);
-    module = lys_parse_path(ctx, yin_file, LYS_IN_YIN);
+    ctx = llly_ctx_new(yang_folder, 0);
+    module = lllys_parse_path(ctx, yin_file, LLLYS_IN_YIN);
     if (!module) {
         fail();
     }
 
     assert_string_equal("a", module->name);
 
-    module = lys_parse_path(ctx, yang_file, LYS_IN_YANG);
+    module = lllys_parse_path(ctx, yang_file, LLLYS_IN_YANG);
     if (!module) {
         fail();
     }
 
     assert_string_equal("b", module->name);
 
-    ly_ctx_destroy(ctx, NULL);
+    llly_ctx_destroy(ctx, NULL);
     ctx = NULL;
 }
 
@@ -481,27 +481,27 @@ static void
 test_lys_features_list(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
+    const struct lllys_module *module;
     const char **result;
     uint8_t st = 1;
     uint8_t *states = &st;
 
-    module = lys_parse_mem(ctx, lys_module_a, LYS_IN_YIN);
+    module = lllys_parse_mem(ctx, lllys_module_a, LLLYS_IN_YIN);
     if (!module) {
         fail();
     }
-    result = lys_features_list(module, &states);
+    result = lllys_features_list(module, &states);
 
     assert_string_equal("foo", *result);
 
     free(result);
     free(states);
 
-    module = lys_parse_mem(ctx, lys_module_b, LYS_IN_YANG);
+    module = lllys_parse_mem(ctx, lllys_module_b, LLLYS_IN_YANG);
     if (!module) {
         fail();
     }
-    result = lys_features_list(module, &states);
+    result = lllys_features_list(module, &states);
 
     assert_string_equal("foo", *result);
 
@@ -513,11 +513,11 @@ static void
 test_lys_features_enable(void **state)
 {
     (void) state; /* unused */
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
-    const struct lys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
+    const struct lllys_module *module;
     int rc;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
@@ -525,24 +525,24 @@ test_lys_features_enable(void **state)
     assert_string_equal("foo", module->features->name);
     assert_int_equal(0x0, module->features->flags);
 
-    rc = lys_features_enable(module, "*");
+    rc = lllys_features_enable(module, "*");
     if (rc) {
         fail();
     }
 
 
-    assert_int_equal(LYS_FENABLED, module->features->flags);
+    assert_int_equal(LLLYS_FENABLED, module->features->flags);
 }
 
 static void
 test_lys_features_disable(void **state)
 {
     (void) state; /* unused */
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
-    const struct lys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
+    const struct lllys_module *module;
     int rc;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
@@ -550,15 +550,15 @@ test_lys_features_disable(void **state)
     assert_string_equal("foo", module->features->name);
     assert_int_equal(0x0, module->features->flags);
 
-    rc = lys_features_enable(module, "*");
+    rc = lllys_features_enable(module, "*");
     if (rc) {
         fail();
     }
 
 
-    assert_int_equal(LYS_FENABLED, module->features->flags);
+    assert_int_equal(LLLYS_FENABLED, module->features->flags);
 
-    rc = lys_features_disable(module, "*");
+    rc = lllys_features_disable(module, "*");
     if (rc) {
         fail();
     }
@@ -571,37 +571,37 @@ static void
 test_lys_features_state(void **state)
 {
     (void) state; /* unused */
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
-    const struct lys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
+    const struct lllys_module *module;
     int feature_state;
     int rc;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
 
     assert_string_equal("foo", module->features->name);
 
-    feature_state = lys_features_state(module, "foo");
+    feature_state = lllys_features_state(module, "foo");
     assert_int_equal(0x0, feature_state);
 
-    rc = lys_features_enable(module, "foo");
+    rc = lllys_features_enable(module, "foo");
     if (rc) {
         fail();
     }
 
 
-    feature_state = lys_features_state(module, "foo");
+    feature_state = lllys_features_state(module, "foo");
     assert_int_equal(0x1, feature_state);
 
-    rc = lys_features_disable(module, "foo");
+    rc = lllys_features_disable(module, "foo");
     if (rc) {
         fail();
     }
 
 
-    feature_state = lys_features_state(module, "foo");
+    feature_state = lllys_features_state(module, "foo");
     assert_int_equal(0x0, feature_state);
 }
 
@@ -609,40 +609,40 @@ static void
 test_lys_is_disabled(void **state)
 {
     (void) state; /* unused */
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
-    const struct lys_module *module;
-    const struct lys_node *node = NULL;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
+    const struct lllys_module *module;
+    const struct lllys_node *node = NULL;
     int rc;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
 
-    node = lys_is_disabled(module->data->child, 2);
+    node = lllys_is_disabled(module->data->child, 2);
     if (!node) {
         fail();
     }
 
     assert_string_equal("/a:top", node->name);
 
-    rc = lys_features_enable(module, "bar");
+    rc = lllys_features_enable(module, "bar");
     if (rc) {
         fail();
     }
 
-    node = lys_is_disabled(module->data->child, 2);
+    node = lllys_is_disabled(module->data->child, 2);
     if (node) {
         fail();
     }
 }
 
 static void
-test_lys_getnext2(const struct lys_module *module)
+test_lys_getnext2(const struct lllys_module *module)
 {
-    const struct lys_node *node;
-    const struct lys_node *node_parent;
-    const struct lys_node *node_child;
+    const struct lllys_node *node;
+    const struct lllys_node *node_parent;
+    const struct lllys_node *node_child;
 
     assert_string_equal("top", module->data->name);
 
@@ -651,7 +651,7 @@ test_lys_getnext2(const struct lys_module *module)
 
     assert_string_equal("bar-sub", node_child->name);
 
-    node = lys_getnext(node_child, node_parent, module, LYS_GETNEXT_WITHINOUT);
+    node = lllys_getnext(node_child, node_parent, module, LLLYS_GETNEXT_WITHINOUT);
 
     assert_string_equal("bar-sub2", node->name);
 }
@@ -660,15 +660,15 @@ static void
 test_lys_getnext(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    module = lys_parse_mem(ctx, lys_module_a, LYS_IN_YIN);
+    module = lllys_parse_mem(ctx, lllys_module_a, LLLYS_IN_YIN);
     if (!module) {
         fail();
     }
     test_lys_getnext2(module);
 
-    module = lys_parse_mem(ctx, lys_module_b, LYS_IN_YANG);
+    module = lllys_parse_mem(ctx, lllys_module_b, LLLYS_IN_YANG);
     if (!module) {
         fail();
     }
@@ -679,12 +679,12 @@ static void
 test_lys_parent(void **state)
 {
     (void) state; /* unused */
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
-    const struct lys_node *node;
-    const struct lys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
+    const struct lllys_node *node;
+    const struct lllys_module *module;
     char *str = "node";
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
@@ -693,7 +693,7 @@ test_lys_parent(void **state)
 
     node = module->data;
 
-    lys_set_private(node, str);
+    lllys_set_private(node, str);
 
     assert_string_equal("node", node->priv);
 }
@@ -702,12 +702,12 @@ static void
 test_lys_set_private(void **state)
 {
     (void) state; /* unused */
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
-    const struct lys_node *node_parent;
-    const struct lys_node *node_child;
-    const struct lys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
+    const struct lllys_node *node_parent;
+    const struct lllys_node *node_child;
+    const struct lllys_module *module;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
@@ -719,7 +719,7 @@ test_lys_set_private(void **state)
 
     assert_string_equal("bar-sub", node_child->name);
 
-    node_parent = lys_parent(node_child);
+    node_parent = lllys_parent(node_child);
 
     assert_string_equal("top", node_parent->name);
 }
@@ -728,17 +728,17 @@ static void
 test_lys_print_mem_tree(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     char *result = NULL;
     int rc;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
 
-    rc = lys_print_mem(&result, module, LYS_OUT_TREE, NULL, 0, 0);
+    rc = lllys_print_mem(&result, module, LLLYS_OUT_TREE, NULL, 0, 0);
     if (rc) {
         fail();
     }
@@ -751,17 +751,17 @@ static void
 test_lys_print_mem_yang(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     char *result = NULL;
     int rc;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
 
-    rc = lys_print_mem(&result, module, LYS_OUT_YANG, NULL, 0, 0);
+    rc = lllys_print_mem(&result, module, LLLYS_OUT_YANG, NULL, 0, 0);
     if (rc) {
         fail();
     }
@@ -774,17 +774,17 @@ static void
 test_lys_print_mem_yin(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     char *result = NULL;
     int rc;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
 
-    rc = lys_print_mem(&result, module, LYS_OUT_YIN, NULL, 0, 0);
+    rc = lllys_print_mem(&result, module, LLLYS_OUT_YIN, NULL, 0, 0);
     if (rc) {
         fail();
     }
@@ -797,18 +797,18 @@ static void
 test_lys_print_mem_info(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     char *target = "feature/foo";
     char *result = NULL;
     int rc;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
 
-    rc = lys_print_mem(&result, module, LYS_OUT_INFO, target, 0, 0);
+    rc = lllys_print_mem(&result, module, LLLYS_OUT_INFO, target, 0, 0);
     if (rc) {
         fail();
     }
@@ -821,18 +821,18 @@ static void
 test_lys_print_mem_jsons(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     const char *target = "grouping/gg";
     char *result = NULL;
     int rc;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         fail();
     }
 
-    rc = lys_print_mem(&result, module, LYS_OUT_JSON, NULL, 0, 0);
+    rc = lllys_print_mem(&result, module, LLLYS_OUT_JSON, NULL, 0, 0);
     if (rc) {
         fail();
     }
@@ -840,7 +840,7 @@ test_lys_print_mem_jsons(void **state)
     assert_string_equal(result_jsons, result);
     free(result);
 
-    rc = lys_print_mem(&result, module, LYS_OUT_JSON, target, 0, 0);
+    rc = lllys_print_mem(&result, module, LLLYS_OUT_JSON, target, 0, 0);
     if (rc) {
         fail();
     }
@@ -853,15 +853,15 @@ static void
 test_lys_print_fd_tree(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     struct stat sb;
     char file_name[20];
     char *result;
     int rc;
     int fd = -1;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         goto error;
     }
@@ -874,7 +874,7 @@ test_lys_print_fd_tree(void **state)
         goto error;
     }
 
-    rc = lys_print_fd(fd, module, LYS_OUT_TREE, NULL, 0, 0);
+    rc = lllys_print_fd(fd, module, LLLYS_OUT_TREE, NULL, 0, 0);
     if (rc) {
         goto error;
     }
@@ -903,15 +903,15 @@ static void
 test_lys_print_fd_yang(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     struct stat sb;
     char file_name[20];
     char *result;
     int rc;
     int fd = -1;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         goto error;
     }
@@ -924,7 +924,7 @@ test_lys_print_fd_yang(void **state)
         goto error;
     }
 
-    rc = lys_print_fd(fd, module, LYS_OUT_YANG, NULL, 0, 0);
+    rc = lllys_print_fd(fd, module, LLLYS_OUT_YANG, NULL, 0, 0);
     if (rc) {
         goto error;
     }
@@ -953,15 +953,15 @@ static void
 test_lys_print_fd_yin(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     struct stat sb;
     char file_name[20];
     char *result;
     int rc;
     int fd = -1;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         goto error;
     }
@@ -974,7 +974,7 @@ test_lys_print_fd_yin(void **state)
         goto error;
     }
 
-    rc = lys_print_fd(fd, module, LYS_OUT_YIN, NULL, 0, 0);
+    rc = lllys_print_fd(fd, module, LLLYS_OUT_YIN, NULL, 0, 0);
     if (rc) {
         goto error;
     }
@@ -1003,8 +1003,8 @@ static void
 test_lys_print_fd_info(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     struct stat sb;
     char *target = "feature/foo";
     char file_name[20];
@@ -1012,7 +1012,7 @@ test_lys_print_fd_info(void **state)
     int rc;
     int fd = -1;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         goto error;
     }
@@ -1025,7 +1025,7 @@ test_lys_print_fd_info(void **state)
         goto error;
     }
 
-    rc = lys_print_fd(fd, module, LYS_OUT_INFO, target, 0, 0);
+    rc = lllys_print_fd(fd, module, LLLYS_OUT_INFO, target, 0, 0);
     if (rc) {
         goto error;
     }
@@ -1054,8 +1054,8 @@ static void
 test_lys_print_fd_jsons(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     struct stat sb;
     char *target = "grouping/gg";
     char file_name1[20];
@@ -1064,7 +1064,7 @@ test_lys_print_fd_jsons(void **state)
     int rc;
     int fd1 = -1, fd2 = -1;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         goto error;
     }
@@ -1081,7 +1081,7 @@ test_lys_print_fd_jsons(void **state)
     }
 
     /* module */
-    rc = lys_print_fd(fd1, module, LYS_OUT_JSON, NULL, 0, 0);
+    rc = lllys_print_fd(fd1, module, LLLYS_OUT_JSON, NULL, 0, 0);
     if (rc) {
         goto error;
     }
@@ -1094,7 +1094,7 @@ test_lys_print_fd_jsons(void **state)
     assert_string_equal(result_jsons, result);
 
     /* grouping */
-    rc = lys_print_fd(fd2, module, LYS_OUT_JSON, target, 0, 0);
+    rc = lllys_print_fd(fd2, module, LLLYS_OUT_JSON, target, 0, 0);
     if (rc) {
         goto error;
     }
@@ -1128,8 +1128,8 @@ static void
 test_lys_print_file_tree(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     struct stat sb;
     char file_name[20];
     char *result;
@@ -1137,7 +1137,7 @@ test_lys_print_file_tree(void **state)
     int rc;
     int fd = -1;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         goto error;
     }
@@ -1156,7 +1156,7 @@ test_lys_print_file_tree(void **state)
         goto error;
     }
 
-    rc = lys_print_file(f, module, LYS_OUT_TREE, NULL, 0, 0);
+    rc = lllys_print_file(f, module, LLLYS_OUT_TREE, NULL, 0, 0);
     if (rc) {
         goto error;
     }
@@ -1190,8 +1190,8 @@ static void
 test_lys_print_file_yin(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     struct stat sb;
     char file_name[20];
     char *result;
@@ -1199,7 +1199,7 @@ test_lys_print_file_yin(void **state)
     int rc;
     int fd = -1;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         goto error;
     }
@@ -1218,7 +1218,7 @@ test_lys_print_file_yin(void **state)
         goto error;
     }
 
-    rc = lys_print_file(f, module, LYS_OUT_YIN, NULL, 0, 0);
+    rc = lllys_print_file(f, module, LLLYS_OUT_YIN, NULL, 0, 0);
     if (rc) {
         goto error;
     }
@@ -1252,8 +1252,8 @@ static void
 test_lys_print_file_yang(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     struct stat sb;
     char file_name[20];
     char *result;
@@ -1261,7 +1261,7 @@ test_lys_print_file_yang(void **state)
     int rc;
     int fd = -1;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         goto error;
     }
@@ -1280,7 +1280,7 @@ test_lys_print_file_yang(void **state)
         goto error;
     }
 
-    rc = lys_print_file(f, module, LYS_OUT_YANG, NULL, 0, 0);
+    rc = lllys_print_file(f, module, LLLYS_OUT_YANG, NULL, 0, 0);
     if (rc) {
         goto error;
     }
@@ -1314,8 +1314,8 @@ static void
 test_lys_print_file_info(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     struct stat sb;
     char *target = "feature/foo";
     char file_name[20];
@@ -1324,7 +1324,7 @@ test_lys_print_file_info(void **state)
     int rc;
     int fd = -1;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         goto error;
     }
@@ -1343,7 +1343,7 @@ test_lys_print_file_info(void **state)
         goto error;
     }
 
-    rc = lys_print_file(f, module, LYS_OUT_INFO, target, 0, 0);
+    rc = lllys_print_file(f, module, LLLYS_OUT_INFO, target, 0, 0);
     if (rc) {
         goto error;
     }
@@ -1377,8 +1377,8 @@ static void
 test_lys_print_file_jsons(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
+    const struct lllys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
     struct stat sb;
     char *target = "grouping/gg";
     char file_name1[20];
@@ -1388,7 +1388,7 @@ test_lys_print_file_jsons(void **state)
     int rc;
     int fd1 = -1, fd2 = -1;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     if (!module) {
         goto error;
     }
@@ -1413,7 +1413,7 @@ test_lys_print_file_jsons(void **state)
     }
 
     /* module */
-    rc = lys_print_file(f1, module, LYS_OUT_JSON, NULL, 0, 0);
+    rc = lllys_print_file(f1, module, LLLYS_OUT_JSON, NULL, 0, 0);
     if (rc) {
         goto error;
     }
@@ -1429,7 +1429,7 @@ test_lys_print_file_jsons(void **state)
     assert_string_equal(result_jsons, result);
 
     /* grouping */
-    rc = lys_print_file(f2, module, LYS_OUT_JSON, target, 0, 0);
+    rc = lllys_print_file(f2, module, LLLYS_OUT_JSON, target, 0, 0);
     if (rc) {
         goto error;
     }
@@ -1470,35 +1470,35 @@ static void
 test_lys_find_path(void **state)
 {
     (void) state; /* unused */
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
-    const struct lys_module *module;
-    struct ly_set *set;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
+    const struct lllys_module *module;
+    struct llly_set *set;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     assert_ptr_not_equal(module, NULL);
 
-    set = lys_find_path(module, NULL, "/x/*");
+    set = lllys_find_path(module, NULL, "/x/*");
     assert_ptr_not_equal(set, NULL);
     assert_int_equal(set->number, 5);
-    ly_set_free(set);
+    llly_set_free(set);
 
-    set = lys_find_path(module, NULL, "/x//*");
+    set = lllys_find_path(module, NULL, "/x//*");
     assert_ptr_not_equal(set, NULL);
     assert_int_equal(set->number, 6);
-    ly_set_free(set);
+    llly_set_free(set);
 
-    set = lys_find_path(module, NULL, "/x//.");
+    set = lllys_find_path(module, NULL, "/x//.");
     assert_ptr_not_equal(set, NULL);
     assert_int_equal(set->number, 7);
-    ly_set_free(set);
+    llly_set_free(set);
 }
 
 static void
 test_lys_xpath_atomize(void **state)
 {
     (void) state; /* unused */
-    const struct lys_module *module;
-    struct ly_set *set;
+    const struct lllys_module *module;
+    struct llly_set *set;
     const char *schema =
     "module a {"
         "namespace \"urn:a\";"
@@ -1530,43 +1530,43 @@ test_lys_xpath_atomize(void **state)
         "uses g;"
     "}";
 
-    module = lys_parse_mem(ctx, schema, LYS_IN_YANG);
+    module = lllys_parse_mem(ctx, schema, LLLYS_IN_YANG);
     assert_non_null(module);
 
     /* should not crash */
-    set = lys_xpath_atomize(module->data->child->child->next, LYXP_NODE_ELEM, "/a[name=current()/../name]/type", 0);
-    ly_set_free(set);
+    set = lllys_xpath_atomize(module->data->child->child->next, LLLYXP_NODE_ELEM, "/a[name=current()/../name]/type", 0);
+    llly_set_free(set);
 }
 
 static void
 test_lys_path(void **state)
 {
     (void) state; /* unused */
-    LYS_INFORMAT yang_format = LYS_IN_YIN;
-    const struct lys_node *node;
-    const struct lys_module *module;
+    LLLYS_INFORMAT yang_format = LLLYS_IN_YIN;
+    const struct lllys_node *node;
+    const struct lllys_module *module;
     char *path;
-    struct ly_set *set;
+    struct llly_set *set;
     const char *template;
 
-    module = lys_parse_mem(ctx, lys_module_a, yang_format);
+    module = lllys_parse_mem(ctx, lllys_module_a, yang_format);
     assert_ptr_not_equal(module, NULL);
 
     template = "/a:x/bar-gggg";
-    set = lys_find_path(module, NULL, template);
+    set = lllys_find_path(module, NULL, template);
     assert_ptr_not_equal(set, NULL);
     node = set->set.s[0];
-    ly_set_free(set);
-    path = lys_path(node, 1);
+    llly_set_free(set);
+    path = lllys_path(node, 1);
     assert_string_equal(template, path);
     free(path);
 
     template = "/a:x/a:bar-gggg";
-    set = lys_find_path(module, NULL, template);
+    set = lllys_find_path(module, NULL, template);
     assert_ptr_not_equal(set, NULL);
     node = set->set.s[0];
-    ly_set_free(set);
-    path = lys_path(node, 0);
+    llly_set_free(set);
+    path = lllys_path(node, 0);
     assert_string_equal(template, path);
     free(path);
 }

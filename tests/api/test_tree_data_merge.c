@@ -25,12 +25,12 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx1;
-    struct ly_ctx *ctx2;
-    struct ly_ctx *ctx3;
-    struct lyd_node *source;
-    struct lyd_node *target;
-    struct lyd_node *result;
+    struct llly_ctx *ctx1;
+    struct llly_ctx *ctx2;
+    struct llly_ctx *ctx3;
+    struct lllyd_node *source;
+    struct lllyd_node *target;
+    struct lllyd_node *result;
     char *path, *output;
 };
 
@@ -46,7 +46,7 @@ setup_dflt(void **state)
     }
 
     /* libyang context */
-    st->ctx1 = ly_ctx_new(TESTS_DIR "/api/files", 0);
+    st->ctx1 = llly_ctx_new(TESTS_DIR "/api/files", 0);
     if (!st->ctx1) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
@@ -55,7 +55,7 @@ setup_dflt(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx1, NULL);
+    llly_ctx_destroy(st->ctx1, NULL);
     free(st);
     (*state) = NULL;
 
@@ -69,10 +69,10 @@ teardown_dflt(void **state)
 
     free(st->path);
     free(st->output);
-    lyd_free_withsiblings(st->target);
-    lyd_free_withsiblings(st->source);
-    lyd_free_withsiblings(st->result);
-    ly_ctx_destroy(st->ctx1, NULL);
+    lllyd_free_withsiblings(st->target);
+    lllyd_free_withsiblings(st->source);
+    lllyd_free_withsiblings(st->result);
+    llly_ctx_destroy(st->ctx1, NULL);
     free(st);
     (*state) = NULL;
 
@@ -91,9 +91,9 @@ setup_mctx(void **state)
     }
 
     /* libyang context */
-    st->ctx1 = ly_ctx_new(NULL, 0);
-    st->ctx2 = ly_ctx_new(NULL, 0);
-    st->ctx3 = ly_ctx_new(NULL, 0);
+    st->ctx1 = llly_ctx_new(NULL, 0);
+    st->ctx2 = llly_ctx_new(NULL, 0);
+    st->ctx3 = llly_ctx_new(NULL, 0);
     if (!st->ctx1 || !st->ctx2 || !st->ctx3) {
         fprintf(stderr, "Failed to create context.\n");
         return -1;
@@ -107,12 +107,12 @@ teardown_mctx(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->source);
-    lyd_free_withsiblings(st->target);
-    lyd_free_withsiblings(st->result);
-    ly_ctx_destroy(st->ctx1, NULL);
-    ly_ctx_destroy(st->ctx2, NULL);
-    ly_ctx_destroy(st->ctx3, NULL);
+    lllyd_free_withsiblings(st->source);
+    lllyd_free_withsiblings(st->target);
+    lllyd_free_withsiblings(st->result);
+    llly_ctx_destroy(st->ctx1, NULL);
+    llly_ctx_destroy(st->ctx2, NULL);
+    llly_ctx_destroy(st->ctx3, NULL);
 
     free(st);
     (*state) = NULL;
@@ -171,20 +171,20 @@ test_merge(void **state)
   "</module>"
 "</modules-state>";
 
-    st->target = lyd_parse_path(st->ctx1, TESTS_DIR "/api/files/merge_start.xml", LYD_XML, LYD_OPT_GET);
+    st->target = lllyd_parse_path(st->ctx1, TESTS_DIR "/api/files/merge_start.xml", LLLYD_XML, LLLYD_OPT_GET);
     assert_ptr_not_equal(st->target, NULL);
 
     asprintf(&st->path, TESTS_DIR "/api/files/mergeXX.xml");
     for (i = 1; i < 12; ++i) {
         sprintf(st->path + (strlen(st->path) - 6), "%02u.xml", i);
-        st->source = lyd_parse_path(st->ctx1, st->path, LYD_XML, LYD_OPT_GET);
+        st->source = lllyd_parse_path(st->ctx1, st->path, LLLYD_XML, LLLYD_OPT_GET);
         assert_ptr_not_equal(st->source, NULL);
 
-        assert_int_equal(lyd_merge(st->target, st->source, LYD_OPT_DESTRUCT), 0);
+        assert_int_equal(lllyd_merge(st->target, st->source, LLLYD_OPT_DESTRUCT), 0);
         st->source = NULL;
     }
 
-    lyd_print_mem(&st->output, st->target, LYD_XML, 0);
+    lllyd_print_mem(&st->output, st->target, LLLYD_XML, 0);
     assert_string_equal(st->output, output_template);
 }
 
@@ -204,28 +204,28 @@ test_merge2(void **state)
     const char *result = "<x xmlns=\"urn:x\">x</x><c1 xmlns=\"urn:x\"><c2><y>y</y></c2></c1>";
     char *printed = NULL;
 
-    /* merging leaf x and leaf y - without the parents, lyd_merge is supposed also to merge subtrees */
-    assert_ptr_not_equal(lys_parse_mem(st->ctx1, sch, LYS_IN_YANG), NULL);
-    st->result = lyd_new_path(NULL, st->ctx1, "/x:c1/c2/y", "y", 0, 0);
+    /* merging leaf x and leaf y - without the parents, lllyd_merge is supposed also to merge subtrees */
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG), NULL);
+    st->result = lllyd_new_path(NULL, st->ctx1, "/x:c1/c2/y", "y", 0, 0);
     assert_ptr_not_equal(st->result, NULL);
-    assert_int_equal(lyd_validate(&st->result, LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&st->result, LLLYD_OPT_CONFIG, NULL), 0);
 
-    /* lyd_new_path returns the first created node, so the top level c1, but we need the
+    /* lllyd_new_path returns the first created node, so the top level c1, but we need the
      * subtree with the y node */
     st->source = st->result->child->child;
-    lyd_unlink(st->source);
-    lyd_free(st->result);
+    lllyd_unlink(st->source);
+    lllyd_free(st->result);
     st->result = NULL;
 
     /* the target tree contains only the x node */
-    st->target = lyd_parse_mem(st->ctx1, trg, LYD_XML, LYD_OPT_CONFIG);
+    st->target = lllyd_parse_mem(st->ctx1, trg, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->target, NULL);
 
     /* merge them */
-    assert_int_equal(lyd_merge(st->target, st->source, 0), 0);
+    assert_int_equal(lllyd_merge(st->target, st->source, 0), 0);
 
     /* check the result */
-    lyd_print_mem(&printed, st->target, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&printed, st->target, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(printed, result);
     free(printed);
 }
@@ -249,20 +249,20 @@ test_merge3(void **state)
     const char *result = "<A xmlns=\"urn:x\"><f1>aa</f1><B><f2>bb</f2></B></A>";
     char *printed = NULL;
 
-    assert_ptr_not_equal(lys_parse_mem(st->ctx1, sch, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG), NULL);
 
-    st->source = lyd_parse_mem(st->ctx1, src, LYD_XML, LYD_OPT_CONFIG);
+    st->source = lllyd_parse_mem(st->ctx1, src, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->source, NULL);
 
-    st->target = lyd_parse_mem(st->ctx1, trg, LYD_XML, LYD_OPT_CONFIG);
+    st->target = lllyd_parse_mem(st->ctx1, trg, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->target, NULL);
 
     /* merge them */
-    assert_int_equal(lyd_merge(st->target, st->source, 0), 0);
-    assert_int_equal(lyd_validate(&st->target, LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_merge(st->target, st->source, 0), 0);
+    assert_int_equal(lllyd_validate(&st->target, LLLYD_OPT_CONFIG, NULL), 0);
 
     /* check the result */
-    lyd_print_mem(&printed, st->target, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&printed, st->target, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(printed, result);
     free(printed);
 }
@@ -291,20 +291,20 @@ test_merge4(void **state)
     const char *result = "<A xmlns=\"aa:A\"><B><f2>aaa</f2></B><C><f3>bbb</f3></C></A>";
     char *printed = NULL;
 
-    assert_ptr_not_equal(lys_parse_mem(st->ctx1, sch, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG), NULL);
 
-    st->source = lyd_parse_mem(st->ctx1, src, LYD_XML, LYD_OPT_CONFIG);
+    st->source = lllyd_parse_mem(st->ctx1, src, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->source, NULL);
 
-    st->target = lyd_parse_mem(st->ctx1, trg, LYD_XML, LYD_OPT_CONFIG);
+    st->target = lllyd_parse_mem(st->ctx1, trg, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->target, NULL);
 
     /* merge them */
-    assert_int_equal(lyd_merge(st->target, st->source, 0), 0);
-    assert_int_equal(lyd_validate(&st->target, LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_merge(st->target, st->source, 0), 0);
+    assert_int_equal(lllyd_validate(&st->target, LLLYD_OPT_CONFIG, NULL), 0);
 
     /* check the result */
-    lyd_print_mem(&printed, st->target, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&printed, st->target, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(printed, result);
     free(printed);
 }
@@ -361,20 +361,20 @@ test_merge5(void **state)
     "</inner1>";
     char *printed = NULL;
 
-    assert_ptr_not_equal(lys_parse_mem(st->ctx1, sch, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG), NULL);
 
-    st->source = lyd_parse_mem(st->ctx1, src, LYD_XML, LYD_OPT_CONFIG);
+    st->source = lllyd_parse_mem(st->ctx1, src, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->source, NULL);
 
-    st->target = lyd_parse_mem(st->ctx1, trg, LYD_XML, LYD_OPT_CONFIG);
+    st->target = lllyd_parse_mem(st->ctx1, trg, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->target, NULL);
 
     /* merge them */
-    assert_int_equal(lyd_merge(st->target, st->source, LYD_OPT_EXPLICIT), 0);
-    assert_int_equal(lyd_validate(&st->target, LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_merge(st->target, st->source, LLLYD_OPT_EXPLICIT), 0);
+    assert_int_equal(lllyd_validate(&st->target, LLLYD_OPT_CONFIG, NULL), 0);
 
     /* check the result */
-    lyd_print_mem(&printed, st->target, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&printed, st->target, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(printed, result);
     free(printed);
 }
@@ -383,21 +383,21 @@ static void
 test_merge_dflt1(void **state)
 {
     struct state *st = (*state);
-    struct lyd_node *tmp;
+    struct lllyd_node *tmp;
 
-    assert_ptr_not_equal(ly_ctx_load_module(st->ctx1, "merge-dflt", NULL), NULL);
+    assert_ptr_not_equal(llly_ctx_load_module(st->ctx1, "merge-dflt", NULL), NULL);
 
-    st->target = lyd_new_path(NULL, st->ctx1, "/merge-dflt:top/c", "c_dflt", 0, 0);
+    st->target = lllyd_new_path(NULL, st->ctx1, "/merge-dflt:top/c", "c_dflt", 0, 0);
     assert_ptr_not_equal(st->target, NULL);
-    assert_int_equal(lyd_validate(&(st->target), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->target), LLLYD_OPT_CONFIG, NULL), 0);
 
-    st->source = lyd_new_path(NULL, st->ctx1, "/merge-dflt:top/a", "a_val", 0, 0);
+    st->source = lllyd_new_path(NULL, st->ctx1, "/merge-dflt:top/a", "a_val", 0, 0);
     assert_ptr_not_equal(st->source, NULL);
-    tmp = lyd_new_path(st->source, st->ctx1, "/merge-dflt:top/b", "b_val", 0, 0);
+    tmp = lllyd_new_path(st->source, st->ctx1, "/merge-dflt:top/b", "b_val", 0, 0);
     assert_ptr_not_equal(tmp, NULL);
-    assert_int_equal(lyd_validate(&(st->source), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->source), LLLYD_OPT_CONFIG, NULL), 0);
 
-    assert_int_equal(lyd_merge(st->target, st->source, LYD_OPT_DESTRUCT), 0);
+    assert_int_equal(lllyd_merge(st->target, st->source, LLLYD_OPT_DESTRUCT), 0);
     st->source = NULL;
 
     /* c should be replaced and now be default */
@@ -408,21 +408,21 @@ static void
 test_merge_dflt2(void **state)
 {
     struct state *st = (*state);
-    struct lyd_node *tmp;
+    struct lllyd_node *tmp;
 
-    assert_ptr_not_equal(ly_ctx_load_module(st->ctx1, "merge-dflt", NULL), NULL);
+    assert_ptr_not_equal(llly_ctx_load_module(st->ctx1, "merge-dflt", NULL), NULL);
 
-    st->target = lyd_new_path(NULL, st->ctx1, "/merge-dflt:top/c", "c_dflt", 0, 0);
+    st->target = lllyd_new_path(NULL, st->ctx1, "/merge-dflt:top/c", "c_dflt", 0, 0);
     assert_ptr_not_equal(st->target, NULL);
-    assert_int_equal(lyd_validate(&(st->target), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->target), LLLYD_OPT_CONFIG, NULL), 0);
 
-    st->source = lyd_new_path(NULL, st->ctx1, "/merge-dflt:top/a", "a_val", 0, 0);
+    st->source = lllyd_new_path(NULL, st->ctx1, "/merge-dflt:top/a", "a_val", 0, 0);
     assert_ptr_not_equal(st->source, NULL);
-    tmp = lyd_new_path(st->source, st->ctx1, "/merge-dflt:top/b", "b_val", 0, 0);
+    tmp = lllyd_new_path(st->source, st->ctx1, "/merge-dflt:top/b", "b_val", 0, 0);
     assert_ptr_not_equal(tmp, NULL);
-    assert_int_equal(lyd_validate(&(st->source), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->source), LLLYD_OPT_CONFIG, NULL), 0);
 
-    assert_int_equal(lyd_merge(st->target, st->source, LYD_OPT_EXPLICIT), 0);
+    assert_int_equal(lllyd_merge(st->target, st->source, LLLYD_OPT_EXPLICIT), 0);
 
     /* c should not be replaced, so c remains not default */
     assert_int_equal(st->target->child->dflt, 0);
@@ -443,16 +443,16 @@ test_merge_to_trgctx1(void **state)
     char *printed = NULL;
 
     /* case 1: src is in ctx1, trg is in ctx2, result is expected in ctx2, src is being destroyed */
-    assert_ptr_not_equal(lys_parse_mem(st->ctx1, sch, LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_mem(st->ctx2, sch, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx2, sch, LLLYS_IN_YANG), NULL);
 
-    st->source = lyd_parse_mem(st->ctx1, src, LYD_XML, LYD_OPT_CONFIG);
+    st->source = lllyd_parse_mem(st->ctx1, src, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->source, NULL);
 
-    st->target = lyd_parse_mem(st->ctx2, trg, LYD_XML, LYD_OPT_CONFIG);
+    st->target = lllyd_parse_mem(st->ctx2, trg, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->target, NULL);
 
-    assert_int_equal(lyd_merge(st->target, st->source, LYD_OPT_DESTRUCT), 0);
+    assert_int_equal(lllyd_merge(st->target, st->source, LLLYD_OPT_DESTRUCT), 0);
     /* forget pointer to source, it should be destroyed, if not it will be seen in valgrind as memory leak */
     st->source = NULL;
 
@@ -462,10 +462,10 @@ test_merge_to_trgctx1(void **state)
     assert_ptr_equal(st->target->next->schema->module->ctx, st->ctx2);
 
     /* print the result after freeing the ctx1 */
-    ly_ctx_destroy(st->ctx1, NULL);
+    llly_ctx_destroy(st->ctx1, NULL);
     st->ctx1 = NULL;
 
-    lyd_print_mem(&printed, st->target, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&printed, st->target, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(printed, result);
     free(printed);
 }
@@ -485,16 +485,16 @@ test_merge_to_trgctx2(void **state)
     char *printed = NULL;
 
     /* case 2: src is in ctx1, trg is in ctx2, result is expected in ctx2, src is not destroyed */
-    assert_ptr_not_equal(lys_parse_mem(st->ctx1, sch, LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_mem(st->ctx2, sch, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx2, sch, LLLYS_IN_YANG), NULL);
 
-    st->source = lyd_parse_mem(st->ctx1, src, LYD_XML, LYD_OPT_CONFIG);
+    st->source = lllyd_parse_mem(st->ctx1, src, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->source, NULL);
 
-    st->target = lyd_parse_mem(st->ctx2, trg, LYD_XML, LYD_OPT_CONFIG);
+    st->target = lllyd_parse_mem(st->ctx2, trg, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->target, NULL);
 
-    assert_int_equal(lyd_merge(st->target, st->source, 0), 0);
+    assert_int_equal(lllyd_merge(st->target, st->source, 0), 0);
 
     assert_ptr_equal(st->target->schema->module->ctx, st->ctx2);
     /* check the merged data - leaf x */
@@ -504,12 +504,12 @@ test_merge_to_trgctx2(void **state)
     assert_ptr_not_equal(st->source, st->target->next);
 
     /* print the result after freeing the ctx1 */
-    lyd_free(st->source);
-    ly_ctx_destroy(st->ctx1, NULL);
+    lllyd_free(st->source);
+    llly_ctx_destroy(st->ctx1, NULL);
     st->source = NULL;
     st->ctx1 = NULL;
 
-    lyd_print_mem(&printed, st->target, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&printed, st->target, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(printed, result);
     free(printed);
 }
@@ -529,17 +529,17 @@ test_merge_to_ctx(void **state)
     char *printed = NULL;
 
     /* case 3: src is in ctx1, trg is in ctx2, result is requested in ctx3, src is destroyed */
-    assert_ptr_not_equal(lys_parse_mem(st->ctx1, sch, LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_mem(st->ctx2, sch, LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_mem(st->ctx3, sch, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx2, sch, LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx3, sch, LLLYS_IN_YANG), NULL);
 
-    st->source = lyd_parse_mem(st->ctx1, src, LYD_XML, LYD_OPT_CONFIG);
+    st->source = lllyd_parse_mem(st->ctx1, src, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->source, NULL);
 
-    st->target = lyd_parse_mem(st->ctx2, trg, LYD_XML, LYD_OPT_CONFIG);
+    st->target = lllyd_parse_mem(st->ctx2, trg, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->target, NULL);
 
-    assert_int_equal(lyd_merge_to_ctx(&st->target, st->source, LYD_OPT_DESTRUCT, st->ctx3), 0);
+    assert_int_equal(lllyd_merge_to_ctx(&st->target, st->source, LLLYD_OPT_DESTRUCT, st->ctx3), 0);
     st->source = NULL; /* source is expected to be destroyed */
 
     /* check the merged data - leaf y */
@@ -549,21 +549,21 @@ test_merge_to_ctx(void **state)
     assert_ptr_equal(st->target->next->schema->module->ctx, st->ctx3);
 
     /* print the result after freeing the ctx1 and ctx2 */
-    ly_ctx_destroy(st->ctx1, NULL);
-    ly_ctx_destroy(st->ctx2, NULL);
+    llly_ctx_destroy(st->ctx1, NULL);
+    llly_ctx_destroy(st->ctx2, NULL);
     st->ctx1 = NULL;
     st->ctx2 = NULL;
 
-    lyd_print_mem(&printed, st->target, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&printed, st->target, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(printed, result);
     free(printed);
 }
 
 
-const struct lys_module *
-test_load_module_clb(struct ly_ctx *ctx, const char *UNUSED(name), const char *UNUSED(ns), int UNUSED(options), void *user_data)
+const struct lllys_module *
+test_load_module_clb(struct llly_ctx *ctx, const char *UNUSED(name), const char *UNUSED(ns), int UNUSED(options), void *user_data)
 {
-    return lys_parse_mem(ctx, (char *) user_data, LYS_IN_YANG);
+    return lllys_parse_mem(ctx, (char *) user_data, LLLYS_IN_YANG);
 }
 
 static void
@@ -585,18 +585,18 @@ test_merge_to_ctx_with_missing_schema(void **state)
 
     /* case 4: src contains module X schema and data, trg contains Y schema and data.
        Verify that X is loaded into Y when merging X into Y. */
-    assert_ptr_not_equal(lys_parse_mem(st->ctx1, sch_x, LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_mem(st->ctx2, sch_y, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx1, sch_x, LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx2, sch_y, LLLYS_IN_YANG), NULL);
 
-    st->source = lyd_parse_mem(st->ctx1, src, LYD_XML, LYD_OPT_CONFIG);
+    st->source = lllyd_parse_mem(st->ctx1, src, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->source, NULL);
 
-    st->target = lyd_parse_mem(st->ctx2, trg, LYD_XML, LYD_OPT_CONFIG);
+    st->target = lllyd_parse_mem(st->ctx2, trg, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->target, NULL);
 
-    ly_ctx_set_module_data_clb(st->ctx2, test_load_module_clb, (void *)sch_x);
+    llly_ctx_set_module_data_clb(st->ctx2, test_load_module_clb, (void *)sch_x);
 
-    assert_int_equal(lyd_merge(st->target, st->source, 0), 0);
+    assert_int_equal(lllyd_merge(st->target, st->source, 0), 0);
 
     assert_ptr_equal(st->target->schema->module->ctx, st->ctx2);
     /* check the merged data - leaf x */
@@ -606,12 +606,12 @@ test_merge_to_ctx_with_missing_schema(void **state)
     assert_ptr_not_equal(st->source, st->target->next);
 
     /* print the result after freeing the ctx1 */
-    lyd_free(st->source);
-    ly_ctx_destroy(st->ctx1, NULL);
+    lllyd_free(st->source);
+    llly_ctx_destroy(st->ctx1, NULL);
     st->source = NULL;
     st->ctx1 = NULL;
 
-    lyd_print_mem(&printed, st->target, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&printed, st->target, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(printed, result);
     free(printed);
 }
@@ -637,18 +637,18 @@ test_merge_leafrefs(void **state)
                       "<l xmlns=\"urn:x\"><n>c</n><r>a</r></l>";
     char *prt = NULL;
 
-    assert_ptr_not_equal(lys_parse_mem(st->ctx1, sch, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx1, sch, LLLYS_IN_YANG), NULL);
 
-    st->target = lyd_parse_mem(st->ctx1, trg, LYD_XML, LYD_OPT_GET);
+    st->target = lllyd_parse_mem(st->ctx1, trg, LLLYD_XML, LLLYD_OPT_GET);
     assert_ptr_not_equal(st->target, NULL);
 
-    st->source = lyd_parse_mem(st->ctx1, src, LYD_XML, LYD_OPT_GET);
+    st->source = lllyd_parse_mem(st->ctx1, src, LLLYD_XML, LLLYD_OPT_GET);
     assert_ptr_not_equal(st->source, NULL);
 
-    assert_int_equal(lyd_merge(st->target, st->source, LYD_OPT_DESTRUCT), 0);
+    assert_int_equal(lllyd_merge(st->target, st->source, LLLYD_OPT_DESTRUCT), 0);
     st->source = NULL;
 
-    lyd_print_mem(&prt, st->target, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&prt, st->target, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(prt, res);
     free(prt);
 }

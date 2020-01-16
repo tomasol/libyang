@@ -39,7 +39,7 @@ typedef struct {
 	char *helpstring; /* Documentation for this function. */
 } COMMAND;
 
-LYS_INFORMAT get_schema_format(const char *path);
+LLLYS_INFORMAT get_schema_format(const char *path);
 
 extern COMMAND commands[];
 

@@ -12,64 +12,64 @@ int
 main(void)
 {
     int ret = 0;
-    struct ly_ctx *ctx = NULL;
-    struct lyd_node *data1 = NULL, *data2 = NULL, *node;
-    struct lyd_difflist *diff = NULL;
+    struct llly_ctx *ctx = NULL;
+    struct lllyd_node *data1 = NULL, *data2 = NULL, *node;
+    struct lllyd_difflist *diff = NULL;
 
-    ctx = ly_ctx_new(NULL, 0);
+    ctx = llly_ctx_new(NULL, 0);
     if (!ctx) {
         ret = 1;
         goto finish;
     }
 
-    if (!lys_parse_path(ctx, SCHEMA, LYS_YANG)) {
+    if (!lllys_parse_path(ctx, SCHEMA, LLLYS_YANG)) {
         ret = 1;
         goto finish;
     }
 
-    data1 = lyd_parse_path(ctx, DATA1, LYD_XML, LYD_OPT_STRICT | LYD_OPT_DATA_NO_YANGLIB);
+    data1 = lllyd_parse_path(ctx, DATA1, LLLYD_XML, LLLYD_OPT_STRICT | LLLYD_OPT_DATA_NO_YANGLIB);
     if (!data1) {
         ret = 1;
         goto finish;
     }
 
-    data2 = lyd_parse_path(ctx, DATA2, LYD_XML, LYD_OPT_STRICT | LYD_OPT_DATA_NO_YANGLIB);
+    data2 = lllyd_parse_path(ctx, DATA2, LLLYD_XML, LLLYD_OPT_STRICT | LLLYD_OPT_DATA_NO_YANGLIB);
     if (!data2) {
         ret = 1;
         goto finish;
     }
 
     CALLGRIND_START_INSTRUMENTATION;
-    diff = lyd_diff(data1, data2, 0);
+    diff = lllyd_diff(data1, data2, 0);
     if (!diff) {
         ret = 1;
         goto finish;
     }
 
-    if (lyd_merge(data1, data2, LYD_OPT_DESTRUCT)) {
+    if (lllyd_merge(data1, data2, LLLYD_OPT_DESTRUCT)) {
         ret = 1;
         goto finish;
     }
     data2 = NULL;
 
     node = data1->child->prev->prev->prev->prev->prev->prev->prev;
-    lyd_unlink(node);
+    lllyd_unlink(node);
 
-    if (lyd_insert(data1, node)) {
+    if (lllyd_insert(data1, node)) {
         ret = 1;
         goto finish;
     }
 
-    if (lyd_validate(&data1, LYD_OPT_DATA | LYD_OPT_DATA_NO_YANGLIB, NULL)) {
+    if (lllyd_validate(&data1, LLLYD_OPT_DATA | LLLYD_OPT_DATA_NO_YANGLIB, NULL)) {
         ret = 1;
         goto finish;
     }
     CALLGRIND_STOP_INSTRUMENTATION;
 
 finish:
-    lyd_free_diff(diff);
-    lyd_free_withsiblings(data1);
-    lyd_free_withsiblings(data2);
-    ly_ctx_destroy(ctx, NULL);
+    lllyd_free_diff(diff);
+    lllyd_free_withsiblings(data1);
+    lllyd_free_withsiblings(data2);
+    llly_ctx_destroy(ctx, NULL);
     return ret;
 }

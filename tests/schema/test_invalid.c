@@ -29,7 +29,7 @@
 #include "tests/config.h"
 
 struct state {
-    struct ly_ctx *ctx;
+    struct llly_ctx *ctx;
 };
 
 static int
@@ -43,7 +43,7 @@ setup_ctx(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
@@ -52,7 +52,7 @@ setup_ctx(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -64,7 +64,7 @@ teardown_ctx(void **state)
 {
     struct state *st = (*state);
 
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -76,9 +76,9 @@ test_case_act_notif(void **state)
 {
     const char *schema = TESTS_DIR"/schema/yang/files/case-act-notif.yang";
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
-    mod = lys_parse_path(st->ctx, schema, LYS_IN_YANG);
+    mod = lllys_parse_path(st->ctx, schema, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
 }
 

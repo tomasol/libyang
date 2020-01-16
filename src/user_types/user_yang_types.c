@@ -25,7 +25,7 @@
 /**
  * @brief Storage for ID used to check plugin API version compatibility.
  */
-LYTYPE_VERSION_CHECK
+LLLYTYPE_VERSION_CHECK
 
 #ifdef __GNUC__
 #  define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
@@ -34,8 +34,8 @@ LYTYPE_VERSION_CHECK
 #endif
 
 static int
-date_and_time_store_clb(struct ly_ctx *UNUSED(ctx), const char *UNUSED(type_name), const char **value_str,
-                        lyd_val *UNUSED(value), char **err_msg)
+date_and_time_store_clb(struct llly_ctx *UNUSED(ctx), const char *UNUSED(type_name), const char **value_str,
+                        lllyd_val *UNUSED(value), char **err_msg)
 {
     struct tm tm, tm2;
     uint32_t i, j;
@@ -223,7 +223,7 @@ error:
 }
 
 static int
-hex_string_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lyd_val *value, char **err_msg)
+hex_string_store_clb(struct llly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lllyd_val *value, char **err_msg)
 {
     char *str;
     uint32_t i, len;
@@ -244,14 +244,14 @@ hex_string_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const ch
     }
 
     /* update the value correctly */
-    lydict_remove(ctx, *value_str);
-    *value_str = lydict_insert_zc(ctx, str);
+    lllydict_remove(ctx, *value_str);
+    *value_str = lllydict_insert_zc(ctx, str);
     value->string = *value_str;
     return 0;
 }
 
 /* Name of this array must match the file name! */
-struct lytype_plugin_list user_yang_types[] = {
+struct lllytype_plugin_list user_yang_types[] = {
     {"ietf-yang-types", "2013-07-15", "date-and-time", date_and_time_store_clb, NULL},
     {"ietf-yang-types", "2013-07-15", "phys-address", hex_string_store_clb, NULL},
     {"ietf-yang-types", "2013-07-15", "mac-address", hex_string_store_clb, NULL},

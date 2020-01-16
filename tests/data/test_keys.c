@@ -22,8 +22,8 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *dt;
+    struct llly_ctx *ctx;
+    struct lllyd_node *dt;
 };
 static int
 setup_f(void **state)
@@ -38,7 +38,7 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         return -1;
@@ -46,7 +46,7 @@ setup_f(void **state)
 
 
     /* schema */
-    if (!lys_parse_path(st->ctx, schemafile, LYS_IN_YIN)) {
+    if (!lllys_parse_path(st->ctx, schemafile, LLLYS_IN_YIN)) {
         fprintf(stderr, "Failed to load data model \"%s\".\n", schemafile);
         return -1;
     }
@@ -59,8 +59,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free(st->dt);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free(st->dt);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -73,7 +73,7 @@ test_keys_correct(void **state)
     struct state *st = (*state);
     const char *data = "<l xmlns=\"urn:libyang:tests:keys\"><key1>1</key1><key2>2</key2><value>a</value></l>";
 
-    st->dt = lyd_parse_mem(st->ctx, data, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, data, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
 }
 
@@ -81,22 +81,22 @@ static void
 test_keys_correct2(void **state)
 {
     struct state *st = (*state);
-    struct lyd_node *node;
+    struct lllyd_node *node;
     int rc;
 
-    st->dt = lyd_new(NULL, ly_ctx_get_module(st->ctx, "keys", NULL, 1), "l");
+    st->dt = lllyd_new(NULL, llly_ctx_get_module(st->ctx, "keys", NULL, 1), "l");
     assert_ptr_not_equal(st->dt, NULL);
 
-    node = lyd_new_leaf(st->dt, NULL, "key1", "1");
+    node = lllyd_new_leaf(st->dt, NULL, "key1", "1");
     assert_ptr_not_equal(node, NULL);
 
-    node = lyd_new_leaf(st->dt, NULL, "key2", "2");
+    node = lllyd_new_leaf(st->dt, NULL, "key2", "2");
     assert_ptr_not_equal(node, NULL);
 
-    node = lyd_new_leaf(st->dt, NULL, "value", "a");
+    node = lllyd_new_leaf(st->dt, NULL, "value", "a");
     assert_ptr_not_equal(node, NULL);
 
-    rc = lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL);
+    rc = lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL);
     assert_int_equal(rc, 0);
 }
 
@@ -106,11 +106,11 @@ test_keys_missing(void **state)
     struct state *st = (*state);
     const char *data = "<l xmlns=\"urn:libyang:tests:keys\"><key2>2</key2><value>a</value></l>";
 
-    st->dt = lyd_parse_mem(st->ctx, data, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, data, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
     data = "<l xmlns=\"urn:libyang:tests:keys\"><key1>1</key1><value>a</value></l>";
-    st->dt = lyd_parse_mem(st->ctx, data, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, data, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 }
 
@@ -118,24 +118,24 @@ static void
 test_keys_missing2(void **state)
 {
     struct state *st = (*state);
-    struct lyd_node *node;
+    struct lllyd_node *node;
     int rc;
 
-    st->dt = lyd_new(NULL, ly_ctx_get_module(st->ctx, "keys", NULL, 1), "l");
+    st->dt = lllyd_new(NULL, llly_ctx_get_module(st->ctx, "keys", NULL, 1), "l");
     assert_ptr_not_equal(st->dt, NULL);
 
-    node = lyd_new_leaf(st->dt, NULL, "key1", "1");
+    node = lllyd_new_leaf(st->dt, NULL, "key1", "1");
     assert_ptr_not_equal(node, NULL);
 
-    rc = lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL);
+    rc = lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL);
     assert_int_not_equal(rc, 0);
 
-    lyd_free(node);
+    lllyd_free(node);
 
-    node = lyd_new_leaf(st->dt, NULL, "key2", "2");
+    node = lllyd_new_leaf(st->dt, NULL, "key2", "2");
     assert_ptr_not_equal(node, NULL);
 
-    rc = lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL);
+    rc = lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL);
     assert_int_not_equal(rc, 0);
 }
 
@@ -148,28 +148,28 @@ test_keys_inorder(void **state)
 
     /* invalid order */
     data = "<l xmlns=\"urn:libyang:tests:keys\"><key2>2</key2><key1>1</key1><value>a</value></l>";
-    st->dt = lyd_parse_mem(st->ctx, data, LYD_XML, LYD_OPT_CONFIG | LYD_OPT_STRICT);
+    st->dt = lllyd_parse_mem(st->ctx, data, LLLYD_XML, LLLYD_OPT_CONFIG | LLLYD_OPT_STRICT);
     assert_ptr_equal(st->dt, NULL);
 
     /* invalid order */
     data = "<l xmlns=\"urn:libyang:tests:keys\"><key1>1</key1><value>a</value><key2>2</key2></l>";
-    st->dt = lyd_parse_mem(st->ctx, data, LYD_XML, LYD_OPT_CONFIG | LYD_OPT_STRICT);
+    st->dt = lllyd_parse_mem(st->ctx, data, LLLYD_XML, LLLYD_OPT_CONFIG | LLLYD_OPT_STRICT);
     assert_ptr_equal(st->dt, NULL);
 
     /* invalid order, not a strict parsing */
     data = "<l xmlns=\"urn:libyang:tests:keys\"><key2>2</key2><key1>1</key1><value>a</value></l>";
-    st->dt = lyd_parse_mem(st->ctx, data, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, data, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
-    assert_int_equal(lyd_print_mem(&printed, st->dt, LYD_XML, 0), 0);
+    assert_int_equal(lllyd_print_mem(&printed, st->dt, LLLYD_XML, 0), 0);
     assert_string_equal(printed, correct);
     free(printed);
-    lyd_free_withsiblings(st->dt);
+    lllyd_free_withsiblings(st->dt);
 
     /* invalid order, not a strict parsing */
     data = "<l xmlns=\"urn:libyang:tests:keys\"><key1>1</key1><value>a</value><key2>2</key2></l>";
-    st->dt = lyd_parse_mem(st->ctx, data, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, data, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
-    assert_int_equal(lyd_print_mem(&printed, st->dt, LYD_XML, 0), 0);
+    assert_int_equal(lllyd_print_mem(&printed, st->dt, LLLYD_XML, 0), 0);
     assert_string_equal(printed, correct);
     free(printed);
 }
@@ -178,30 +178,30 @@ static void
 test_keys_inorder2(void **state)
 {
     struct state *st = (*state);
-    struct lyd_node *node;
+    struct lllyd_node *node;
 
-    st->dt = lyd_new(NULL, ly_ctx_get_module(st->ctx, "keys", NULL, 1), "l");
+    st->dt = lllyd_new(NULL, llly_ctx_get_module(st->ctx, "keys", NULL, 1), "l");
     assert_ptr_not_equal(st->dt, NULL);
 
     /* libyang is able to put the keys into a correct order */
-    node = lyd_new_leaf(st->dt, NULL, "key2", "2");
+    node = lllyd_new_leaf(st->dt, NULL, "key2", "2");
     assert_ptr_not_equal(node, NULL);
-    node = lyd_new_leaf(st->dt, NULL, "key1", "1");
+    node = lllyd_new_leaf(st->dt, NULL, "key1", "1");
     assert_ptr_not_equal(node, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 
-    lyd_free_withsiblings(st->dt->child);
+    lllyd_free_withsiblings(st->dt->child);
 
     /* libyang is able to put the keys into a correct order */
-    node = lyd_new_leaf(st->dt, NULL, "key2", "2");
+    node = lllyd_new_leaf(st->dt, NULL, "key2", "2");
     assert_ptr_not_equal(node, NULL);
-    node = lyd_new_leaf(st->dt, NULL, "value", "a");
+    node = lllyd_new_leaf(st->dt, NULL, "value", "a");
     assert_ptr_not_equal(node, NULL);
-    node = lyd_new_leaf(st->dt, NULL, "key1", "1");
+    node = lllyd_new_leaf(st->dt, NULL, "key1", "1");
     assert_ptr_not_equal(node, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 }
 
 int main(void)

@@ -26,7 +26,7 @@
 /**
  * @brief Storage for ID used to check plugin API version compatibility.
  */
-LYTYPE_VERSION_CHECK
+LLLYTYPE_VERSION_CHECK
 
 #ifdef __GNUC__
 #  define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
@@ -65,7 +65,7 @@ convert_ipv6_addr(const char *ipv6_addr, char **err_msg)
 }
 
 static int
-ip_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lyd_val *value, char **err_msg)
+ip_store_clb(struct llly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lllyd_val *value, char **err_msg)
 {
     char *ptr, *ipv6_addr, *result, *tmp;
 
@@ -104,8 +104,8 @@ ip_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const char **val
             free(tmp);
         }
 
-        lydict_remove(ctx, *value_str);
-        *value_str = lydict_insert_zc(ctx, result);
+        lllydict_remove(ctx, *value_str);
+        *value_str = lllydict_insert_zc(ctx, result);
         value->string = *value_str;
     } else {
         free(result);
@@ -115,7 +115,7 @@ ip_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const char **val
 }
 
 static int
-ipv4_prefix_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lyd_val *value, char **err_msg)
+ipv4_prefix_store_clb(struct llly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lllyd_val *value, char **err_msg)
 {
     char *pref_str, *ptr, *result;
     uint32_t pref, addr_bin, i, mask;
@@ -188,8 +188,8 @@ ipv4_prefix_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const c
 
     if (strcmp(result, *value_str)) {
         /* some conversion took place, update the value */
-        lydict_remove(ctx, *value_str);
-        *value_str = lydict_insert_zc(ctx, result);
+        lllydict_remove(ctx, *value_str);
+        *value_str = lllydict_insert_zc(ctx, result);
         value->string = *value_str;
     } else {
         free(result);
@@ -199,7 +199,7 @@ ipv4_prefix_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const c
 }
 
 static int
-ipv6_prefix_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lyd_val *value, char **err_msg)
+ipv6_prefix_store_clb(struct llly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lllyd_val *value, char **err_msg)
 {
     char *pref_str, *ptr, *result;
     unsigned long int pref, i, j;
@@ -272,8 +272,8 @@ ipv6_prefix_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const c
 
     if (strcmp(result, *value_str)) {
         /* some conversion took place, update the value */
-        lydict_remove(ctx, *value_str);
-        *value_str = lydict_insert_zc(ctx, result);
+        lllydict_remove(ctx, *value_str);
+        *value_str = lllydict_insert_zc(ctx, result);
         value->string = *value_str;
     } else {
         free(result);
@@ -283,7 +283,7 @@ ipv6_prefix_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const c
 }
 
 static int
-ip_prefix_store_clb(struct ly_ctx *ctx, const char *type_name, const char **value_str, lyd_val *value, char **err_msg)
+ip_prefix_store_clb(struct llly_ctx *ctx, const char *type_name, const char **value_str, lllyd_val *value, char **err_msg)
 {
     if (strchr(*value_str, ':')) {
         return ipv6_prefix_store_clb(ctx, type_name, value_str, value, err_msg);
@@ -292,7 +292,7 @@ ip_prefix_store_clb(struct ly_ctx *ctx, const char *type_name, const char **valu
 }
 
 /* Name of this array must match the file name! */
-struct lytype_plugin_list user_inet_types[] = {
+struct lllytype_plugin_list user_inet_types[] = {
     {"ietf-inet-types", "2013-07-15", "ip-address", ip_store_clb, NULL},
     {"ietf-inet-types", "2013-07-15", "ipv6-address", ip_store_clb, NULL},
     {"ietf-inet-types", "2013-07-15", "ip-address-no-zone", ip_store_clb, NULL},

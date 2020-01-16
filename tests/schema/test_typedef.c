@@ -29,7 +29,7 @@
 #include "tests/config.h"
 
 struct state {
-    struct ly_ctx *ctx;
+    struct llly_ctx *ctx;
     int fd;
     char *str1;
     char *str2;
@@ -46,7 +46,7 @@ setup_ctx(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
@@ -55,7 +55,7 @@ setup_ctx(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -67,7 +67,7 @@ teardown_ctx(void **state)
 {
     struct state *st = (*state);
 
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     if (st->fd > 0) {
         close(st->fd);
     }
@@ -85,9 +85,9 @@ test_typedef_yin(void **state)
     const char *schema = TESTS_DIR"/schema/yin/files/f.yin";
     struct state *st = (*state);
     struct stat s;
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
-    mod = lys_parse_path(st->ctx, schema, LYS_IN_YIN);
+    mod = lllys_parse_path(st->ctx, schema, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
     st->fd = open(schema, O_RDONLY);
@@ -97,7 +97,7 @@ test_typedef_yin(void **state)
     assert_int_equal(read(st->fd, st->str1, s.st_size), s.st_size);
     st->str1[s.st_size] = '\0';
 
-    lys_print_mem(&(st->str2), mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&(st->str2), mod, LLLYS_OUT_YIN, NULL, 0, 0);
 
     assert_string_equal(st->str1, st->str2);
 }
@@ -108,9 +108,9 @@ test_typedef_yang(void **state)
     const char *schema = TESTS_DIR"/schema/yang/files/f.yang";
     struct state *st = (*state);
     struct stat s;
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
-    mod = lys_parse_path(st->ctx, schema, LYS_IN_YANG);
+    mod = lllys_parse_path(st->ctx, schema, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
     st->fd = open(schema, O_RDONLY);
@@ -120,7 +120,7 @@ test_typedef_yang(void **state)
     assert_int_equal(read(st->fd, st->str1, s.st_size), s.st_size);
     st->str1[s.st_size] = '\0';
 
-    lys_print_mem(&(st->str2), mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&(st->str2), mod, LLLYS_OUT_YANG, NULL, 0, 0);
 
     assert_string_equal(st->str1, st->str2);
 }
@@ -129,7 +129,7 @@ static void
 test_typedef_11in10(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *yin_enums = "<module name=\"x1\" xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\">"
 "  <namespace uri=\"urn:x1\"/><prefix value=\"x1\"/>"
 "  <typedef name=\"e1\"><type name=\"enumeration\">"
@@ -189,45 +189,45 @@ test_typedef_11in10(void **state)
 "    type string; type empty; }}"
 "  }";
 
-    mod = lys_parse_mem(st->ctx, yin_enums, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin_enums, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INSTMT);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INSTMT);
 
-    mod = lys_parse_mem(st->ctx, yin_bits, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin_bits, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INSTMT);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INSTMT);
 
-    mod = lys_parse_mem(st->ctx, yin_union1, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin_union1, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INARG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INARG);
 
-    mod = lys_parse_mem(st->ctx, yin_union2, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, yin_union2, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INARG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INARG);
 
-    mod = lys_parse_mem(st->ctx, yang_enums, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang_enums, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INSTMT);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INSTMT);
 
-    mod = lys_parse_mem(st->ctx, yang_bits, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang_bits, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INSTMT);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INSTMT);
 
-    mod = lys_parse_mem(st->ctx, yang_union1, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang_union1, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INARG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INARG);
 
-    mod = lys_parse_mem(st->ctx, yang_union2, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang_union2, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INARG);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INARG);
 }
 
 static void
 test_typedef_11_multidents_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
-    struct lyd_node *root;
+    const struct lllys_module *mod;
+    struct lllyd_node *root;
     const char *schema = "module x {"
 "  yang-version 1.1;"
 "  namespace \"urn:x\";"
@@ -245,30 +245,30 @@ test_typedef_11_multidents_yang(void **state)
     const char *data2 = "<l1 xmlns=\"urn:x\">des3</l1><l2 xmlns=\"urn:x\">des3</l2>";
     const char *data3 = "<l1 xmlns=\"urn:x\">rsa</l1><l2 xmlns=\"urn:x\">rsa</l2>";
 
-    mod = lys_parse_mem(st->ctx, schema, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, schema, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_string_equal(ly_errmsg(st->ctx), "Failed to resolve identityref \"des\".");
-    assert_string_equal(ly_errpath(st->ctx), "/x:l2");
+    assert_string_equal(llly_errmsg(st->ctx), "Failed to resolve identityref \"des\".");
+    assert_string_equal(llly_errpath(st->ctx), "/x:l2");
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_string_equal(ly_errmsg(st->ctx), "Failed to resolve identityref \"des3\".");
-    assert_string_equal(ly_errpath(st->ctx), "/x:l2");
+    assert_string_equal(llly_errmsg(st->ctx), "Failed to resolve identityref \"des3\".");
+    assert_string_equal(llly_errpath(st->ctx), "/x:l2");
 
-    root = lyd_parse_mem(st->ctx, data3, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data3, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 static void
 test_typedef_11_multidents_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
-    struct lyd_node *root;
+    const struct lllys_module *mod;
+    struct lllyd_node *root;
     const char *schema = "<module name=\"x\" xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\">"
 "  <yang-version value=\"1.1\"/>"
 "  <namespace uri=\"urn:x\"/><prefix value=\"x\"/>"
@@ -285,29 +285,29 @@ test_typedef_11_multidents_yin(void **state)
     const char *data2 = "<l1 xmlns=\"urn:x\">des3</l1><l2 xmlns=\"urn:x\">des3</l2>";
     const char *data3 = "<l1 xmlns=\"urn:x\">rsa</l1><l2 xmlns=\"urn:x\">rsa</l2>";
 
-    mod = lys_parse_mem(st->ctx, schema, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, schema, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_string_equal(ly_errmsg(st->ctx), "Failed to resolve identityref \"des\".");
-    assert_string_equal(ly_errpath(st->ctx), "/x:l2");
+    assert_string_equal(llly_errmsg(st->ctx), "Failed to resolve identityref \"des\".");
+    assert_string_equal(llly_errpath(st->ctx), "/x:l2");
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_string_equal(ly_errmsg(st->ctx), "Failed to resolve identityref \"des3\".");
-    assert_string_equal(ly_errpath(st->ctx), "/x:l2");
+    assert_string_equal(llly_errmsg(st->ctx), "Failed to resolve identityref \"des3\".");
+    assert_string_equal(llly_errpath(st->ctx), "/x:l2");
 
-    root = lyd_parse_mem(st->ctx, data3, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data3, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 static void
 test_typedef_11_enums_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *enums1 = "module x {"
 "  yang-version 1.1;"
 "  namespace \"urn:x\";"
@@ -336,19 +336,19 @@ test_typedef_11_enums_yang(void **state)
 "  typedef e1 { type enumeration { enum one; enum two; } default one; }"
 "  leaf l { type e1 { enum one; } } }";
 
-    mod = lys_parse_mem(st->ctx, enums1, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, enums1, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    mod = lys_parse_mem(st->ctx, enums2, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, enums2, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_ENUM_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_ENUM_INVAL);
 
-    mod = lys_parse_mem(st->ctx, enums3, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, enums3, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_ENUM_INNAME);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_ENUM_INNAME);
 
-    mod = lys_parse_mem(st->ctx, enums4, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, enums4, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 }
 
@@ -356,7 +356,7 @@ static void
 test_typedef_11_enums_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *enums1 = "<module name=\"x\" xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\">"
 "  <yang-version value=\"1.1\"/>"
 "  <namespace uri=\"urn:x\"/><prefix value=\"x\"/>"
@@ -401,19 +401,19 @@ test_typedef_11_enums_yin(void **state)
 "  </type></leaf>"
 "</module>";
 
-    mod = lys_parse_mem(st->ctx, enums1, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, enums1, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    mod = lys_parse_mem(st->ctx, enums2, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, enums2, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_ENUM_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_ENUM_INVAL);
 
-    mod = lys_parse_mem(st->ctx, enums3, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, enums3, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_ENUM_INNAME);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_ENUM_INNAME);
 
-    mod = lys_parse_mem(st->ctx, enums4, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, enums4, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 }
 
@@ -421,7 +421,7 @@ static void
 test_typedef_11_bits_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     const char *bits1 = "module y {"
 "  yang-version 1.1;"
@@ -451,19 +451,19 @@ test_typedef_11_bits_yang(void **state)
 "  typedef b1 { type bits { bit one; bit two; } default one; }"
 "  leaf l { type b1 { bit one; } } }";
 
-    mod = lys_parse_mem(st->ctx, bits1, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, bits1, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    mod = lys_parse_mem(st->ctx, bits2, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, bits2, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_BITS_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_BITS_INVAL);
 
-    mod = lys_parse_mem(st->ctx, bits3, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, bits3, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_BITS_INNAME);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_BITS_INNAME);
 
-    mod = lys_parse_mem(st->ctx, bits4, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, bits4, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 }
 
@@ -471,7 +471,7 @@ static void
 test_typedef_11_bits_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     const char *bits1 = "<module name=\"y\" xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\">"
 "  <yang-version value=\"1.1\"/>"
@@ -517,19 +517,19 @@ test_typedef_11_bits_yin(void **state)
 "  </type></leaf>"
 "</module>";
 
-    mod = lys_parse_mem(st->ctx, bits1, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, bits1, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    mod = lys_parse_mem(st->ctx, bits2, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, bits2, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_BITS_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_BITS_INVAL);
 
-    mod = lys_parse_mem(st->ctx, bits3, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, bits3, LLLYS_IN_YIN);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_BITS_INNAME);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_BITS_INNAME);
 
-    mod = lys_parse_mem(st->ctx, bits4, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, bits4, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 }
 
@@ -537,7 +537,7 @@ static void
 test_typedef_11_iff_ident_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     const char *idents = "module x {"
 "  yang-version 1.1;"
@@ -549,37 +549,37 @@ test_typedef_11_iff_ident_yang(void **state)
 "  identity \"two\" { base \"ibase\"; }"
 "  leaf l { type identityref { base ibase; } } }";
 
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<l xmlns=\"urn:x\">one</l>";
     const char *data2 = "<l xmlns=\"urn:x\">two</l>";
 
-    mod = lys_parse_mem(st->ctx, idents, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, idents, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 
-    lys_features_enable(mod, "x");
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    lllys_features_enable(mod, "x");
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
 
-    lys_features_disable(mod, "x");
-    assert_int_not_equal(lyd_validate(&root, LYD_OPT_CONFIG, NULL), 0);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    lllys_features_disable(mod, "x");
+    assert_int_not_equal(lllyd_validate(&root, LLLYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 static void
 test_typedef_11_iff_ident_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     const char *idents = "<module name=\"x\" xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\">"
 "  <yang-version value=\"1.1\"/>"
@@ -589,37 +589,37 @@ test_typedef_11_iff_ident_yin(void **state)
 "  <identity name=\"two\"><base name=\"ibase\"/></identity>"
 "  <leaf name=\"l\"><type name=\"identityref\"><base name=\"ibase\"/></type></leaf></module>";
 
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<l xmlns=\"urn:x\">one</l>";
     const char *data2 = "<l xmlns=\"urn:x\">two</l>";
 
-    mod = lys_parse_mem(st->ctx, idents, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, idents, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 
-    lys_features_enable(mod, "x");
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    lllys_features_enable(mod, "x");
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
 
-    lys_features_disable(mod, "x");
-    assert_int_not_equal(lyd_validate(&root, LYD_OPT_CONFIG, NULL), 0);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    lllys_features_disable(mod, "x");
+    assert_int_not_equal(lllyd_validate(&root, LLLYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 static void
 test_typedef_11_iff_enums_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     const char *idents = "module x {"
 "  yang-version 1.1;"
@@ -629,37 +629,37 @@ test_typedef_11_iff_enums_yang(void **state)
 "  typedef myenum { type enumeration { enum one { if-feature x; } enum two; } }"
 "  leaf l { type myenum; } }";
 
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<l xmlns=\"urn:x\">one</l>";
     const char *data2 = "<l xmlns=\"urn:x\">two</l>";
 
-    mod = lys_parse_mem(st->ctx, idents, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, idents, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 
-    lys_features_enable(mod, "x");
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    lllys_features_enable(mod, "x");
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
 
-    lys_features_disable(mod, "x");
-    assert_int_not_equal(lyd_validate(&root, LYD_OPT_CONFIG, NULL), 0);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    lllys_features_disable(mod, "x");
+    assert_int_not_equal(lllyd_validate(&root, LLLYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 static void
 test_typedef_11_iff_enums_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     const char *idents = "<module name=\"x\" xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\">"
 "  <yang-version value=\"1.1\"/>"
@@ -669,37 +669,37 @@ test_typedef_11_iff_enums_yin(void **state)
 "  </type></typedef>"
 "  <leaf name=\"l\"><type name=\"myenum\"/></leaf></module>";
 
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<l xmlns=\"urn:x\">one</l>";
     const char *data2 = "<l xmlns=\"urn:x\">two</l>";
 
-    mod = lys_parse_mem(st->ctx, idents, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, idents, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 
-    lys_features_enable(mod, "x");
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    lllys_features_enable(mod, "x");
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
 
-    lys_features_disable(mod, "x");
-    assert_int_not_equal(lyd_validate(&root, LYD_OPT_CONFIG, NULL), 0);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    lllys_features_disable(mod, "x");
+    assert_int_not_equal(lllyd_validate(&root, LLLYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 static void
 test_typedef_11_iff_bits_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     const char *idents = "module x {"
 "  yang-version 1.1;"
@@ -709,37 +709,37 @@ test_typedef_11_iff_bits_yang(void **state)
 "  typedef mybits { type bits { bit one { if-feature x;} bit two; } }"
 "  leaf l { type mybits; } }";
 
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<l xmlns=\"urn:x\">one</l>";
     const char *data2 = "<l xmlns=\"urn:x\">two</l>";
 
-    mod = lys_parse_mem(st->ctx, idents, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, idents, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 
-    lys_features_enable(mod, "x");
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    lllys_features_enable(mod, "x");
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
 
-    lys_features_disable(mod, "x");
-    assert_int_not_equal(lyd_validate(&root, LYD_OPT_CONFIG, NULL), 0);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    lllys_features_disable(mod, "x");
+    assert_int_not_equal(lllyd_validate(&root, LLLYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 static void
 test_typedef_11_iff_bits_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     const char *idents = "<module name=\"x\" xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\">"
 "  <yang-version value=\"1.1\"/>"
@@ -749,37 +749,37 @@ test_typedef_11_iff_bits_yin(void **state)
 "  </type></typedef>"
 "  <leaf name=\"l\"><type name=\"mybits\"/></leaf></module>";
 
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<l xmlns=\"urn:x\">one</l>";
     const char *data2 = "<l xmlns=\"urn:x\">two</l>";
 
-    mod = lys_parse_mem(st->ctx, idents, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, idents, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 
-    lys_features_enable(mod, "x");
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    lllys_features_enable(mod, "x");
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
 
-    lys_features_disable(mod, "x");
-    assert_int_not_equal(lyd_validate(&root, LYD_OPT_CONFIG, NULL), 0);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    lllys_features_disable(mod, "x");
+    assert_int_not_equal(lllyd_validate(&root, LLLYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 static void
 test_typedef_11_pattern_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     const char *modstr = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 "<module name=\"x\"\n"
@@ -793,37 +793,37 @@ test_typedef_11_pattern_yin(void **state)
 "    </type>\n  </leaf>\n</module>\n";
     char *printed;
 
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<l xmlns=\"urn:x\">enabled</l>"; /* legal */
     const char *data2 = "<l xmlns=\"urn:x\">10</l>";      /* ilegal, starts with number */
     const char *data3 = "<l xmlns=\"urn:x\">notoric</l>"; /* ilegal, starts with not */
 
-    mod = lys_parse_mem(st->ctx, modstr, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, modstr, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&printed, mod, LYS_OUT_YIN, NULL, 0, 0);
+    lllys_print_mem(&printed, mod, LLLYS_OUT_YIN, NULL, 0, 0);
     assert_ptr_not_equal(printed, NULL);
     assert_string_equal(printed, modstr);
     free(printed);
 
-    root = lyd_parse_mem(st->ctx, data3, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data3, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_NOCONSTR);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_NOCONSTR);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_NOCONSTR);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_NOCONSTR);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 static void
 test_typedef_11_pattern_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     const char *modstr = "module x {\n"
 "  yang-version 1.1;\n"
@@ -836,29 +836,29 @@ test_typedef_11_pattern_yang(void **state)
 "}\n";
     char *printed;
 
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<l xmlns=\"urn:x\">enabled</l>"; /* legal */
     const char *data2 = "<l xmlns=\"urn:x\">10</l>";      /* ilegal, starts with number */
     const char *data3 = "<l xmlns=\"urn:x\">notoric</l>"; /* ilegal, starts with not */
 
-    mod = lys_parse_mem(st->ctx, modstr, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, modstr, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
-    lys_print_mem(&printed, mod, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&printed, mod, LLLYS_OUT_YANG, NULL, 0, 0);
     assert_ptr_not_equal(printed, NULL);
     assert_string_equal(printed, modstr);
     free(printed);
 
-    root = lyd_parse_mem(st->ctx, data3, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data3, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_NOCONSTR);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_NOCONSTR);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_NOCONSTR);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_NOCONSTR);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 /* this test follows RFC 7950, sec. 9.12.4 */
@@ -914,36 +914,36 @@ test_typedef_11_union_leafref_yin(void **state)
 "    </type>"
 "  </leaf>"
 "</module>";
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<filter xmlns=\"urn:x\"><name>http</name></filter>"
                         "<filter2 xmlns=\"urn:x\">http</filter2>"; /* legal */
     const char *data2 = "<filter2 xmlns=\"urn:x\">http</filter2>"; /* illegal, leafref nor enumeration does not match */
     const char *data3 = "<filter3 xmlns=\"urn:x\">http</filter3>"; /* legal, leafref does not match, but string does */
     const char *data4 = "<filter4 xmlns=\"urn:x\">http</filter4>"; /* legal, leafref does not need to match */
 
-    assert_ptr_not_equal(lys_parse_mem(st->ctx, modstr, LYS_IN_YIN), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx, modstr, LLLYS_IN_YIN), NULL);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    assert_int_equal(((struct lyd_node_leaf_list *)root->next)->value_type, LY_TYPE_LEAFREF);
-    assert_ptr_equal(root->child, ((struct lyd_node_leaf_list *)root->next)->value.leafref);
-    lyd_free_withsiblings(root);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root->next)->value_type, LLLY_TYPE_LEAFREF);
+    assert_ptr_equal(root->child, ((struct lllyd_node_leaf_list *)root->next)->value.leafref);
+    lllyd_free_withsiblings(root);
 
-    root = lyd_parse_mem(st->ctx, data3, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data3, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    assert_int_equal(((struct lyd_node_leaf_list *)root)->value_type, LY_TYPE_STRING);
-    lyd_free_withsiblings(root);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root)->value_type, LLLY_TYPE_STRING);
+    lllyd_free_withsiblings(root);
 
-    root = lyd_parse_mem(st->ctx, data4, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data4, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    assert_int_equal(((struct lyd_node_leaf_list *)root)->value_type, LY_TYPE_STRING);
-    assert_int_equal(((struct lyd_node_leaf_list *)root)->value_flags, LY_VALUE_UNRES);
-    assert_string_equal("http", ((struct lyd_node_leaf_list *)root)->value.string);
-    lyd_free_withsiblings(root);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root)->value_type, LLLY_TYPE_STRING);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root)->value_flags, LLLY_VALUE_UNRES);
+    assert_string_equal("http", ((struct lllyd_node_leaf_list *)root)->value.string);
+    lllyd_free_withsiblings(root);
 }
 
 static void
@@ -995,36 +995,36 @@ test_typedef_11_union_leafref_yang(void **state)
 "    }"
 "  }"
 "}";
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<filter xmlns=\"urn:x\"><name>http</name></filter>"
                         "<filter2 xmlns=\"urn:x\">http</filter2>"; /* legal */
     const char *data2 = "<filter2 xmlns=\"urn:x\">http</filter2>"; /* illegal, leafref nor enumeration does not match */
     const char *data3 = "<filter3 xmlns=\"urn:x\">http</filter3>"; /* legal, leafref does not match, but string does */
     const char *data4 = "<filter4 xmlns=\"urn:x\">http</filter4>"; /* legal, leafref does not need to match */
 
-    assert_ptr_not_equal(lys_parse_mem(st->ctx, modstr, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx, modstr, LLLYS_IN_YANG), NULL);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    assert_int_equal(((struct lyd_node_leaf_list *)root->next)->value_type, LY_TYPE_LEAFREF);
-    assert_ptr_equal(root->child, ((struct lyd_node_leaf_list *)root->next)->value.leafref);
-    lyd_free_withsiblings(root);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root->next)->value_type, LLLY_TYPE_LEAFREF);
+    assert_ptr_equal(root->child, ((struct lllyd_node_leaf_list *)root->next)->value.leafref);
+    lllyd_free_withsiblings(root);
 
-    root = lyd_parse_mem(st->ctx, data3, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data3, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    assert_int_equal(((struct lyd_node_leaf_list *)root)->value_type, LY_TYPE_STRING);
-    lyd_free_withsiblings(root);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root)->value_type, LLLY_TYPE_STRING);
+    lllyd_free_withsiblings(root);
 
-    root = lyd_parse_mem(st->ctx, data4, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data4, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    assert_int_equal(((struct lyd_node_leaf_list *)root)->value_type, LY_TYPE_STRING);
-    assert_int_equal(((struct lyd_node_leaf_list *)root)->value_flags, LY_VALUE_UNRES);
-    assert_string_equal("http", ((struct lyd_node_leaf_list *)root)->value.string);
-    lyd_free_withsiblings(root);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root)->value_type, LLLY_TYPE_STRING);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root)->value_flags, LLLY_VALUE_UNRES);
+    assert_string_equal("http", ((struct lllyd_node_leaf_list *)root)->value.string);
+    lllyd_free_withsiblings(root);
 }
 
 static void
@@ -1056,31 +1056,31 @@ test_typedef_11_union_empty_yin(void **state)
 "    <type name=\"mytype2\"/>"
 "  </leaf>"
 "</module>";
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<integer xmlns=\"urn:x\"/>"; /* illegal */
     const char *data2 = "<value xmlns=\"urn:x\">xxx</value>"; /* illegal */
     const char *data3 = "<value xmlns=\"urn:x\">11</value>"; /* legal, int32 */
     const char *data4 = "<value xmlns=\"urn:x\"/>"; /* legal, empty */
 
-    assert_ptr_not_equal(lys_parse_mem(st->ctx, modstr, LYS_IN_YIN), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx, modstr, LLLYS_IN_YIN), NULL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data3, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data3, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    assert_int_equal(((struct lyd_node_leaf_list *)root)->value_type, LY_TYPE_INT32);
-    lyd_free_withsiblings(root);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root)->value_type, LLLY_TYPE_INT32);
+    lllyd_free_withsiblings(root);
 
-    root = lyd_parse_mem(st->ctx, data4, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data4, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    assert_int_equal(((struct lyd_node_leaf_list *)root)->value_type, LY_TYPE_EMPTY);
-    lyd_free_withsiblings(root);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root)->value_type, LLLY_TYPE_EMPTY);
+    lllyd_free_withsiblings(root);
 }
 
 static void
@@ -1109,35 +1109,35 @@ test_typedef_11_union_empty_yang(void **state)
 "    type mytype2;"
 "  }"
 "}";
-    struct lyd_node *root;
+    struct lllyd_node *root;
     const char *data1 = "<integer xmlns=\"urn:x\"/>"; /* illegal */
     const char *data2 = "<value xmlns=\"urn:x\">xxx</value>"; /* illegal */
     const char *data3 = "<value xmlns=\"urn:x\">11</value>"; /* legal, int32 */
     const char *data4 = "<value xmlns=\"urn:x\"/>"; /* legal, empty */
 
-    assert_ptr_not_equal(lys_parse_mem(st->ctx, modstr, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(st->ctx, modstr, LLLYS_IN_YANG), NULL);
 
-    root = lyd_parse_mem(st->ctx, data1, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data2, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(root, NULL);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INVAL);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INVAL);
 
-    root = lyd_parse_mem(st->ctx, data3, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data3, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    assert_int_equal(((struct lyd_node_leaf_list *)root)->value_type, LY_TYPE_INT32);
-    lyd_free_withsiblings(root);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root)->value_type, LLLY_TYPE_INT32);
+    lllyd_free_withsiblings(root);
 
-    root = lyd_parse_mem(st->ctx, data4, LYD_XML, LYD_OPT_CONFIG);
+    root = lllyd_parse_mem(st->ctx, data4, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(root, NULL);
-    assert_int_equal(((struct lyd_node_leaf_list *)root)->value_type, LY_TYPE_EMPTY);
-    lyd_free_withsiblings(root);
+    assert_int_equal(((struct lllyd_node_leaf_list *)root)->value_type, LLLY_TYPE_EMPTY);
+    lllyd_free_withsiblings(root);
 }
 
 static void
-test_typedef_patterns_optimizations_schema(struct state *st, const struct lys_module *mod)
+test_typedef_patterns_optimizations_schema(struct state *st, const struct lllys_module *mod)
 {
     const char *valid = "<a xmlns=\"urn:libyang:tests:patterns\">a</a>"
                         "<b xmlns=\"urn:libyang:tests:patterns\">2</b>"
@@ -1145,83 +1145,83 @@ test_typedef_patterns_optimizations_schema(struct state *st, const struct lys_mo
     const char *invalid1 = "<a xmlns=\"urn:libyang:tests:patterns\">1</a>";
     const char *invalid2 = "<b xmlns=\"urn:libyang:tests:patterns\">b</b>";
     const char *invalid3 = "<c xmlns=\"urn:libyang:tests:patterns\">c</c>";
-    struct lys_node_grp *grp = NULL;
-    struct lys_node_leaf *leaf = NULL;
-    struct lys_node *iter;
-    struct lyd_node *data;
+    struct lllys_node_grp *grp = NULL;
+    struct lllys_node_leaf *leaf = NULL;
+    struct lllys_node *iter;
+    struct lllyd_node *data;
 
     /* check optimizations */
     /* 1. module's typedef has PCRE data */
     assert_int_equal(mod->tpdf_size, 1);
     assert_ptr_not_equal(mod->tpdf, NULL);
-    assert_int_equal(mod->tpdf[0].type.base, LY_TYPE_STRING);
+    assert_int_equal(mod->tpdf[0].type.base, LLLY_TYPE_STRING);
     assert_int_equal(mod->tpdf[0].type.info.str.pat_count, 1);
-#ifdef LY_ENABLED_CACHE
+#ifdef LLLY_ENABLED_CACHE
     assert_ptr_not_equal(mod->tpdf[0].type.info.str.patterns_pcre, NULL);
 #endif
 
     /* 2. grouping's typedef has PCRE data */
-    LY_TREE_FOR(mod->data, iter) {
-        if (iter->nodetype == LYS_GROUPING && !strcmp(iter->name, "a")) {
-            grp = (struct lys_node_grp*)iter;
+    LLLY_TREE_FOR(mod->data, iter) {
+        if (iter->nodetype == LLLYS_GROUPING && !strcmp(iter->name, "a")) {
+            grp = (struct lllys_node_grp*)iter;
             break;
         }
     }
     assert_ptr_not_equal(grp, NULL);
     assert_int_equal(grp->tpdf_size, 1);
     assert_ptr_not_equal(grp->tpdf, NULL);
-    assert_int_equal(grp->tpdf[0].type.base, LY_TYPE_STRING);
+    assert_int_equal(grp->tpdf[0].type.base, LLLY_TYPE_STRING);
     assert_int_equal(grp->tpdf[0].type.info.str.pat_count, 1);
-#ifdef LY_ENABLED_CACHE
+#ifdef LLLY_ENABLED_CACHE
     assert_ptr_not_equal(grp->tpdf[0].type.info.str.patterns_pcre, NULL);
 #endif
 
     /* 3. grouping's leaf does not have PCRE data */
-    LY_TREE_FOR(mod->data, iter) {
-        if (iter->nodetype == LYS_GROUPING && !strcmp(iter->name, "b")) {
-            leaf = (struct lys_node_leaf*)iter->child;
+    LLLY_TREE_FOR(mod->data, iter) {
+        if (iter->nodetype == LLLYS_GROUPING && !strcmp(iter->name, "b")) {
+            leaf = (struct lllys_node_leaf*)iter->child;
             break;
         }
     }
     assert_ptr_not_equal(leaf, NULL);
-    assert_int_equal(leaf->type.base, LY_TYPE_STRING);
+    assert_int_equal(leaf->type.base, LLLY_TYPE_STRING);
     assert_int_equal(leaf->type.info.str.pat_count, 1);
-#ifdef LY_ENABLED_CACHE
+#ifdef LLLY_ENABLED_CACHE
     assert_ptr_equal(leaf->type.info.str.patterns_pcre, NULL);
 #endif
     leaf = NULL;
 
     /* 4. but it's instantiated copy does have PCRE data */
-    LY_TREE_FOR(mod->data, iter) {
-        if (iter->nodetype == LYS_USES && !strcmp(iter->name, "b")) {
-            leaf = (struct lys_node_leaf*)iter->child;
+    LLLY_TREE_FOR(mod->data, iter) {
+        if (iter->nodetype == LLLYS_USES && !strcmp(iter->name, "b")) {
+            leaf = (struct lllys_node_leaf*)iter->child;
             break;
         }
     }
     assert_ptr_not_equal(leaf, NULL);
-    assert_int_equal(leaf->type.base, LY_TYPE_STRING);
+    assert_int_equal(leaf->type.base, LLLY_TYPE_STRING);
     assert_int_equal(leaf->type.info.str.pat_count, 1);
-#ifdef LY_ENABLED_CACHE
+#ifdef LLLY_ENABLED_CACHE
     assert_ptr_not_equal(leaf->type.info.str.patterns_pcre, NULL);
 #endif
 
     /* check data */
-    data = lyd_parse_mem(st->ctx, valid, LYD_XML, LYD_OPT_CONFIG);
+    data = lllyd_parse_mem(st->ctx, valid, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(data, NULL);
-    lyd_free_withsiblings(data);
+    lllyd_free_withsiblings(data);
 
-    assert_ptr_equal(lyd_parse_mem(st->ctx, invalid1, LYD_XML, LYD_OPT_CONFIG), NULL);
-    assert_ptr_equal(lyd_parse_mem(st->ctx, invalid2, LYD_XML, LYD_OPT_CONFIG), NULL);
-    assert_ptr_equal(lyd_parse_mem(st->ctx, invalid3, LYD_XML, LYD_OPT_CONFIG), NULL);
+    assert_ptr_equal(lllyd_parse_mem(st->ctx, invalid1, LLLYD_XML, LLLYD_OPT_CONFIG), NULL);
+    assert_ptr_equal(lllyd_parse_mem(st->ctx, invalid2, LLLYD_XML, LLLYD_OPT_CONFIG), NULL);
+    assert_ptr_equal(lllyd_parse_mem(st->ctx, invalid3, LLLYD_XML, LLLYD_OPT_CONFIG), NULL);
 }
 
 static void
 test_typedef_patterns_optimizations_yang(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
-    mod = lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/files/patterns.yang", LYS_IN_YANG);
+    mod = lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/files/patterns.yang", LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
     test_typedef_patterns_optimizations_schema(st, mod);
@@ -1231,9 +1231,9 @@ static void
 test_typedef_patterns_optimizations_yin(void **state)
 {
     struct state *st = (*state);
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
-    mod = lys_parse_path(st->ctx, TESTS_DIR"/schema/yin/files/patterns.yin", LYS_IN_YIN);
+    mod = lllys_parse_path(st->ctx, TESTS_DIR"/schema/yin/files/patterns.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
     test_typedef_patterns_optimizations_schema(st, mod);

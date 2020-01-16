@@ -30,7 +30,7 @@
 #include "tests/config.h"
 #include "libyang.h"
 
-struct ly_ctx *ctx = NULL;
+struct llly_ctx *ctx = NULL;
 
 const char *a_data_xml = "\
 <x xmlns=\"urn:a\">\n\
@@ -40,7 +40,7 @@ const char *a_data_xml = "\
 int
 generic_init(char *yang_file, char *yang_folder)
 {
-    LYS_INFORMAT yang_format;
+    LLLYS_INFORMAT yang_format;
     char *schema = NULL;
     struct stat sb_schema;
     int fd = -1;
@@ -49,9 +49,9 @@ generic_init(char *yang_file, char *yang_folder)
         goto error;
     }
 
-    yang_format = LYS_IN_YIN;
+    yang_format = LLLYS_IN_YIN;
 
-    ctx = ly_ctx_new(yang_folder, 0);
+    ctx = llly_ctx_new(yang_folder, 0);
     if (!ctx) {
         goto error;
     }
@@ -64,7 +64,7 @@ generic_init(char *yang_file, char *yang_folder)
     schema = mmap(NULL, sb_schema.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     close(fd);
 
-    if (!lys_parse_mem(ctx, schema, yang_format)) {
+    if (!lllys_parse_mem(ctx, schema, yang_format)) {
         goto error;
     }
 
@@ -106,7 +106,7 @@ teardown_f(void **state)
 {
     (void) state; /* unused */
     if (ctx)
-        ly_ctx_destroy(ctx, NULL);
+        llly_ctx_destroy(ctx, NULL);
 
     return 0;
 }
@@ -119,7 +119,7 @@ test_lydict_insert(void **state)
     const char *string;
     size_t len = 1;
 
-    string = lydict_insert(ctx, value, len);
+    string = lllydict_insert(ctx, value, len);
     if (!string) {
         fail();
     }
@@ -128,14 +128,14 @@ test_lydict_insert(void **state)
     value = "bubba";
     len = 5;
 
-    string = lydict_insert(ctx, value, len);
+    string = lllydict_insert(ctx, value, len);
     if (!string) {
         fail();
     }
 
     assert_string_equal(value, string);
-    lydict_remove(ctx, "bubba");
-    lydict_remove(ctx, "x");
+    lllydict_remove(ctx, "bubba");
+    lllydict_remove(ctx, "x");
 }
 
 static void
@@ -149,7 +149,7 @@ test_lydict_insert_zc(void **state)
         fail();
     }
     const char *string;
-    string = lydict_insert_zc(ctx, value);
+    string = lllydict_insert_zc(ctx, value);
     if (!string) {
         free(value);
         fail();
@@ -162,15 +162,15 @@ test_lydict_insert_zc(void **state)
         fail();
     }
 
-    string = lydict_insert_zc(ctx, value);
+    string = lllydict_insert_zc(ctx, value);
     if (!string) {
         free(value);
         fail();
     }
 
     assert_string_equal("bubba", string);
-    lydict_remove(ctx, "bubba");
-    lydict_remove(ctx, "x");
+    lllydict_remove(ctx, "bubba");
+    lllydict_remove(ctx, "x");
 }
 
 static void
@@ -191,7 +191,7 @@ test_lydict_remove(void **state)
     }
 
     const char *string;
-    string = lydict_insert_zc(ctx, value); /* 1st instance */
+    string = lllydict_insert_zc(ctx, value); /* 1st instance */
     if (!string) {
         free(value);
         free(value2);
@@ -199,15 +199,15 @@ test_lydict_remove(void **state)
     }
 
     assert_string_equal("new_name", string);
-    str = lydict_insert(ctx, "new_name", 0); /* 2nd instance */
+    str = lllydict_insert(ctx, "new_name", 0); /* 2nd instance */
     assert_ptr_equal(str, string);
-    lydict_remove(ctx, string); /* remove 2nd instance */
-    lydict_remove(ctx, string); /* remove 1st instance */
+    lllydict_remove(ctx, string); /* remove 2nd instance */
+    lllydict_remove(ctx, string); /* remove 1st instance */
     /* string content is supposed to be invalid since now! */
-    str = lydict_insert_zc(ctx, value2);
+    str = lllydict_insert_zc(ctx, value2);
     assert_ptr_not_equal(str, NULL);
     assert_ptr_not_equal(str, string);
-    lydict_remove(ctx, str);
+    lllydict_remove(ctx, str);
 }
 
 static void
@@ -216,34 +216,34 @@ test_similar_strings(void **state) {
 
     const char *ret = NULL;
 
-    ret = lydict_insert(ctx, "aaab", 4);
+    ret = lllydict_insert(ctx, "aaab", 4);
     if (!ret) {
         fail();
     }
     assert_string_equal(ret, "aaab");
 
-    ret = lydict_insert(ctx, "aaa", 3);
+    ret = lllydict_insert(ctx, "aaa", 3);
     if (!ret) {
         fail();
     }
     assert_string_equal(ret, "aaa");
 
-    ret = lydict_insert(ctx, "bbb", 3);
+    ret = lllydict_insert(ctx, "bbb", 3);
     if (!ret) {
         fail();
     }
     assert_string_equal(ret, "bbb");
 
-    ret = lydict_insert(ctx, "bbba", 4);
+    ret = lllydict_insert(ctx, "bbba", 4);
     if (!ret) {
         fail();
     }
     assert_string_equal(ret, "bbba");
 
-    lydict_remove(ctx, "aaa");
-    lydict_remove(ctx, "aaab");
-    lydict_remove(ctx, "bbb");
-    lydict_remove(ctx, "bbba");
+    lllydict_remove(ctx, "aaa");
+    lllydict_remove(ctx, "aaab");
+    lllydict_remove(ctx, "bbb");
+    lllydict_remove(ctx, "bbba");
 }
 
 int main(void)

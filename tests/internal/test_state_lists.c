@@ -25,19 +25,19 @@
 #include "hash_table.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *root1, *root2;
+    struct llly_ctx *ctx;
+    struct lllyd_node *root1, *root2;
 };
 
 const char *schemafile = TESTS_DIR"/data/files/state-lists.yang";
 const char *datafile = TESTS_DIR"/data/files/state-lists1.xml";
 
-#ifdef LY_ENABLED_CACHE
+#ifdef LLLY_ENABLED_CACHE
 
 static void
-lyd_hash_check(struct lyd_node *node)
+lllyd_hash_check(struct lllyd_node *node)
 {
-    struct lyd_node *iter;
+    struct lllyd_node *iter;
     uint32_t orig_hash, i;
 
     if (!node) {
@@ -46,33 +46,33 @@ lyd_hash_check(struct lyd_node *node)
 
     orig_hash = node->hash;
     node->hash = 0;
-    lyd_hash(node);
+    lllyd_hash(node);
     assert(node->hash == orig_hash);
 
-    if (node->schema->nodetype & (LYS_CONTAINER | LYS_LIST | LYS_RPC | LYS_ACTION | LYS_NOTIF | LYS_INPUT | LYS_OUTPUT)) {
+    if (node->schema->nodetype & (LLLYS_CONTAINER | LLLYS_LIST | LLLYS_RPC | LLLYS_ACTION | LLLYS_NOTIF | LLLYS_INPUT | LLLYS_OUTPUT)) {
         for (i = 0, iter = node->child; iter; ++i, iter = iter->next) {
-            if ((iter->schema->nodetype == LYS_LIST) && !lyd_list_has_keys(iter)) {
+            if ((iter->schema->nodetype == LLLYS_LIST) && !lllyd_list_has_keys(iter)) {
                 --i;
             }
         }
 
-        if (i >= LY_CACHE_HT_MIN_CHILDREN) {
+        if (i >= LLLY_CACHE_HT_MIN_CHILDREN) {
             assert(node->ht && (node->ht->used == i));
-            LY_TREE_FOR(node->child, iter) {
-                if ((iter->schema->nodetype != LYS_LIST) || lyd_list_has_keys(iter)) {
-                    assert(!lyht_find(node->ht, &iter, iter->hash, NULL));
+            LLLY_TREE_FOR(node->child, iter) {
+                if ((iter->schema->nodetype != LLLYS_LIST) || lllyd_list_has_keys(iter)) {
+                    assert(!lllyht_find(node->ht, &iter, iter->hash, NULL));
                 }
             }
         } else {
             assert(!node->ht);
         }
 
-        LY_TREE_FOR(node->child, iter) {
-            lyd_hash_check(iter);
+        LLLY_TREE_FOR(node->child, iter) {
+            lllyd_hash_check(iter);
         }
     }
 
-    if ((node->schema->nodetype != LYS_LIST) || lyd_list_has_keys(node)) {
+    if ((node->schema->nodetype != LLLYS_LIST) || lllyd_list_has_keys(node)) {
         assert(node->hash);
     } else {
         assert(!node->hash);
@@ -82,30 +82,30 @@ lyd_hash_check(struct lyd_node *node)
 static void
 test_hash(void **state)
 {
-    struct lyd_node *root, *node;
+    struct lllyd_node *root, *node;
     struct state *st = (*state);
 
-    root = lyd_new_path(NULL, st->ctx, "/state-lists:cont/l/leaf1", "cc", 0, 0);
+    root = lllyd_new_path(NULL, st->ctx, "/state-lists:cont/l/leaf1", "cc", 0, 0);
     assert_non_null(root);
-    lyd_hash_check(root);
+    lllyd_hash_check(root);
 
-    node = lyd_new_path(root, NULL, "/state-lists:cont/l[1]/lcont/l2/leaf4", "cc", 0, 0);
+    node = lllyd_new_path(root, NULL, "/state-lists:cont/l[1]/lcont/l2/leaf4", "cc", 0, 0);
     assert_non_null(root);
     assert_string_equal(node->schema->name, "lcont");
-    lyd_hash_check(root);
+    lllyd_hash_check(root);
 
-    assert_int_equal(lyd_insert(st->root1, root->child), 0);
-    lyd_free(root);
-    lyd_hash_check(st->root1);
+    assert_int_equal(lllyd_insert(st->root1, root->child), 0);
+    lllyd_free(root);
+    lllyd_hash_check(st->root1);
 
-    lyd_free(st->root1->child->next->next->next);
-    lyd_hash_check(st->root1);
+    lllyd_free(st->root1->child->next->next->next);
+    lllyd_hash_check(st->root1);
 
-    lyd_free(st->root1->child->child->next->next->child->next->child);
-    lyd_hash_check(st->root1);
+    lllyd_free(st->root1->child->child->next->next->child->next->child);
+    lllyd_hash_check(st->root1);
 
-    lyd_free(st->root1->child->child->next);
-    lyd_hash_check(st->root1);
+    lllyd_free(st->root1->child->child->next);
+    lllyd_hash_check(st->root1);
 }
 
 #endif
@@ -122,21 +122,21 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         return -1;
     }
 
     /* schema */
-    if (!lys_parse_path(st->ctx, schemafile, LYS_IN_YANG)) {
+    if (!lllys_parse_path(st->ctx, schemafile, LLLYS_IN_YANG)) {
         fprintf(stderr, "Failed to load data model \"%s\".\n", schemafile);
         return -1;
     }
 
     /* data */
-    st->root1 = lyd_parse_path(st->ctx, datafile, LYD_XML, LYD_OPT_GET);
-    st->root2 = lyd_dup(st->root1, 1);
+    st->root1 = lllyd_parse_path(st->ctx, datafile, LLLYD_XML, LLLYD_OPT_GET);
+    st->root2 = lllyd_dup(st->root1, 1);
     if (!st->root1 || !st->root2) {
         fprintf(stderr, "Failed to load initial data file.\n");
         return -1;
@@ -150,13 +150,13 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-#ifdef LY_ENABLED_CACHE
-    lyd_hash_check(st->root1);
-    lyd_hash_check(st->root2);
+#ifdef LLLY_ENABLED_CACHE
+    lllyd_hash_check(st->root1);
+    lllyd_hash_check(st->root2);
 #endif
-    lyd_free(st->root1);
-    lyd_free(st->root2);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free(st->root1);
+    lllyd_free(st->root2);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -199,9 +199,9 @@ test_merge_same(void **state)
     "</cont>\n";
 
     /* merging 2 exact same data trees, the result should always be again the same data tree */
-    assert_int_equal(lyd_merge(st->root1, st->root2, 0), 0);
+    assert_int_equal(lllyd_merge(st->root1, st->root2, 0), 0);
 
-    lyd_print_mem(&str1, st->root1, LYD_XML, LYP_FORMAT);
+    lllyd_print_mem(&str1, st->root1, LLLYD_XML, LLLYP_FORMAT);
     assert_non_null(str1);
 
     assert_string_equal(str1, str2);
@@ -211,7 +211,7 @@ test_merge_same(void **state)
 static void
 test_merge_equal_leaflist(void **state)
 {
-    struct lyd_node *node;
+    struct lllyd_node *node;
     char *str1;
     struct state *st = (*state);
     const char str2[] =
@@ -246,13 +246,13 @@ test_merge_equal_leaflist(void **state)
     "</cont>\n";
 
     /* we added a leaf-list, an exact same one is already there */
-    node = lyd_new_path(st->root2, NULL, "/state-lists:cont/ll", "abab", 0, 0);
+    node = lllyd_new_path(st->root2, NULL, "/state-lists:cont/ll", "abab", 0, 0);
     assert_non_null(node);
     assert_string_equal(node->schema->name, "ll");
 
-    assert_int_equal(lyd_merge(st->root1, st->root2, 0), 0);
+    assert_int_equal(lllyd_merge(st->root1, st->root2, 0), 0);
 
-    lyd_print_mem(&str1, st->root1, LYD_XML, LYP_FORMAT);
+    lllyd_print_mem(&str1, st->root1, LLLYD_XML, LLLYP_FORMAT);
     assert_non_null(str1);
 
     assert_string_equal(str1, str2);
@@ -262,7 +262,7 @@ test_merge_equal_leaflist(void **state)
 static void
 test_merge_equal_list(void **state)
 {
-    struct lyd_node *node;
+    struct lllyd_node *node;
     char *str1;
     struct state *st = (*state);
     const char str2[] =
@@ -307,15 +307,15 @@ test_merge_equal_list(void **state)
     "</cont>\n";
 
     /* we added a list, an exact same one is already there */
-    node = lyd_dup(st->root1->child, 1);
+    node = lllyd_dup(st->root1->child, 1);
     assert_non_null(node);
     assert_string_equal(node->schema->name, "l");
 
-    assert_int_equal(lyd_insert(st->root2, node), 0);
+    assert_int_equal(lllyd_insert(st->root2, node), 0);
 
-    assert_int_equal(lyd_merge(st->root1, st->root2, 0), 0);
+    assert_int_equal(lllyd_merge(st->root1, st->root2, 0), 0);
 
-    lyd_print_mem(&str1, st->root1, LYD_XML, LYP_FORMAT);
+    lllyd_print_mem(&str1, st->root1, LLLYD_XML, LLLYP_FORMAT);
     assert_non_null(str1);
 
     assert_string_equal(str1, str2);
@@ -325,7 +325,7 @@ test_merge_equal_list(void **state)
 static void
 test_merge_nonequal_list(void **state)
 {
-    struct lyd_node *node;
+    struct lllyd_node *node;
     char *str1;
     struct state *st = (*state);
     const char str2[] =
@@ -368,19 +368,19 @@ test_merge_nonequal_list(void **state)
     "</cont>\n";
 
     /* now one of the keyless lists is different, the whole instance should be in the diff */
-    node = lyd_dup(st->root1->child->next, 1);
+    node = lllyd_dup(st->root1->child->next, 1);
     assert_non_null(node);
     assert_string_equal(node->schema->name, "l");
 
-    assert_int_equal(lyd_insert(st->root2, node), 0);
+    assert_int_equal(lllyd_insert(st->root2, node), 0);
 
-    node = lyd_new_path(st->root2, NULL, "/state-lists:cont/l[5]/lcont/l2[1]/leaf5", "cc", 0, LYD_PATH_OPT_UPDATE);
+    node = lllyd_new_path(st->root2, NULL, "/state-lists:cont/l[5]/lcont/l2[1]/leaf5", "cc", 0, LLLYD_PATH_OPT_UPDATE);
     assert_non_null(node);
     assert_string_equal(node->schema->name, "leaf5");
 
-    assert_int_equal(lyd_merge(st->root1, st->root2, 0), 0);
+    assert_int_equal(lllyd_merge(st->root1, st->root2, 0), 0);
 
-    lyd_print_mem(&str1, st->root1, LYD_XML, LYP_FORMAT);
+    lllyd_print_mem(&str1, st->root1, LLLYD_XML, LLLYP_FORMAT);
     assert_non_null(str1);
 
     assert_string_equal(str1, str2);
@@ -390,90 +390,90 @@ test_merge_nonequal_list(void **state)
 static void
 test_diff_same(void **state)
 {
-    struct lyd_difflist *diff;
+    struct lllyd_difflist *diff;
     struct state *st = (*state);
 
     /* diffing 2 exact same data trees, the result should be no differences */
-    diff = lyd_diff(st->root1, st->root2, 0);
+    diff = lllyd_diff(st->root1, st->root2, 0);
     assert_non_null(diff);
-    assert_int_equal(diff->type[0], LYD_DIFF_END);
-    lyd_free_diff(diff);
+    assert_int_equal(diff->type[0], LLLYD_DIFF_END);
+    lllyd_free_diff(diff);
 }
 
 static void
 test_diff_equal_leaflist(void **state)
 {
-    struct lyd_node *node;
-    struct lyd_difflist *diff;
+    struct lllyd_node *node;
+    struct lllyd_difflist *diff;
     struct state *st = (*state);
 
     /* we added a leaf-list, an exact same one is already there */
-    node = lyd_new_path(st->root2, NULL, "/state-lists:cont/ll", "abab", 0, 0);
+    node = lllyd_new_path(st->root2, NULL, "/state-lists:cont/ll", "abab", 0, 0);
     assert_non_null(node);
     assert_string_equal(node->schema->name, "ll");
 
-    diff = lyd_diff(st->root1, st->root2, 0);
+    diff = lllyd_diff(st->root1, st->root2, 0);
     assert_non_null(diff);
-    assert_int_equal(diff->type[0], LYD_DIFF_CREATED);
+    assert_int_equal(diff->type[0], LLLYD_DIFF_CREATED);
     assert_string_equal(diff->second[0]->schema->name, "ll");
-    assert_string_equal(((struct lyd_node_leaf_list *)diff->second[0])->value_str, "abab");
-    assert_int_equal(diff->type[1], LYD_DIFF_END);
-    lyd_free_diff(diff);
+    assert_string_equal(((struct lllyd_node_leaf_list *)diff->second[0])->value_str, "abab");
+    assert_int_equal(diff->type[1], LLLYD_DIFF_END);
+    lllyd_free_diff(diff);
 }
 
 static void
 test_diff_equal_list(void **state)
 {
-    struct lyd_node *node;
-    struct lyd_difflist *diff;
+    struct lllyd_node *node;
+    struct lllyd_difflist *diff;
     struct state *st = (*state);
 
     /* we added a list, an exact same one is already there */
-    node = lyd_dup(st->root1->child, 1);
+    node = lllyd_dup(st->root1->child, 1);
     assert_non_null(node);
     assert_string_equal(node->schema->name, "l");
 
-    assert_int_equal(lyd_insert(st->root2, node), 0);
+    assert_int_equal(lllyd_insert(st->root2, node), 0);
 
-    diff = lyd_diff(st->root1, st->root2, 0);
+    diff = lllyd_diff(st->root1, st->root2, 0);
     assert_non_null(diff);
-    assert_int_equal(diff->type[0], LYD_DIFF_CREATED);
+    assert_int_equal(diff->type[0], LLLYD_DIFF_CREATED);
     assert_string_equal(diff->second[0]->schema->name, "l");
-    assert_int_equal(lyd_list_pos(diff->second[0]), 5);
-    assert_int_equal(diff->type[1], LYD_DIFF_END);
-    lyd_free_diff(diff);
+    assert_int_equal(lllyd_list_pos(diff->second[0]), 5);
+    assert_int_equal(diff->type[1], LLLYD_DIFF_END);
+    lllyd_free_diff(diff);
 }
 
 static void
 test_diff_nonequal_list(void **state)
 {
-    struct lyd_node *node;
-    struct lyd_difflist *diff;
+    struct lllyd_node *node;
+    struct lllyd_difflist *diff;
     struct state *st = (*state);
 
     /* now one of the keyless lists is different, the whole instance should be in the diff */
-    node = lyd_dup(st->root1->child->next, 1);
+    node = lllyd_dup(st->root1->child->next, 1);
     assert_non_null(node);
     assert_string_equal(node->schema->name, "l");
 
-    assert_int_equal(lyd_insert(st->root2, node), 0);
+    assert_int_equal(lllyd_insert(st->root2, node), 0);
 
-    node = lyd_new_path(st->root2, NULL, "/state-lists:cont/l[5]/lcont/l2[1]/leaf5", "cc", 0, LYD_PATH_OPT_UPDATE);
+    node = lllyd_new_path(st->root2, NULL, "/state-lists:cont/l[5]/lcont/l2[1]/leaf5", "cc", 0, LLLYD_PATH_OPT_UPDATE);
     assert_non_null(node);
     assert_string_equal(node->schema->name, "leaf5");
 
-    diff = lyd_diff(st->root1, st->root2, 0);
-    assert_int_equal(diff->type[0], LYD_DIFF_CREATED);
+    diff = lllyd_diff(st->root1, st->root2, 0);
+    assert_int_equal(diff->type[0], LLLYD_DIFF_CREATED);
     assert_string_equal(diff->second[0]->schema->name, "l");
-    assert_int_equal(lyd_list_pos(diff->second[0]), 5);
-    assert_int_equal(diff->type[1], LYD_DIFF_END);
-    lyd_free_diff(diff);
+    assert_int_equal(lllyd_list_pos(diff->second[0]), 5);
+    assert_int_equal(diff->type[1], LLLYD_DIFF_END);
+    lllyd_free_diff(diff);
 }
 
 int main(void)
 {
     const struct CMUnitTest tests[] = {
-#ifdef LY_ENABLED_CACHE
+#ifdef LLLY_ENABLED_CACHE
                     cmocka_unit_test_setup_teardown(test_hash, setup_f, teardown_f),
 #endif
                     cmocka_unit_test_setup_teardown(test_merge_same, setup_f, teardown_f),

@@ -12,8 +12,8 @@
  *     https://opensource.org/licenses/BSD-3-Clause
  */
 
-#ifndef LY_PARSER_H_
-#define LY_PARSER_H_
+#ifndef LLLY_PARSER_H_
+#define LLLY_PARSER_H_
 
 #include <pcre.h>
 #include <sys/mman.h>
@@ -32,8 +32,8 @@
  * @defgroup yin YIN format support
  * @{
  */
-struct lys_module *yin_read_module(struct ly_ctx *ctx, const char *data, const char *revision, int implement);
-struct lys_submodule *yin_read_submodule(struct lys_module *module, const char *data, struct unres_schema *unres);
+struct lllys_module *yin_read_module(struct llly_ctx *ctx, const char *data, const char *revision, int implement);
+struct lllys_submodule *yin_read_submodule(struct lllys_module *module, const char *data, struct unres_schema *unres);
 
 /**@} yin */
 
@@ -41,7 +41,7 @@ struct lys_submodule *yin_read_submodule(struct lys_module *module, const char *
  * @defgroup xmldata XML data format support
  * @{
  */
-struct lyd_node *xml_read_data(struct ly_ctx *ctx, const char *data, int options);
+struct lllyd_node *xml_read_data(struct llly_ctx *ctx, const char *data, int options);
 
 /**@} xmldata */
 
@@ -49,79 +49,79 @@ struct lyd_node *xml_read_data(struct ly_ctx *ctx, const char *data, int options
  * @defgroup jsondata JSON data format support
  * @{
  */
-struct lyd_node *lyd_parse_json(struct ly_ctx *ctx, const char *data, int options, const struct lyd_node *rpc_act,
-                                const struct lyd_node *data_tree, const char *yang_data_name);
+struct lllyd_node *lllyd_parse_json(struct llly_ctx *ctx, const char *data, int options, const struct lllyd_node *rpc_act,
+                                const struct lllyd_node *data_tree, const char *yang_data_name);
 
 /**@} jsondata */
 
 /**
- * @defgroup lybdata LYB data format support
+ * @defgroup lllybdata LLLYB data format support
  * @{
  */
-struct lyd_node *lyd_parse_lyb(struct ly_ctx *ctx, const char *data, int options, const struct lyd_node *data_tree,
+struct lllyd_node *lllyd_parse_lyb(struct llly_ctx *ctx, const char *data, int options, const struct lllyd_node *data_tree,
                                const char *yang_data_name, int *parsed);
 
-/**@} lybdata */
+/**@} lllybdata */
 
 /**
  * internal options values for schema parsers
  */
-#define LYS_PARSE_OPT_CFG_NOINHERIT 0x01 /**< do not inherit config flag */
-#define LYS_PARSE_OPT_CFG_IGNORE    0x02 /**< ignore config flag (in rpc, actions, notifications) */
-#define LYS_PARSE_OPT_CFG_MASK      0x03
-#define LYS_PARSE_OPT_INGRP         0x04 /**< flag to know that parser is inside a grouping */
+#define LLLYS_PARSE_OPT_CFG_NOINHERIT 0x01 /**< do not inherit config flag */
+#define LLLYS_PARSE_OPT_CFG_IGNORE    0x02 /**< ignore config flag (in rpc, actions, notifications) */
+#define LLLYS_PARSE_OPT_CFG_MASK      0x03
+#define LLLYS_PARSE_OPT_INGRP         0x04 /**< flag to know that parser is inside a grouping */
 
 /* list of YANG statement strings */
-extern const char *ly_stmt_str[];
+extern const char *llly_stmt_str[];
 
-enum LY_IDENT {
-    LY_IDENT_SIMPLE,   /* only syntax rules */
-    LY_IDENT_FEATURE,
-    LY_IDENT_IDENTITY,
-    LY_IDENT_TYPE,
-    LY_IDENT_NODE,
-    LY_IDENT_NAME,     /* uniqueness across the siblings */
-    LY_IDENT_PREFIX,
-    LY_IDENT_EXTENSION
+enum LLLY_IDENT {
+    LLLY_IDENT_SIMPLE,   /* only syntax rules */
+    LLLY_IDENT_FEATURE,
+    LLLY_IDENT_IDENTITY,
+    LLLY_IDENT_TYPE,
+    LLLY_IDENT_NODE,
+    LLLY_IDENT_NAME,     /* uniqueness across the siblings */
+    LLLY_IDENT_PREFIX,
+    LLLY_IDENT_EXTENSION
 };
-int lyp_yin_fill_ext(void *parent, LYEXT_PAR parent_type, LYEXT_SUBSTMT substmt, uint8_t substmt_index,
-                     struct lys_module *module, struct lyxml_elem *yin, struct lys_ext_instance ***ext,
+int lllyp_yin_fill_ext(void *parent, LLLYEXT_PAR parent_type, LLLYEXT_SUBSTMT substmt, uint8_t substmt_index,
+                     struct lllys_module *module, struct lllyxml_elem *yin, struct lllys_ext_instance ***ext,
                      uint8_t ext_index, struct unres_schema *unres);
 
-int lyp_yin_parse_complex_ext(struct lys_module *mod, struct lys_ext_instance_complex *ext,
-                              struct lyxml_elem *yin, struct unres_schema *unres);
-int lyp_yin_parse_subnode_ext(struct lys_module *mod, void *elem, LYEXT_PAR elem_type,
-                              struct lyxml_elem *yin, LYEXT_SUBSTMT type, uint8_t i, struct unres_schema *unres);
+int lllyp_yin_parse_complex_ext(struct lllys_module *mod, struct lllys_ext_instance_complex *ext,
+                              struct lllyxml_elem *yin, struct unres_schema *unres);
+int lllyp_yin_parse_subnode_ext(struct lllys_module *mod, void *elem, LLLYEXT_PAR elem_type,
+                              struct lllyxml_elem *yin, LLLYEXT_SUBSTMT type, uint8_t i, struct unres_schema *unres);
 
-struct lys_type *lyp_get_next_union_type(struct lys_type *type, struct lys_type *prev_type, int *found);
+struct lllys_type *lllyp_get_next_union_type(struct lllys_type *type, struct lllys_type *prev_type, int *found);
 
 /* return: 0 - ret set, ok; 1 - ret not set, no log, unknown meta; -1 - ret not set, log, fatal error */
-int lyp_fill_attr(struct ly_ctx *ctx, struct lyd_node *parent, const char *module_ns, const char *module_name,
-                  const char *attr_name, const char *attr_value, struct lyxml_elem *xml, int options, struct lyd_attr **ret);
+int lllyp_fill_attr(struct llly_ctx *ctx, struct lllyd_node *parent, const char *module_ns, const char *module_name,
+                  const char *attr_name, const char *attr_value, struct lllyxml_elem *xml, int options, struct lllyd_attr **ret);
 
-int lyp_check_edit_attr(struct ly_ctx *ctx, struct lyd_attr *attr, struct lyd_node *parent, int *editbits);
+int lllyp_check_edit_attr(struct llly_ctx *ctx, struct lllyd_attr *attr, struct lllyd_node *parent, int *editbits);
 
-struct lys_type *lyp_parse_value(struct lys_type *type, const char **value_, struct lyxml_elem *xml,
-                                 struct lyd_node_leaf_list *leaf, struct lyd_attr *attr, struct lys_module *local_mod,
+struct lllys_type *lllyp_parse_value(struct lllys_type *type, const char **value_, struct lllyxml_elem *xml,
+                                 struct lllyd_node_leaf_list *leaf, struct lllyd_attr *attr, struct lllys_module *local_mod,
                                  int store, int dflt, int trusted);
 
-int lyp_check_length_range(struct ly_ctx *ctx, const char *expr, struct lys_type *type);
+int lllyp_check_length_range(struct llly_ctx *ctx, const char *expr, struct lllys_type *type);
 
-int lyp_check_pattern(struct ly_ctx *ctx, const char *pattern, pcre **pcre_precomp);
-int lyp_precompile_pattern(struct ly_ctx *ctx, const char *pattern, pcre** pcre_cmp, pcre_extra **pcre_std);
+int lllyp_check_pattern(struct llly_ctx *ctx, const char *pattern, pcre **pcre_precomp);
+int lllyp_precompile_pattern(struct llly_ctx *ctx, const char *pattern, pcre** pcre_cmp, pcre_extra **pcre_std);
 
-int fill_yin_type(struct lys_module *module, struct lys_node *parent, struct lyxml_elem *yin, struct lys_type *type,
+int fill_yin_type(struct lllys_module *module, struct lllys_node *parent, struct lllyxml_elem *yin, struct lllys_type *type,
                   int tpdftype, struct unres_schema *unres);
 
-int lyp_check_status(uint16_t flags1, struct lys_module *mod1, const char *name1,
-                     uint16_t flags2, struct lys_module *mod2, const char *name2,
-                     const struct lys_node *node);
+int lllyp_check_status(uint16_t flags1, struct lllys_module *mod1, const char *name1,
+                     uint16_t flags2, struct lllys_module *mod2, const char *name2,
+                     const struct lllys_node *node);
 
-void lyp_del_includedup(struct lys_module *mod, int free_subs);
+void lllyp_del_includedup(struct lllys_module *mod, int free_subs);
 
-int dup_typedef_check(const char *type, struct lys_tpdf *tpdf, int size);
+int dup_typedef_check(const char *type, struct lllys_tpdf *tpdf, int size);
 
-int dup_identities_check(const char *id, struct lys_module *module);
+int dup_identities_check(const char *id, struct lllys_module *module);
 
 /**
  * @brief Get know if the node is part of the RPC/action's input/output
@@ -129,7 +129,7 @@ int dup_identities_check(const char *id, struct lys_module *module);
  * @param node Schema node to be examined.
  * @return 1 for true, 0 for false
  */
-int lyp_is_rpc_action(struct lys_node *node);
+int lllyp_is_rpc_action(struct lllys_node *node);
 
 /**
  * @brief Check validity of data parser options.
@@ -138,29 +138,29 @@ int lyp_is_rpc_action(struct lys_node *node);
  * @param func name of the function where called
  * @return 0 for ok, 1 when multiple data types bits are set, or incompatible options are used together.
  */
-int lyp_data_check_options(struct ly_ctx *ctx, int options, const char *func);
+int lllyp_data_check_options(struct llly_ctx *ctx, int options, const char *func);
 
-int lyp_check_identifier(struct ly_ctx *ctx, const char *id, enum LY_IDENT type, struct lys_module *module, struct lys_node *parent);
-int lyp_check_date(struct ly_ctx *ctx, const char *date);
-int lyp_check_mandatory_augment(struct lys_node_augment *node, const struct lys_node *target);
-int lyp_check_mandatory_choice(struct lys_node *node);
+int lllyp_check_identifier(struct llly_ctx *ctx, const char *id, enum LLLY_IDENT type, struct lllys_module *module, struct lllys_node *parent);
+int lllyp_check_date(struct llly_ctx *ctx, const char *date);
+int lllyp_check_mandatory_augment(struct lllys_node_augment *node, const struct lllys_node *target);
+int lllyp_check_mandatory_choice(struct lllys_node *node);
 
-int lyp_check_include(struct lys_module *module, const char *value,
-                      struct lys_include *inc, struct unres_schema *unres);
-int lyp_check_include_missing(struct lys_module *main_module);
-int lyp_check_import(struct lys_module *module, const char *value, struct lys_import *imp);
-int lyp_check_circmod_add(struct lys_module *module);
-void lyp_check_circmod_pop(struct ly_ctx *ctx);
+int lllyp_check_include(struct lllys_module *module, const char *value,
+                      struct lllys_include *inc, struct unres_schema *unres);
+int lllyp_check_include_missing(struct lllys_module *main_module);
+int lllyp_check_import(struct lllys_module *module, const char *value, struct lllys_import *imp);
+int lllyp_check_circmod_add(struct lllys_module *module);
+void lllyp_check_circmod_pop(struct llly_ctx *ctx);
 
-void lyp_sort_revisions(struct lys_module *module);
-int lyp_rfn_apply_ext(struct lys_module *module);
-int lyp_deviation_apply_ext(struct lys_module *module);
-int lyp_mand_check_ext(struct lys_ext_instance_complex *ext, const char *ext_name);
+void lllyp_sort_revisions(struct lllys_module *module);
+int lllyp_rfn_apply_ext(struct lllys_module *module);
+int lllyp_deviation_apply_ext(struct lllys_module *module);
+int lllyp_mand_check_ext(struct lllys_ext_instance_complex *ext, const char *ext_name);
 
-const char *lyp_get_yang_data_template_name(const struct lyd_node *node);
-const struct lys_node *lyp_get_yang_data_template(const struct lys_module *module, const char *yang_data_name, int yang_data_name_len);
+const char *lllyp_get_yang_data_template_name(const struct lllyd_node *node);
+const struct lllys_node *lllyp_get_yang_data_template(const struct lllys_module *module, const char *yang_data_name, int yang_data_name_len);
 
-void lyp_ext_instance_rm(struct ly_ctx *ctx, struct lys_ext_instance ***ext, uint8_t *size, uint8_t index);
+void lllyp_ext_instance_rm(struct llly_ctx *ctx, struct lllys_ext_instance ***ext, uint8_t *size, uint8_t index);
 
 /**
  * @brief Propagate imports and includes into the main module
@@ -169,20 +169,20 @@ void lyp_ext_instance_rm(struct ly_ctx *ctx, struct lys_ext_instance ***ext, uin
  * @param inc Filled include structure
  * @return 0 for success, 1 for failure
  */
-int lyp_propagate_submodule(struct lys_module *module, struct lys_include *inc);
+int lllyp_propagate_submodule(struct lllys_module *module, struct lllys_include *inc);
 
 /* return: -1 = error, 0 = success, 1 = already there (if it was disabled, it is enabled first) */
-int lyp_ctx_check_module(struct lys_module *module);
+int lllyp_ctx_check_module(struct lllys_module *module);
 
-int lyp_ctx_add_module(struct lys_module *module);
+int lllyp_ctx_add_module(struct lllys_module *module);
 
 /**
  * @brief Add annotations definitions of attributes and URL config used in ietf-netconf RPCs.
  */
-int lyp_add_ietf_netconf_annotations_config(struct lys_module *mod);
+int lllyp_add_ietf_netconf_annotations_config(struct lllys_module *mod);
 
 /**
- * @brief mmap() wrapper for parsers. To unmap, use lyp_munmap().
+ * @brief mmap() wrapper for parsers. To unmap, use lllyp_munmap().
  *
  * @param[in] prot The desired memory protection as in case of mmap().
  * @param[in] fd File descriptor for getting data.
@@ -192,12 +192,12 @@ int lyp_add_ietf_netconf_annotations_config(struct lys_module *mod);
  * @param[out] addr Pointer to the memory where the file data is mapped.
  * @return 0 on success, non-zero on error.
  */
-int lyp_mmap(struct ly_ctx *ctx, int fd, size_t addsize, size_t *length, void **addr);
+int lllyp_mmap(struct llly_ctx *ctx, int fd, size_t addsize, size_t *length, void **addr);
 
 /**
- * @brief Unmap function for the data mapped by lyp_mmap()
+ * @brief Unmap function for the data mapped by lllyp_mmap()
  */
-int lyp_munmap(void *addr, size_t length);
+int lllyp_munmap(void *addr, size_t length);
 
 /**
  * Store UTF-8 character specified as 4byte integer into the dst buffer.
@@ -210,8 +210,8 @@ int lyp_munmap(void *addr, size_t length);
  * 00010000 -- 001FFFFF:    11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
  *
  */
-unsigned int pututf8(struct ly_ctx *ctx, char *dst, int32_t value);
-unsigned int copyutf8(struct ly_ctx *ctx, char *dst, const char *src);
+unsigned int pututf8(struct llly_ctx *ctx, char *dst, int32_t value);
+unsigned int copyutf8(struct llly_ctx *ctx, char *dst, const char *src);
 
 /**
  * @brief Find a module. First, imports from \p module with matching \p prefix, \p name, or both are checked,
@@ -227,7 +227,7 @@ unsigned int copyutf8(struct ly_ctx *ctx, char *dst, const char *src);
  *
  * @return Matching module, NULL if not found.
  */
-const struct lys_module *lyp_get_module(const struct lys_module *module, const char *prefix, int pref_len,
+const struct lllys_module *lllyp_get_module(const struct lllys_module *module, const char *prefix, int pref_len,
                                                const char *name, int name_len, int in_data);
 
 /**
@@ -236,7 +236,7 @@ const struct lys_module *lyp_get_module(const struct lys_module *module, const c
  * @param[in] module Module with imports.
  * @param[in] ns Namespace to be found.
  */
-const struct lys_module *lyp_get_import_module_ns(const struct lys_module *module, const char *ns);
+const struct lllys_module *lllyp_get_import_module_ns(const struct lllys_module *module, const char *ns);
 
 /*
  * Internal functions implementing YANG (extension and user type) plugin support
@@ -251,7 +251,7 @@ const struct lys_module *lyp_get_import_module_ns(const struct lys_module *modul
  * @param[in] revision Revision of the extension's module
  * @return pointer to the extension plugin structure, NULL if no plugin available
  */
-struct lyext_plugin *ext_get_plugin(const char *name, const char *module, const char *revision);
+struct lllyext_plugin *ext_get_plugin(const char *name, const char *module, const char *revision);
 
 /**
  * @brief Try to store a value as a user type defined by a plugin.
@@ -262,7 +262,7 @@ struct lyext_plugin *ext_get_plugin(const char *name, const char *module, const 
  * @param[in,out] value Filled value to be overwritten by the user store callback.
  * @return 0 on successful storing, 1 if the type is not a user type, -1 on error.
  */
-int lytype_store(const struct lys_module *mod, const char *type_name, const char **value_str, lyd_val *value);
+int lllytype_store(const struct lllys_module *mod, const char *type_name, const char **value_str, lllyd_val *value);
 
 /**
  * @brief Free a user type stored value.
@@ -271,6 +271,6 @@ int lytype_store(const struct lys_module *mod, const char *type_name, const char
  * @param[in] value Value union to free.
  * @param[in] value_str String value of the value.
  */
-void lytype_free(const struct lys_type *type, lyd_val value, const char *value_str);
+void lllytype_free(const struct lllys_type *type, lllyd_val value, const char *value_str);
 
-#endif /* LY_PARSER_H_ */
+#endif /* LLLY_PARSER_H_ */

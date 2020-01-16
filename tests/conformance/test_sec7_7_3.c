@@ -33,8 +33,8 @@
 #define TEST_DATA_FILE_LOAD_FAIL 1,1,0,1,0,1,0
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *node;
+    struct llly_ctx *ctx;
+    struct lllyd_node *node;
 };
 
 static int
@@ -49,7 +49,7 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         return -1;
@@ -63,8 +63,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->node);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->node);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -78,14 +78,14 @@ TEST_LEAFLIST_MINELEMENTS(void **state)
     const int schemas_fail[] = {TEST_SCHEMA_LOAD_FAIL};
     const int data_files_fail[] = {TEST_DATA_FILE_LOAD_FAIL};
     char buf[1024];
-    LYS_INFORMAT schema_format = LYS_IN_YANG;
-    const struct lys_module *mod;
+    LLLYS_INFORMAT schema_format = LLLYS_IN_YANG;
+    const struct lllys_module *mod;
     int i, j, ret;
 
     for (i = 0; i < 2; ++i) {
         for (j = 0; j < TEST_SCHEMA_COUNT; ++j) {
-            sprintf(buf, TESTS_DIR "/conformance/" TEST_DIR "/mod%d.%s", j + 1, (schema_format == LYS_IN_YANG ? "yang" : "yin"));
-            mod = lys_parse_path(st->ctx, buf, schema_format);
+            sprintf(buf, TESTS_DIR "/conformance/" TEST_DIR "/mod%d.%s", j + 1, (schema_format == LLLYS_IN_YANG ? "yang" : "yin"));
+            mod = lllys_parse_path(st->ctx, buf, schema_format);
             if (schemas_fail[j]) {
                 assert_ptr_equal(mod, NULL);
             } else {
@@ -95,17 +95,17 @@ TEST_LEAFLIST_MINELEMENTS(void **state)
 
         for (j = 0; j < TEST_DATA_FILE_COUNT; ++j) {
             sprintf(buf, TESTS_DIR "/conformance/" TEST_DIR "/data%d.xml", j + 1);
-            st->node = lyd_parse_path(st->ctx, buf, LYD_XML, LYD_OPT_CONFIG);
+            st->node = lllyd_parse_path(st->ctx, buf, LLLYD_XML, LLLYD_OPT_CONFIG);
             if (data_files_fail[j]) {
                 assert_ptr_equal(st->node, NULL);
             } else {
                 assert_ptr_not_equal(st->node, NULL);
             }
-            lyd_free_withsiblings(st->node);
+            lllyd_free_withsiblings(st->node);
             st->node = NULL;
         }
 
-        if (schema_format == LYS_IN_YANG) {
+        if (schema_format == LLLYS_IN_YANG) {
             /* convert the modules */
             for (j = 0; j < TEST_SCHEMA_COUNT; ++j) {
                 sprintf(buf, BUILD_DIR "/yang2yin "
@@ -121,9 +121,9 @@ TEST_LEAFLIST_MINELEMENTS(void **state)
                 }
             }
 
-            schema_format = LYS_IN_YIN;
-            ly_ctx_destroy(st->ctx, NULL);
-            st->ctx = ly_ctx_new(TESTS_DIR "/conformance/" TEST_DIR, 0);
+            schema_format = LLLYS_IN_YIN;
+            llly_ctx_destroy(st->ctx, NULL);
+            st->ctx = llly_ctx_new(TESTS_DIR "/conformance/" TEST_DIR, 0);
             if (!st->ctx) {
                 fprintf(stderr, "Failed to create context.\n");
                 fail();

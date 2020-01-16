@@ -30,14 +30,14 @@
 
 #define SCHEMA_FOLDER_YANG TESTS_DIR"/schema/yang/files"
 
-struct ly_ctx *ctx;
+struct llly_ctx *ctx;
 
 static int
 setup_ctx_yang(void **state)
 {
     (void)state;
 
-    ctx = ly_ctx_new(SCHEMA_FOLDER_YANG, 0);
+    ctx = llly_ctx_new(SCHEMA_FOLDER_YANG, 0);
     if (!ctx) {
         return -1;
     }
@@ -50,7 +50,7 @@ teardown_ctx(void **state)
 {
     (void)state;
 
-    ly_ctx_destroy(ctx, NULL);
+    llly_ctx_destroy(ctx, NULL);
 
     return 0;
 }
@@ -60,14 +60,14 @@ test_deviation(void **state)
 {
     (void)state;
     char *str;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    if (!(module = ly_ctx_load_module(ctx, "deviation1-dv", NULL))) {
+    if (!(module = llly_ctx_load_module(ctx, "deviation1-dv", NULL))) {
         fail();
     }
-    lys_print_mem(&str, module, LYS_OUT_YANG, NULL, 0, 0);
+    lllys_print_mem(&str, module, LLLYS_OUT_YANG, NULL, 0, 0);
     free(str);
-    assert_int_equal(ly_errno, 0);
+    assert_int_equal(llly_errno, 0);
 }
 
 static void
@@ -75,23 +75,23 @@ test_augment_deviation(void **state)
 {
     (void)state;
     char *str;
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
-    if (!ly_ctx_load_module(ctx, "z-dev", NULL)) {
+    if (!llly_ctx_load_module(ctx, "z-dev", NULL)) {
         fail();
     }
-    mod = ly_ctx_get_module(ctx, "z", NULL, 0);
+    mod = llly_ctx_get_module(ctx, "z", NULL, 0);
     assert_ptr_not_equal(mod, NULL);
 
-    lys_print_mem(&str, mod, LYS_YANG, NULL, 0, 0);
+    lllys_print_mem(&str, mod, LLLYS_YANG, NULL, 0, 0);
     free(str);
-    assert_int_equal(ly_errno, 0);
+    assert_int_equal(llly_errno, 0);
 }
 
 int
 main(void)
 {
-    ly_verb(LY_LLWRN);
+    llly_verb(LLLY_LLWRN);
     const struct CMUnitTest cmut[] = {
         cmocka_unit_test_setup_teardown(test_deviation, setup_ctx_yang, teardown_ctx),
         cmocka_unit_test_setup_teardown(test_augment_deviation, setup_ctx_yang, teardown_ctx),

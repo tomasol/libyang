@@ -34,7 +34,7 @@
 static int
 setup_ctx(void **state)
 {
-    *state = ly_ctx_new(NULL, 0);
+    *state = llly_ctx_new(NULL, 0);
     if (!*state) {
         return -1;
     }
@@ -44,14 +44,14 @@ setup_ctx(void **state)
 static int
 teardown_ctx(void **state)
 {
-    ly_ctx_destroy(*state, NULL);
+    llly_ctx_destroy(*state, NULL);
     return 0;
 }
 
 static void
 test_mult_revisions(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *sch_yang = "module mod_a {"
         "namespace \"urn:cesnet:test:a\";"
         "prefix \"a\";"
@@ -81,31 +81,31 @@ test_mult_revisions(void **state)
         "<container name=\"data1\"><uses name=\"r1:grp\"/></container>"
         "<container name=\"data2\"><uses name=\"r2:grp\"/></container></module>";
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
-    assert_ptr_equal(lys_parse_mem(ctx, sch_yang, LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_mem(ctx, sch_correct_yang, LYS_IN_YANG), NULL);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
+    assert_ptr_equal(lllys_parse_mem(ctx, sch_yang, LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, sch_correct_yang, LLLYS_IN_YANG), NULL);
 
-    ly_ctx_destroy(*state, NULL);
-    *state = ctx = ly_ctx_new(SCHEMA_FOLDER_YIN, 0);
+    llly_ctx_destroy(*state, NULL);
+    *state = ctx = llly_ctx_new(SCHEMA_FOLDER_YIN, 0);
 
-    assert_ptr_equal(lys_parse_mem(ctx, sch_yin, LYS_IN_YIN), NULL);
-    assert_ptr_not_equal(lys_parse_mem(ctx, sch_correct_yin, LYS_IN_YIN), NULL);
+    assert_ptr_equal(lllys_parse_mem(ctx, sch_yin, LLLYS_IN_YIN), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, sch_correct_yin, LLLYS_IN_YIN), NULL);
 }
 
 static void
 test_circular_import(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
 
-    assert_ptr_equal(ly_ctx_load_module(ctx, "circ_imp1", NULL), NULL);
-    assert_int_equal(ly_vecode(ctx), LYVE_CIRC_IMPORTS);
+    assert_ptr_equal(llly_ctx_load_module(ctx, "circ_imp1", NULL), NULL);
+    assert_int_equal(llly_vecode(ctx), LLLYVE_CIRC_IMPORTS);
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
 
-    assert_ptr_equal(ly_ctx_load_module(ctx, "circ_imp1", NULL), NULL);
-    assert_int_equal(ly_vecode(ctx), LYVE_CIRC_IMPORTS);
+    assert_ptr_equal(llly_ctx_load_module(ctx, "circ_imp1", NULL), NULL);
+    assert_int_equal(llly_vecode(ctx), LLLYVE_CIRC_IMPORTS);
 }
 
 /*
@@ -115,19 +115,19 @@ test_circular_import(void **state)
 static void
 test_autoimplement_augment_import(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
-    assert_ptr_not_equal(ly_ctx_load_module(ctx, "impl_aug_a", NULL), NULL);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
+    assert_ptr_not_equal(llly_ctx_load_module(ctx, "impl_aug_a", NULL), NULL);
 }
 
 static void
 test_autoimplement_leafref_import(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
-    assert_ptr_not_equal(ly_ctx_load_module(ctx, "impl_lr_a", NULL), NULL);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
+    assert_ptr_not_equal(llly_ctx_load_module(ctx, "impl_lr_a", NULL), NULL);
 }
 
 int

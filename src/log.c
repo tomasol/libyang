@@ -27,62 +27,62 @@
 #include "context.h"
 #include "tree_internal.h"
 
-volatile uint8_t ly_log_level = LY_LLWRN;
-volatile uint8_t ly_log_opts = LY_LOLOG | LY_LOSTORE_LAST;
-static void (*ly_log_clb)(LY_LOG_LEVEL level, const char *msg, const char *path);
+volatile uint8_t llly_log_level = LLLY_LLWRN;
+volatile uint8_t llly_log_opts = LLLY_LOLOG | LLLY_LOSTORE_LAST;
+static void (*llly_log_clb)(LLLY_LOG_LEVEL level, const char *msg, const char *path);
 static volatile int path_flag = 1;
 #ifndef NDEBUG
-volatile int ly_log_dbg_groups = 0;
+volatile int llly_log_dbg_groups = 0;
 #endif
 
-API LY_LOG_LEVEL
-ly_verb(LY_LOG_LEVEL level)
+API LLLY_LOG_LEVEL
+llly_verb(LLLY_LOG_LEVEL level)
 {
-    LY_LOG_LEVEL prev = ly_log_level;
+    LLLY_LOG_LEVEL prev = llly_log_level;
 
-    ly_log_level = level;
+    llly_log_level = level;
     return prev;
 }
 
 API int
-ly_log_options(int opts)
+llly_log_options(int opts)
 {
-    uint8_t prev = ly_log_opts;
+    uint8_t prev = llly_log_opts;
 
-    ly_log_opts = opts;
+    llly_log_opts = opts;
     return prev;
 }
 
 API void
-ly_verb_dbg(int dbg_groups)
+llly_verb_dbg(int dbg_groups)
 {
 #ifndef NDEBUG
-    ly_log_dbg_groups = dbg_groups;
+    llly_log_dbg_groups = dbg_groups;
 #else
     (void)dbg_groups;
 #endif
 }
 
 API void
-ly_set_log_clb(void (*clb)(LY_LOG_LEVEL level, const char *msg, const char *path), int path)
+llly_set_log_clb(void (*clb)(LLLY_LOG_LEVEL level, const char *msg, const char *path), int path)
 {
-    ly_log_clb = clb;
+    llly_log_clb = clb;
     path_flag = path;
 }
 
 API void
-(*ly_get_log_clb(void))(LY_LOG_LEVEL, const char *, const char *)
+(*llly_get_log_clb(void))(LLLY_LOG_LEVEL, const char *, const char *)
 {
-    return ly_log_clb;
+    return llly_log_clb;
 }
 
 /* !! spends all string parameters !! */
 static int
-log_store(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, LY_VECODE vecode, char *msg, char *path, char *apptag)
+log_store(const struct llly_ctx *ctx, LLLY_LOG_LEVEL level, LLLY_ERR no, LLLY_VECODE vecode, char *msg, char *path, char *apptag)
 {
-    struct ly_err_item *eitem, *last;
+    struct llly_err_item *eitem, *last;
 
-    assert(ctx && (level < LY_LLVRB));
+    assert(ctx && (level < LLLY_LLVRB));
 
     eitem = pthread_getspecific(ctx->errlist_key);
     if (!eitem) {
@@ -103,7 +103,7 @@ log_store(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, LY_VECODE vec
         /* find last error */
         eitem = eitem->prev;
         do {
-            if (eitem->level == LY_LLERR) {
+            if (eitem->level == LLLY_LLERR) {
                 /* fill the path */
                 free(eitem->path);
                 eitem->path = path;
@@ -113,7 +113,7 @@ log_store(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, LY_VECODE vec
         } while (eitem->prev->next);
         /* last error was not found */
         assert(0);
-    } else if ((log_opt != ILO_STORE) && ((ly_log_opts & LY_LOSTORE_LAST) == LY_LOSTORE_LAST)) {
+    } else if ((log_opt != ILO_STORE) && ((llly_log_opts & LLLY_LOSTORE_LAST) == LLLY_LOSTORE_LAST)) {
         /* overwrite last message */
         free(eitem->msg);
         free(eitem->path);
@@ -150,18 +150,18 @@ mem_fail:
 
 /* !! spends path !! */
 static void
-log_vprintf(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, LY_VECODE vecode, char *path,
+log_vprintf(const struct llly_ctx *ctx, LLLY_LOG_LEVEL level, LLLY_ERR no, LLLY_VECODE vecode, char *path,
             const char *format, va_list args)
 {
     char *msg = NULL;
     int free_strs;
 
-    if ((log_opt == ILO_ERR2WRN) && (level == LY_LLERR)) {
+    if ((log_opt == ILO_ERR2WRN) && (level == LLLY_LLERR)) {
         /* change error to warning */
-        level = LY_LLWRN;
+        level = LLLY_LLWRN;
     }
 
-    if ((log_opt == ILO_IGNORE) || (level > ly_log_level)) {
+    if ((log_opt == ILO_IGNORE) || (level > llly_log_level)) {
         /* do not print or store the message */
         free(path);
         return;
@@ -169,16 +169,16 @@ log_vprintf(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, LY_VECODE v
 
     /* set global errno on normal logging, but do not erase */
     if ((log_opt != ILO_STORE) && no) {
-        ly_errno = no;
+        llly_errno = no;
     }
 
-    if ((no == LY_EVALID) && (vecode == LYVE_SUCCESS)) {
+    if ((no == LLLY_EVALID) && (vecode == LLLYVE_SUCCESS)) {
         /* assume we are inheriting the error, so inherit vecode as well */
-        vecode = ly_vecode(ctx);
+        vecode = llly_vecode(ctx);
     }
 
     /* store the error/warning (if we need to store errors internally, it does not matter what are the user log options) */
-    if ((level < LY_LLVRB) && ctx && ((ly_log_opts & LY_LOSTORE) || (log_opt == ILO_STORE))) {
+    if ((level < LLLY_LLVRB) && ctx && ((llly_log_opts & LLLY_LOSTORE) || (log_opt == ILO_STORE))) {
         if (!format) {
             assert(path);
             /* postponed print of path related to the previous error, do not rewrite stored original message */
@@ -207,9 +207,9 @@ log_vprintf(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, LY_VECODE v
     }
 
     /* if we are only storing errors internally, never print the message (yet) */
-    if ((ly_log_opts & LY_LOLOG) && (log_opt != ILO_STORE)) {
-        if (ly_log_clb) {
-            ly_log_clb(level, msg, path);
+    if ((llly_log_opts & LLLY_LOLOG) && (log_opt != ILO_STORE)) {
+        if (llly_log_clb) {
+            llly_log_clb(level, msg, path);
         } else {
             fprintf(stderr, "libyang[%d]: %s%s", level, msg, path ? " " : "\n");
             if (path) {
@@ -225,7 +225,7 @@ log_vprintf(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, LY_VECODE v
 }
 
 void
-ly_log(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, const char *format, ...)
+llly_log(const struct llly_ctx *ctx, LLLY_LOG_LEVEL level, LLLY_ERR no, const char *format, ...)
 {
     va_list ap;
 
@@ -237,36 +237,36 @@ ly_log(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, const char *form
 #ifndef NDEBUG
 
 void
-ly_log_dbg(int group, const char *format, ...)
+llly_log_dbg(int group, const char *format, ...)
 {
     char *dbg_format;
     const char *str_group;
     va_list ap;
 
-    if (!(ly_log_dbg_groups & group)) {
+    if (!(llly_log_dbg_groups & group)) {
         return;
     }
 
     switch (group) {
-    case LY_LDGDICT:
+    case LLLY_LDGDICT:
         str_group = "DICT";
         break;
-    case LY_LDGYANG:
+    case LLLY_LDGYANG:
         str_group = "YANG";
         break;
-    case LY_LDGYIN:
+    case LLLY_LDGYIN:
         str_group = "YIN";
         break;
-    case LY_LDGXPATH:
+    case LLLY_LDGXPATH:
         str_group = "XPATH";
         break;
-    case LY_LDGDIFF:
+    case LLLY_LDGDIFF:
         str_group = "DIFF";
         break;
-    case LY_LDGAPI:
+    case LLLY_LDGAPI:
         str_group = "API";
         break;
-    case LY_LDGHASH:
+    case LLLY_LDGHASH:
         str_group = "HASH";
         break;
     default:
@@ -280,7 +280,7 @@ ly_log_dbg(int group, const char *format, ...)
     }
 
     va_start(ap, format);
-    log_vprintf(NULL, LY_LLDBG, 0, 0, NULL, dbg_format, ap);
+    log_vprintf(NULL, LLLY_LLDBG, 0, 0, NULL, dbg_format, ap);
     va_end(ap);
     free(dbg_format);
 }
@@ -288,13 +288,13 @@ ly_log_dbg(int group, const char *format, ...)
 #endif
 
 API void
-lyext_log(const struct ly_ctx *ctx, LY_LOG_LEVEL level, const char *plugin, const char *function, const char *format, ...)
+lllyext_log(const struct llly_ctx *ctx, LLLY_LOG_LEVEL level, const char *plugin, const char *function, const char *format, ...)
 {
     va_list ap;
     char *plugin_msg;
     int ret;
 
-    if (ly_log_level < level) {
+    if (llly_log_level < level) {
         return;
     }
 
@@ -309,34 +309,34 @@ lyext_log(const struct ly_ctx *ctx, LY_LOG_LEVEL level, const char *plugin, cons
     }
 
     va_start(ap, format);
-    log_vprintf(ctx, level, (level == LY_LLERR ? LY_EPLUGIN : 0), 0, NULL, plugin_msg, ap);
+    log_vprintf(ctx, level, (level == LLLY_LLERR ? LLLY_EPLUGIN : 0), 0, NULL, plugin_msg, ap);
     va_end(ap);
 
     free(plugin_msg);
 }
 
-static enum LY_VLOG_ELEM extvelog2velog[] = {
-    LY_VLOG_NONE, /* LYEXT_VLOG_NONE */
-    LY_VLOG_XML, /* LYEXT_VLOG_XML */
-    LY_VLOG_LYS, /* LYEXT_VLOG_LYS */
-    LY_VLOG_LYD, /* LYEXT_VLOG_LYD */
-    LY_VLOG_STR, /* LYEXT_VLOG_STR */
-    LY_VLOG_PREV, /* LYEXT_VLOG_PREV */
+static enum LLLY_VLOG_ELEM extvelog2velog[] = {
+    LLLY_VLOG_NONE, /* LLLYEXT_VLOG_NONE */
+    LLLY_VLOG_XML, /* LLLYEXT_VLOG_XML */
+    LLLY_VLOG_LYS, /* LLLYEXT_VLOG_LYS */
+    LLLY_VLOG_LYD, /* LLLYEXT_VLOG_LYD */
+    LLLY_VLOG_STR, /* LLLYEXT_VLOG_STR */
+    LLLY_VLOG_PREV, /* LLLYEXT_VLOG_PREV */
 };
 
 API void
-lyext_vlog(const struct ly_ctx *ctx, LY_VECODE vecode, const char *plugin, const char *function,
-           LYEXT_VLOG_ELEM elem_type, const void *elem, const char *format, ...)
+lllyext_vlog(const struct llly_ctx *ctx, LLLY_VECODE vecode, const char *plugin, const char *function,
+           LLLYEXT_VLOG_ELEM elem_type, const void *elem, const char *format, ...)
 {
-    enum LY_VLOG_ELEM etype = extvelog2velog[elem_type];
+    enum LLLY_VLOG_ELEM etype = extvelog2velog[elem_type];
     char *plugin_msg, *path = NULL;
     va_list ap;
     int ret;
 
-    if (path_flag && (etype != LY_VLOG_NONE)) {
-        if (etype == LY_VLOG_PREV) {
+    if (path_flag && (etype != LLLY_VLOG_NONE)) {
+        if (etype == LLLY_VLOG_PREV) {
             /* use previous path */
-            const struct ly_err_item *first = ly_err_first(ctx);
+            const struct llly_err_item *first = llly_err_first(ctx);
             if (first && first->prev->path) {
                 path = strdup(first->prev->path);
             }
@@ -346,7 +346,7 @@ lyext_vlog(const struct ly_ctx *ctx, LY_VECODE vecode, const char *plugin, const
                 /* top-level */
                 path = strdup("/");
             } else {
-                ly_vlog_build_path(etype, elem, &path, 0, 0);
+                llly_vlog_build_path(etype, elem, &path, 0, 0);
             }
         }
     }
@@ -364,214 +364,214 @@ lyext_vlog(const struct ly_ctx *ctx, LY_VECODE vecode, const char *plugin, const
 
     va_start(ap, format);
     /* path is spent and should not be freed! */
-    log_vprintf(ctx, LY_LLERR, LY_EVALID, vecode, path, plugin_msg, ap);
+    log_vprintf(ctx, LLLY_LLERR, LLLY_EVALID, vecode, path, plugin_msg, ap);
     va_end(ap);
 
     free(plugin_msg);
 }
 
-const char *ly_errs[] = {
-/* LYE_SUCCESS */      "",
-/* LYE_XML_MISS */     "Missing %s \"%s\".",
-/* LYE_XML_INVAL */    "Invalid %s.",
-/* LYE_XML_INCHAR */   "Encountered invalid character sequence \"%.10s\".",
+const char *llly_errs[] = {
+/* LLLYE_SUCCESS */      "",
+/* LLLYE_XML_MISS */     "Missing %s \"%s\".",
+/* LLLYE_XML_INVAL */    "Invalid %s.",
+/* LLLYE_XML_INCHAR */   "Encountered invalid character sequence \"%.10s\".",
 
-/* LYE_EOF */          "Unexpected end of input data.",
-/* LYE_INSTMT */       "Invalid keyword \"%s\".",
-/* LYE_INCHILDSTMT */  "Invalid keyword \"%s\" as a child to \"%s\".",
-/* LYE_INPAR */        "Invalid ancestor \"%s\" of \"%s\".",
-/* LYE_INID */         "Invalid identifier \"%s\" (%s).",
-/* LYE_INDATE */       "Invalid date \"%s\", valid date in format \"YYYY-MM-DD\" expected.",
-/* LYE_INARG */        "Invalid value \"%s\" of \"%s\".",
-/* LYE_MISSSTMT */     "Missing keyword \"%s\".",
-/* LYE_MISSCHILDSTMT */ "Missing keyword \"%s\" as a child to \"%s\".",
-/* LYE_MISSARG */      "Missing argument \"%s\" to keyword \"%s\".",
-/* LYE_TOOMANY */      "Too many instances of \"%s\" in \"%s\".",
-/* LYE_DUPID */        "Duplicated %s identifier \"%s\".",
-/* LYE_DUPLEAFLIST */  "Duplicated instance of \"%s\" leaf-list (\"%s\").",
-/* LYE_DUPLIST */      "Duplicated instance of \"%s\" list.",
-/* LYE_NOUNIQ */       "Unique data leaf(s) \"%s\" not satisfied in \"%s\" and \"%s\".",
-/* LYE_ENUM_INVAL */   "Invalid value \"%d\" of \"%s\" enum, restricted enum value does not match the base type value \"%d\".",
-/* LYE_ENUM_INNAME */  "Adding new enum name \"%s\" in restricted enumeration type is not allowed.",
-/* LYE_ENUM_DUPVAL */  "The value \"%d\" of \"%s\" enum has already been assigned to \"%s\" enum.",
-/* LYE_ENUM_DUPNAME */ "The enum name \"%s\" has already been assigned to another enum.",
-/* LYE_ENUM_WS */      "The enum name \"%s\" includes invalid leading or trailing whitespaces.",
-/* LYE_BITS_INVAL */   "Invalid position \"%d\" of \"%s\" bit, restricted bits position does not match the base type position \"%d\".",
-/* LYE_BITS_INNAME */  "Adding new bit name \"%s\" in restricted bits type is not allowed.",
-/* LYE_BITS_DUPVAL */  "The position \"%d\" of \"%s\" bit has already been assigned to \"%s\" bit.",
-/* LYE_BITS_DUPNAME */ "The bit name \"%s\" has already been assigned to another bit.",
-/* LYE_INMOD */        "Module name \"%s\" refers to an unknown module.",
-/* LYE_INMOD_LEN */    "Module name \"%.*s\" refers to an unknown module.",
-/* LYE_KEY_NLEAF */    "Key \"%s\" is not a leaf.",
-/* LYE_KEY_TYPE */     "Key \"%s\" must not be the built-in type \"empty\".",
-/* LYE_KEY_CONFIG */   "The \"config\" value of the \"%s\" key differs from its list config value.",
-/* LYE_KEY_MISS */     "Leaf \"%s\" defined as key in a list not found.",
-/* LYE_KEY_DUP */      "Key identifier \"%s\" is not unique.",
-/* LYE_INREGEX */      "Regular expression \"%s\" is not valid (\"%s\": %s).",
-/* LYE_INRESOLV */     "Failed to resolve %s \"%s\".",
-/* LYE_INSTATUS */     "A %s definition \"%s\" %s %s definition \"%s\".",
-/* LYE_CIRC_LEAFREFS */"A circular chain of leafrefs detected.",
-/* LYE_CIRC_FEATURES */"A circular chain features detected in \"%s\" feature.",
-/* LYE_CIRC_IMPORTS */ "A circular dependency (import) for module \"%s\".",
-/* LYE_CIRC_INCLUDES */"A circular dependency (include) for submodule \"%s\".",
-/* LYE_INVER */        "Different YANG versions of a submodule and its main module.",
-/* LYE_SUBMODULE */    "Unable to parse submodule, parse the main module instead.",
+/* LLLYE_EOF */          "Unexpected end of input data.",
+/* LLLYE_INSTMT */       "Invalid keyword \"%s\".",
+/* LLLYE_INCHILDSTMT */  "Invalid keyword \"%s\" as a child to \"%s\".",
+/* LLLYE_INPAR */        "Invalid ancestor \"%s\" of \"%s\".",
+/* LLLYE_INID */         "Invalid identifier \"%s\" (%s).",
+/* LLLYE_INDATE */       "Invalid date \"%s\", valid date in format \"YYYY-MM-DD\" expected.",
+/* LLLYE_INARG */        "Invalid value \"%s\" of \"%s\".",
+/* LLLYE_MISSSTMT */     "Missing keyword \"%s\".",
+/* LLLYE_MISSCHILDSTMT */ "Missing keyword \"%s\" as a child to \"%s\".",
+/* LLLYE_MISSARG */      "Missing argument \"%s\" to keyword \"%s\".",
+/* LLLYE_TOOMANY */      "Too many instances of \"%s\" in \"%s\".",
+/* LLLYE_DUPID */        "Duplicated %s identifier \"%s\".",
+/* LLLYE_DUPLEAFLIST */  "Duplicated instance of \"%s\" leaf-list (\"%s\").",
+/* LLLYE_DUPLIST */      "Duplicated instance of \"%s\" list.",
+/* LLLYE_NOUNIQ */       "Unique data leaf(s) \"%s\" not satisfied in \"%s\" and \"%s\".",
+/* LLLYE_ENUM_INVAL */   "Invalid value \"%d\" of \"%s\" enum, restricted enum value does not match the base type value \"%d\".",
+/* LLLYE_ENUM_INNAME */  "Adding new enum name \"%s\" in restricted enumeration type is not allowed.",
+/* LLLYE_ENUM_DUPVAL */  "The value \"%d\" of \"%s\" enum has already been assigned to \"%s\" enum.",
+/* LLLYE_ENUM_DUPNAME */ "The enum name \"%s\" has already been assigned to another enum.",
+/* LLLYE_ENUM_WS */      "The enum name \"%s\" includes invalid leading or trailing whitespaces.",
+/* LLLYE_BITS_INVAL */   "Invalid position \"%d\" of \"%s\" bit, restricted bits position does not match the base type position \"%d\".",
+/* LLLYE_BITS_INNAME */  "Adding new bit name \"%s\" in restricted bits type is not allowed.",
+/* LLLYE_BITS_DUPVAL */  "The position \"%d\" of \"%s\" bit has already been assigned to \"%s\" bit.",
+/* LLLYE_BITS_DUPNAME */ "The bit name \"%s\" has already been assigned to another bit.",
+/* LLLYE_INMOD */        "Module name \"%s\" refers to an unknown module.",
+/* LLLYE_INMOD_LEN */    "Module name \"%.*s\" refers to an unknown module.",
+/* LLLYE_KEY_NLEAF */    "Key \"%s\" is not a leaf.",
+/* LLLYE_KEY_TYPE */     "Key \"%s\" must not be the built-in type \"empty\".",
+/* LLLYE_KEY_CONFIG */   "The \"config\" value of the \"%s\" key differs from its list config value.",
+/* LLLYE_KEY_MISS */     "Leaf \"%s\" defined as key in a list not found.",
+/* LLLYE_KEY_DUP */      "Key identifier \"%s\" is not unique.",
+/* LLLYE_INREGEX */      "Regular expression \"%s\" is not valid (\"%s\": %s).",
+/* LLLYE_INRESOLV */     "Failed to resolve %s \"%s\".",
+/* LLLYE_INSTATUS */     "A %s definition \"%s\" %s %s definition \"%s\".",
+/* LLLYE_CIRC_LEAFREFS */"A circular chain of leafrefs detected.",
+/* LLLYE_CIRC_FEATURES */"A circular chain features detected in \"%s\" feature.",
+/* LLLYE_CIRC_IMPORTS */ "A circular dependency (import) for module \"%s\".",
+/* LLLYE_CIRC_INCLUDES */"A circular dependency (include) for submodule \"%s\".",
+/* LLLYE_INVER */        "Different YANG versions of a submodule and its main module.",
+/* LLLYE_SUBMODULE */    "Unable to parse submodule, parse the main module instead.",
 
-/* LYE_OBSDATA */      "Obsolete data \"%s\" instantiated.",
-/* LYE_OBSTYPE */      "Data node \"%s\" with obsolete type \"%s\" instantiated.",
-/* LYE_NORESOLV */     "No resolvents found for %s \"%s\".",
-/* LYE_INELEM */       "Unknown element \"%s\".",
-/* LYE_INELEM_LEN */   "Unknown element \"%.*s\".",
-/* LYE_MISSELEM */     "Missing required element \"%s\" in \"%s\".",
-/* LYE_INVAL */        "Invalid value \"%s\" in \"%s\" element.",
-/* LYE_INMETA */       "Invalid \"%s:%s\" metadata with value \"%s\".",
-/* LYE_INATTR */       "Invalid attribute \"%s\".",
-/* LYE_MISSATTR */     "Missing attribute \"%s\" in \"%s\" element.",
-/* LYE_NOCONSTR */     "Value \"%s\" does not satisfy the constraint \"%s\" (range, length, or pattern).",
-/* LYE_INCHAR */       "Unexpected character(s) '%c' (%.15s).",
-/* LYE_INPRED */       "Predicate resolution failed on \"%s\".",
-/* LYE_MCASEDATA */    "Data for more than one case branch of \"%s\" choice present.",
-/* LYE_NOMUST */       "Must condition \"%s\" not satisfied.",
-/* LYE_NOWHEN */       "When condition \"%s\" not satisfied.",
-/* LYE_INORDER */      "Invalid order of elements \"%s\" and \"%s\".",
-/* LYE_INWHEN */       "Irresolvable when condition \"%s\".",
-/* LYE_NOMIN */        "Too few \"%s\" elements.",
-/* LYE_NOMAX */        "Too many \"%s\" elements.",
-/* LYE_NOREQINS */     "Required instance of \"%s\" does not exist.",
-/* LYE_NOLEAFREF */    "Leafref \"%s\" of value \"%s\" points to a non-existing leaf.",
-/* LYE_NOMANDCHOICE */ "Mandatory choice \"%s\" missing a case branch.",
+/* LLLYE_OBSDATA */      "Obsolete data \"%s\" instantiated.",
+/* LLLYE_OBSTYPE */      "Data node \"%s\" with obsolete type \"%s\" instantiated.",
+/* LLLYE_NORESOLV */     "No resolvents found for %s \"%s\".",
+/* LLLYE_INELEM */       "Unknown element \"%s\".",
+/* LLLYE_INELEM_LEN */   "Unknown element \"%.*s\".",
+/* LLLYE_MISSELEM */     "Missing required element \"%s\" in \"%s\".",
+/* LLLYE_INVAL */        "Invalid value \"%s\" in \"%s\" element.",
+/* LLLYE_INMETA */       "Invalid \"%s:%s\" metadata with value \"%s\".",
+/* LLLYE_INATTR */       "Invalid attribute \"%s\".",
+/* LLLYE_MISSATTR */     "Missing attribute \"%s\" in \"%s\" element.",
+/* LLLYE_NOCONSTR */     "Value \"%s\" does not satisfy the constraint \"%s\" (range, length, or pattern).",
+/* LLLYE_INCHAR */       "Unexpected character(s) '%c' (%.15s).",
+/* LLLYE_INPRED */       "Predicate resolution failed on \"%s\".",
+/* LLLYE_MCASEDATA */    "Data for more than one case branch of \"%s\" choice present.",
+/* LLLYE_NOMUST */       "Must condition \"%s\" not satisfied.",
+/* LLLYE_NOWHEN */       "When condition \"%s\" not satisfied.",
+/* LLLYE_INORDER */      "Invalid order of elements \"%s\" and \"%s\".",
+/* LLLYE_INWHEN */       "Irresolvable when condition \"%s\".",
+/* LLLYE_NOMIN */        "Too few \"%s\" elements.",
+/* LLLYE_NOMAX */        "Too many \"%s\" elements.",
+/* LLLYE_NOREQINS */     "Required instance of \"%s\" does not exist.",
+/* LLLYE_NOLEAFREF */    "Leafref \"%s\" of value \"%s\" points to a non-existing leaf.",
+/* LLLYE_NOMANDCHOICE */ "Mandatory choice \"%s\" missing a case branch.",
 
-/* LYE_XPATH_INTOK */  "Unexpected XPath token %s (%.15s).",
-/* LYE_XPATH_EOF */    "Unexpected XPath expression end.",
-/* LYE_XPATH_INOP_1 */ "Cannot apply XPath operation %s on %s.",
-/* LYE_XPATH_INOP_2 */ "Cannot apply XPath operation %s on %s and %s.",
-/* LYE_XPATH_INCTX */  "Invalid context type %s in %s.",
-/* LYE_XPATH_INMOD */  "Unknown module \"%.*s\".",
-/* LYE_XPATH_INFUNC */ "Unknown XPath function \"%.*s\".",
-/* LYE_XPATH_INARGCOUNT */ "Invalid number of arguments (%d) for the XPath function %.*s.",
-/* LYE_XPATH_INARGTYPE */ "Wrong type of argument #%d (%s) for the XPath function %s.",
-/* LYE_XPATH_DUMMY */   "Accessing the value of the dummy node \"%s\".",
-/* LYE_XPATH_NOEND */   "Unterminated string delimited with %c (%.15s).",
+/* LLLYE_XPATH_INTOK */  "Unexpected XPath token %s (%.15s).",
+/* LLLYE_XPATH_EOF */    "Unexpected XPath expression end.",
+/* LLLYE_XPATH_INOP_1 */ "Cannot apply XPath operation %s on %s.",
+/* LLLYE_XPATH_INOP_2 */ "Cannot apply XPath operation %s on %s and %s.",
+/* LLLYE_XPATH_INCTX */  "Invalid context type %s in %s.",
+/* LLLYE_XPATH_INMOD */  "Unknown module \"%.*s\".",
+/* LLLYE_XPATH_INFUNC */ "Unknown XPath function \"%.*s\".",
+/* LLLYE_XPATH_INARGCOUNT */ "Invalid number of arguments (%d) for the XPath function %.*s.",
+/* LLLYE_XPATH_INARGTYPE */ "Wrong type of argument #%d (%s) for the XPath function %s.",
+/* LLLYE_XPATH_DUMMY */   "Accessing the value of the dummy node \"%s\".",
+/* LLLYE_XPATH_NOEND */   "Unterminated string delimited with %c (%.15s).",
 
-/* LYE_PATH_INCHAR */  "Unexpected character(s) '%c' (\"%s\").",
-/* LYE_PATH_INMOD */   "Module not found or not implemented.",
-/* LYE_PATH_MISSMOD */ "Missing module name.",
-/* LYE_PATH_INNODE */  "Schema node not found.",
-/* LYE_PATH_INKEY */   "List key not found or on incorrect position (\"%s\").",
-/* LYE_PATH_MISSKEY */ "List keys or position missing (\"%s\").",
-/* LYE_PATH_INIDENTREF */ "Identityref predicate value \"%.*s\" missing module name.",
-/* LYE_PATH_EXISTS */  "Node already exists.",
-/* LYE_PATH_MISSPAR */ "Parent does not exist.",
-/* LYE_PATH_PREDTOOMANY */ "Too many predicates.",
+/* LLLYE_PATH_INCHAR */  "Unexpected character(s) '%c' (\"%s\").",
+/* LLLYE_PATH_INMOD */   "Module not found or not implemented.",
+/* LLLYE_PATH_MISSMOD */ "Missing module name.",
+/* LLLYE_PATH_INNODE */  "Schema node not found.",
+/* LLLYE_PATH_INKEY */   "List key not found or on incorrect position (\"%s\").",
+/* LLLYE_PATH_MISSKEY */ "List keys or position missing (\"%s\").",
+/* LLLYE_PATH_INIDENTREF */ "Identityref predicate value \"%.*s\" missing module name.",
+/* LLLYE_PATH_EXISTS */  "Node already exists.",
+/* LLLYE_PATH_MISSPAR */ "Parent does not exist.",
+/* LLLYE_PATH_PREDTOOMANY */ "Too many predicates.",
 };
 
-static const LY_VECODE ecode2vecode[] = {
-    LYVE_SUCCESS,      /* LYE_SUCCESS */
+static const LLLY_VECODE ecode2vecode[] = {
+    LLLYVE_SUCCESS,      /* LLLYE_SUCCESS */
 
-    LYVE_XML_MISS,     /* LYE_XML_MISS */
-    LYVE_XML_INVAL,    /* LYE_XML_INVAL */
-    LYVE_XML_INCHAR,   /* LYE_XML_INCHAR */
+    LLLYVE_XML_MISS,     /* LLLYE_XML_MISS */
+    LLLYVE_XML_INVAL,    /* LLLYE_XML_INVAL */
+    LLLYVE_XML_INCHAR,   /* LLLYE_XML_INCHAR */
 
-    LYVE_EOF,          /* LYE_EOF */
-    LYVE_INSTMT,       /* LYE_INSTMT */
-    LYVE_INSTMT,       /* LYE_INCHILDSTMT */
-    LYVE_INPAR,        /* LYE_INPAR */
-    LYVE_INID,         /* LYE_INID */
-    LYVE_INDATE,       /* LYE_INDATE */
-    LYVE_INARG,        /* LYE_INARG */
-    LYVE_MISSSTMT,     /* LYE_MISSCHILDSTMT */
-    LYVE_MISSSTMT,     /* LYE_MISSSTMT */
-    LYVE_MISSARG,      /* LYE_MISSARG */
-    LYVE_TOOMANY,      /* LYE_TOOMANY */
-    LYVE_DUPID,        /* LYE_DUPID */
-    LYVE_DUPLEAFLIST,  /* LYE_DUPLEAFLIST */
-    LYVE_DUPLIST,      /* LYE_DUPLIST */
-    LYVE_NOUNIQ,       /* LYE_NOUNIQ */
-    LYVE_ENUM_INVAL,   /* LYE_ENUM_INVAL */
-    LYVE_ENUM_INNAME,  /* LYE_ENUM_INNAME */
-    LYVE_ENUM_INVAL,   /* LYE_ENUM_DUPVAL */
-    LYVE_ENUM_INNAME,  /* LYE_ENUM_DUPNAME */
-    LYVE_ENUM_WS,      /* LYE_ENUM_WS */
-    LYVE_BITS_INVAL,   /* LYE_BITS_INVAL */
-    LYVE_BITS_INNAME,  /* LYE_BITS_INNAME */
-    LYVE_BITS_INVAL,   /* LYE_BITS_DUPVAL */
-    LYVE_BITS_INNAME,  /* LYE_BITS_DUPNAME */
-    LYVE_INMOD,        /* LYE_INMOD */
-    LYVE_INMOD,        /* LYE_INMOD_LEN */
-    LYVE_KEY_NLEAF,    /* LYE_KEY_NLEAF */
-    LYVE_KEY_TYPE,     /* LYE_KEY_TYPE */
-    LYVE_KEY_CONFIG,   /* LYE_KEY_CONFIG */
-    LYVE_KEY_MISS,     /* LYE_KEY_MISS */
-    LYVE_KEY_DUP,      /* LYE_KEY_DUP */
-    LYVE_INREGEX,      /* LYE_INREGEX */
-    LYVE_INRESOLV,     /* LYE_INRESOLV */
-    LYVE_INSTATUS,     /* LYE_INSTATUS */
-    LYVE_CIRC_LEAFREFS,/* LYE_CIRC_LEAFREFS */
-    LYVE_CIRC_FEATURES,/* LYE_CIRC_FEATURES */
-    LYVE_CIRC_IMPORTS, /* LYE_CIRC_IMPORTS */
-    LYVE_CIRC_INCLUDES,/* LYE_CIRC_INCLUDES */
-    LYVE_INVER,        /* LYE_INVER */
-    LYVE_SUBMODULE,    /* LYE_SUBMODULE */
+    LLLYVE_EOF,          /* LLLYE_EOF */
+    LLLYVE_INSTMT,       /* LLLYE_INSTMT */
+    LLLYVE_INSTMT,       /* LLLYE_INCHILDSTMT */
+    LLLYVE_INPAR,        /* LLLYE_INPAR */
+    LLLYVE_INID,         /* LLLYE_INID */
+    LLLYVE_INDATE,       /* LLLYE_INDATE */
+    LLLYVE_INARG,        /* LLLYE_INARG */
+    LLLYVE_MISSSTMT,     /* LLLYE_MISSCHILDSTMT */
+    LLLYVE_MISSSTMT,     /* LLLYE_MISSSTMT */
+    LLLYVE_MISSARG,      /* LLLYE_MISSARG */
+    LLLYVE_TOOMANY,      /* LLLYE_TOOMANY */
+    LLLYVE_DUPID,        /* LLLYE_DUPID */
+    LLLYVE_DUPLEAFLIST,  /* LLLYE_DUPLEAFLIST */
+    LLLYVE_DUPLIST,      /* LLLYE_DUPLIST */
+    LLLYVE_NOUNIQ,       /* LLLYE_NOUNIQ */
+    LLLYVE_ENUM_INVAL,   /* LLLYE_ENUM_INVAL */
+    LLLYVE_ENUM_INNAME,  /* LLLYE_ENUM_INNAME */
+    LLLYVE_ENUM_INVAL,   /* LLLYE_ENUM_DUPVAL */
+    LLLYVE_ENUM_INNAME,  /* LLLYE_ENUM_DUPNAME */
+    LLLYVE_ENUM_WS,      /* LLLYE_ENUM_WS */
+    LLLYVE_BITS_INVAL,   /* LLLYE_BITS_INVAL */
+    LLLYVE_BITS_INNAME,  /* LLLYE_BITS_INNAME */
+    LLLYVE_BITS_INVAL,   /* LLLYE_BITS_DUPVAL */
+    LLLYVE_BITS_INNAME,  /* LLLYE_BITS_DUPNAME */
+    LLLYVE_INMOD,        /* LLLYE_INMOD */
+    LLLYVE_INMOD,        /* LLLYE_INMOD_LEN */
+    LLLYVE_KEY_NLEAF,    /* LLLYE_KEY_NLEAF */
+    LLLYVE_KEY_TYPE,     /* LLLYE_KEY_TYPE */
+    LLLYVE_KEY_CONFIG,   /* LLLYE_KEY_CONFIG */
+    LLLYVE_KEY_MISS,     /* LLLYE_KEY_MISS */
+    LLLYVE_KEY_DUP,      /* LLLYE_KEY_DUP */
+    LLLYVE_INREGEX,      /* LLLYE_INREGEX */
+    LLLYVE_INRESOLV,     /* LLLYE_INRESOLV */
+    LLLYVE_INSTATUS,     /* LLLYE_INSTATUS */
+    LLLYVE_CIRC_LEAFREFS,/* LLLYE_CIRC_LEAFREFS */
+    LLLYVE_CIRC_FEATURES,/* LLLYE_CIRC_FEATURES */
+    LLLYVE_CIRC_IMPORTS, /* LLLYE_CIRC_IMPORTS */
+    LLLYVE_CIRC_INCLUDES,/* LLLYE_CIRC_INCLUDES */
+    LLLYVE_INVER,        /* LLLYE_INVER */
+    LLLYVE_SUBMODULE,    /* LLLYE_SUBMODULE */
 
-    LYVE_OBSDATA,      /* LYE_OBSDATA */
-    LYVE_OBSDATA,      /* LYE_OBSTYPE */
-    LYVE_NORESOLV,     /* LYE_NORESOLV */
-    LYVE_INELEM,       /* LYE_INELEM */
-    LYVE_INELEM,       /* LYE_INELEM_LEN */
-    LYVE_MISSELEM,     /* LYE_MISSELEM */
-    LYVE_INVAL,        /* LYE_INVAL */
-    LYVE_INMETA,       /* LYE_INMETA */
-    LYVE_INATTR,       /* LYE_INATTR */
-    LYVE_MISSATTR,     /* LYE_MISSATTR */
-    LYVE_NOCONSTR,     /* LYE_NOCONSTR */
-    LYVE_INCHAR,       /* LYE_INCHAR */
-    LYVE_INPRED,       /* LYE_INPRED */
-    LYVE_MCASEDATA,    /* LYE_MCASEDATA */
-    LYVE_NOMUST,       /* LYE_NOMUST */
-    LYVE_NOWHEN,       /* LYE_NOWHEN */
-    LYVE_INORDER,      /* LYE_INORDER */
-    LYVE_INWHEN,       /* LYE_INWHEN */
-    LYVE_NOMIN,        /* LYE_NOMIN */
-    LYVE_NOMAX,        /* LYE_NOMAX */
-    LYVE_NOREQINS,     /* LYE_NOREQINS */
-    LYVE_NOLEAFREF,    /* LYE_NOLEAFREF */
-    LYVE_NOMANDCHOICE, /* LYE_NOMANDCHOICE */
+    LLLYVE_OBSDATA,      /* LLLYE_OBSDATA */
+    LLLYVE_OBSDATA,      /* LLLYE_OBSTYPE */
+    LLLYVE_NORESOLV,     /* LLLYE_NORESOLV */
+    LLLYVE_INELEM,       /* LLLYE_INELEM */
+    LLLYVE_INELEM,       /* LLLYE_INELEM_LEN */
+    LLLYVE_MISSELEM,     /* LLLYE_MISSELEM */
+    LLLYVE_INVAL,        /* LLLYE_INVAL */
+    LLLYVE_INMETA,       /* LLLYE_INMETA */
+    LLLYVE_INATTR,       /* LLLYE_INATTR */
+    LLLYVE_MISSATTR,     /* LLLYE_MISSATTR */
+    LLLYVE_NOCONSTR,     /* LLLYE_NOCONSTR */
+    LLLYVE_INCHAR,       /* LLLYE_INCHAR */
+    LLLYVE_INPRED,       /* LLLYE_INPRED */
+    LLLYVE_MCASEDATA,    /* LLLYE_MCASEDATA */
+    LLLYVE_NOMUST,       /* LLLYE_NOMUST */
+    LLLYVE_NOWHEN,       /* LLLYE_NOWHEN */
+    LLLYVE_INORDER,      /* LLLYE_INORDER */
+    LLLYVE_INWHEN,       /* LLLYE_INWHEN */
+    LLLYVE_NOMIN,        /* LLLYE_NOMIN */
+    LLLYVE_NOMAX,        /* LLLYE_NOMAX */
+    LLLYVE_NOREQINS,     /* LLLYE_NOREQINS */
+    LLLYVE_NOLEAFREF,    /* LLLYE_NOLEAFREF */
+    LLLYVE_NOMANDCHOICE, /* LLLYE_NOMANDCHOICE */
 
-    LYVE_XPATH_INTOK,  /* LYE_XPATH_INTOK */
-    LYVE_XPATH_EOF,    /* LYE_XPATH_EOF */
-    LYVE_XPATH_INOP,   /* LYE_XPATH_INOP_1 */
-    LYVE_XPATH_INOP,   /* LYE_XPATH_INOP_2 */
-    LYVE_XPATH_INCTX,  /* LYE_XPATH_INCTX */
-    LYVE_XPATH_INMOD,  /* LYE_XPATH_INMOD */
-    LYVE_XPATH_INFUNC, /* LYE_XPATH_INFUNC */
-    LYVE_XPATH_INARGCOUNT, /* LYE_XPATH_INARGCOUNT */
-    LYVE_XPATH_INARGTYPE, /* LYE_XPATH_INARGTYPE */
-    LYVE_XPATH_DUMMY,  /* LYE_XPATH_DUMMY */
-    LYVE_XPATH_NOEND,  /* LYE_XPATH_NOEND */
+    LLLYVE_XPATH_INTOK,  /* LLLYE_XPATH_INTOK */
+    LLLYVE_XPATH_EOF,    /* LLLYE_XPATH_EOF */
+    LLLYVE_XPATH_INOP,   /* LLLYE_XPATH_INOP_1 */
+    LLLYVE_XPATH_INOP,   /* LLLYE_XPATH_INOP_2 */
+    LLLYVE_XPATH_INCTX,  /* LLLYE_XPATH_INCTX */
+    LLLYVE_XPATH_INMOD,  /* LLLYE_XPATH_INMOD */
+    LLLYVE_XPATH_INFUNC, /* LLLYE_XPATH_INFUNC */
+    LLLYVE_XPATH_INARGCOUNT, /* LLLYE_XPATH_INARGCOUNT */
+    LLLYVE_XPATH_INARGTYPE, /* LLLYE_XPATH_INARGTYPE */
+    LLLYVE_XPATH_DUMMY,  /* LLLYE_XPATH_DUMMY */
+    LLLYVE_XPATH_NOEND,  /* LLLYE_XPATH_NOEND */
 
-    LYVE_PATH_INCHAR,  /* LYE_PATH_INCHAR */
-    LYVE_PATH_INMOD,   /* LYE_PATH_INMOD */
-    LYVE_PATH_MISSMOD, /* LYE_PATH_MISSMOD */
-    LYVE_PATH_INNODE,  /* LYE_PATH_INNODE */
-    LYVE_PATH_INKEY,   /* LYE_PATH_INKEY */
-    LYVE_PATH_MISSKEY, /* LYE_PATH_MISSKEY */
-    LYVE_PATH_INIDENTREF, /* LYE_PATH_INIDENTREF */
-    LYVE_PATH_EXISTS,  /* LYE_PATH_EXISTS */
-    LYVE_PATH_MISSPAR, /* LYE_PATH_MISSPAR */
-    LYVE_PATH_PREDTOOMANY, /* LYE_PATH_PREDTOOMANY */
+    LLLYVE_PATH_INCHAR,  /* LLLYE_PATH_INCHAR */
+    LLLYVE_PATH_INMOD,   /* LLLYE_PATH_INMOD */
+    LLLYVE_PATH_MISSMOD, /* LLLYE_PATH_MISSMOD */
+    LLLYVE_PATH_INNODE,  /* LLLYE_PATH_INNODE */
+    LLLYVE_PATH_INKEY,   /* LLLYE_PATH_INKEY */
+    LLLYVE_PATH_MISSKEY, /* LLLYE_PATH_MISSKEY */
+    LLLYVE_PATH_INIDENTREF, /* LLLYE_PATH_INIDENTREF */
+    LLLYVE_PATH_EXISTS,  /* LLLYE_PATH_EXISTS */
+    LLLYVE_PATH_MISSPAR, /* LLLYE_PATH_MISSPAR */
+    LLLYVE_PATH_PREDTOOMANY, /* LLLYE_PATH_PREDTOOMANY */
 };
 
 static int
-ly_vlog_build_path_print(char **path, uint16_t *index, const char *str, uint16_t str_len, uint16_t *length)
+llly_vlog_build_path_print(char **path, uint16_t *index, const char *str, uint16_t str_len, uint16_t *length)
 {
     void *mem;
     uint16_t step;
 
     if ((*index) < str_len) {
         /* enlarge buffer */
-        step = (str_len < LY_BUF_STEP) ? LY_BUF_STEP : str_len;
+        step = (str_len < LLLY_BUF_STEP) ? LLLY_BUF_STEP : str_len;
         mem = realloc(*path, *length + *index + step + 1);
-        LY_CHECK_ERR_RETURN(!mem, LOGMEM(NULL), -1);
+        LLLY_CHECK_ERR_RETURN(!mem, LOGMEM(NULL), -1);
         *path = mem;
 
         /* move data, lengths */
@@ -587,13 +587,13 @@ ly_vlog_build_path_print(char **path, uint16_t *index, const char *str, uint16_t
 }
 
 int
-ly_vlog_build_path(enum LY_VLOG_ELEM elem_type, const void *elem, char **path, int schema_all_prefixes, int data_no_last_predicate)
+llly_vlog_build_path(enum LLLY_VLOG_ELEM elem_type, const void *elem, char **path, int schema_all_prefixes, int data_no_last_predicate)
 {
     int i, j, yang_data_extension = 0;
-    struct lys_node_list *slist;
-    struct lys_node *sparent = NULL;
-    struct lyd_node *dlist, *diter;
-    const struct lys_module *top_smodule = NULL;
+    struct lllys_node_list *slist;
+    struct lllys_node *sparent = NULL;
+    struct lllyd_node *dlist, *diter;
+    const struct lllys_module *top_smodule = NULL;
     const char *name, *prefix = NULL, *val_end, *val_start, *ext_name;
     char *str;
     uint16_t length, index;
@@ -601,63 +601,63 @@ ly_vlog_build_path(enum LY_VLOG_ELEM elem_type, const void *elem, char **path, i
 
     length = 0;
     *path = malloc(1);
-    LY_CHECK_ERR_RETURN(!(*path), LOGMEM(NULL), -1);
+    LLLY_CHECK_ERR_RETURN(!(*path), LOGMEM(NULL), -1);
     index = 0;
 
     while (elem) {
         switch (elem_type) {
-        case LY_VLOG_XML:
-            name = ((struct lyxml_elem *)elem)->name;
-            prefix = ((struct lyxml_elem *)elem)->ns ? ((struct lyxml_elem *)elem)->ns->prefix : NULL;
-            elem = ((struct lyxml_elem *)elem)->parent;
+        case LLLY_VLOG_XML:
+            name = ((struct lllyxml_elem *)elem)->name;
+            prefix = ((struct lllyxml_elem *)elem)->ns ? ((struct lllyxml_elem *)elem)->ns->prefix : NULL;
+            elem = ((struct lllyxml_elem *)elem)->parent;
             break;
-        case LY_VLOG_LYS:
+        case LLLY_VLOG_LYS:
             if (!top_smodule) {
                 /* remember the top module, it will act as the current module */
-                for (sparent = (struct lys_node *)elem; lys_parent(sparent); sparent = lys_parent(sparent));
-                top_smodule = lys_node_module(sparent);
+                for (sparent = (struct lllys_node *)elem; lllys_parent(sparent); sparent = lllys_parent(sparent));
+                top_smodule = lllys_node_module(sparent);
             }
 
             /* skip uses */
-            sparent = lys_parent((struct lys_node *)elem);
-            while (sparent && (sparent->nodetype == LYS_USES)) {
-                sparent = lys_parent(sparent);
+            sparent = lllys_parent((struct lllys_node *)elem);
+            while (sparent && (sparent->nodetype == LLLYS_USES)) {
+                sparent = lllys_parent(sparent);
             }
-            if (!sparent || (lys_node_module((struct lys_node *)elem) != top_smodule) || schema_all_prefixes) {
-                prefix = lys_node_module((struct lys_node *)elem)->name;
+            if (!sparent || (lllys_node_module((struct lllys_node *)elem) != top_smodule) || schema_all_prefixes) {
+                prefix = lllys_node_module((struct lllys_node *)elem)->name;
             } else {
                 prefix = NULL;
             }
 
-            if (((struct lys_node *)elem)->nodetype & (LYS_AUGMENT | LYS_GROUPING)) {
-                if (ly_vlog_build_path_print(path, &index, "]", 1, &length)) {
+            if (((struct lllys_node *)elem)->nodetype & (LLLYS_AUGMENT | LLLYS_GROUPING)) {
+                if (llly_vlog_build_path_print(path, &index, "]", 1, &length)) {
                     return -1;
                 }
 
-                name = ((struct lys_node *)elem)->name;
-                if (ly_vlog_build_path_print(path, &index, name, strlen(name), &length)) {
+                name = ((struct lllys_node *)elem)->name;
+                if (llly_vlog_build_path_print(path, &index, name, strlen(name), &length)) {
                     return -1;
                 }
 
-                if (((struct lys_node *)elem)->nodetype == LYS_GROUPING) {
+                if (((struct lllys_node *)elem)->nodetype == LLLYS_GROUPING) {
                     name = "{grouping}[";
                 } else { /* augment */
                     name = "{augment}[";
                 }
-            } else if (((struct lys_node *)elem)->nodetype == LYS_EXT) {
-                name = ((struct lys_ext_instance *)elem)->def->name;
+            } else if (((struct lllys_node *)elem)->nodetype == LLLYS_EXT) {
+                name = ((struct lllys_ext_instance *)elem)->def->name;
                 if (!strcmp(name, "yang-data")) {
                     yang_data_extension = 1;
-                    name = ((struct lys_ext_instance *)elem)->arg_value;
-                    prefix = lys_node_module((struct lys_node *)elem)->name;
+                    name = ((struct lllys_ext_instance *)elem)->arg_value;
+                    prefix = lllys_node_module((struct lllys_node *)elem)->name;
                 }
             } else {
-                name = ((struct lys_node *)elem)->name;
+                name = ((struct lllys_node *)elem)->name;
             }
 
-            if (((struct lys_node *)elem)->nodetype == LYS_EXT) {
-                if (((struct lys_ext_instance*)elem)->parent_type == LYEXT_PAR_NODE) {
-                    elem = (struct lys_node*)((struct lys_ext_instance*)elem)->parent;
+            if (((struct lllys_node *)elem)->nodetype == LLLYS_EXT) {
+                if (((struct lllys_ext_instance*)elem)->parent_type == LLLYEXT_PAR_NODE) {
+                    elem = (struct lllys_node*)((struct lllys_ext_instance*)elem)->parent;
                 } else {
                     sparent = NULL;
                     elem = NULL;
@@ -667,34 +667,34 @@ ly_vlog_build_path(enum LY_VLOG_ELEM elem_type, const void *elem, char **path, i
 
             /* need to find the parent again because we don't want to skip augments */
             do {
-                sparent = ((struct lys_node *)elem)->parent;
-                elem = lys_parent((struct lys_node *)elem);
-            } while (elem && (((struct lys_node *)elem)->nodetype == LYS_USES));
+                sparent = ((struct lllys_node *)elem)->parent;
+                elem = lllys_parent((struct lllys_node *)elem);
+            } while (elem && (((struct lllys_node *)elem)->nodetype == LLLYS_USES));
             break;
-        case LY_VLOG_LYD:
-            name = ((struct lyd_node *)elem)->schema->name;
-            if (!((struct lyd_node *)elem)->parent ||
-                    lyd_node_module((struct lyd_node *)elem) != lyd_node_module(((struct lyd_node *)elem)->parent)) {
-                prefix = lyd_node_module((struct lyd_node *)elem)->name;
+        case LLLY_VLOG_LYD:
+            name = ((struct lllyd_node *)elem)->schema->name;
+            if (!((struct lllyd_node *)elem)->parent ||
+                    lllyd_node_module((struct lllyd_node *)elem) != lllyd_node_module(((struct lllyd_node *)elem)->parent)) {
+                prefix = lllyd_node_module((struct lllyd_node *)elem)->name;
             } else {
                 prefix = NULL;
             }
 
             /* handle predicates (keys) in case of lists */
             if (!data_no_last_predicate || index) {
-                if (((struct lyd_node *)elem)->schema->nodetype == LYS_LIST) {
-                    dlist = (struct lyd_node *)elem;
-                    slist = (struct lys_node_list *)((struct lyd_node *)elem)->schema;
+                if (((struct lllyd_node *)elem)->schema->nodetype == LLLYS_LIST) {
+                    dlist = (struct lllyd_node *)elem;
+                    slist = (struct lllys_node_list *)((struct lllyd_node *)elem)->schema;
                     if (slist->keys_size) {
                         /* schema list with keys - use key values in predicates */
                         for (i = slist->keys_size - 1; i > -1; i--) {
-                            LY_TREE_FOR(dlist->child, diter) {
-                                if (diter->schema == (struct lys_node *)slist->keys[i]) {
+                            LLLY_TREE_FOR(dlist->child, diter) {
+                                if (diter->schema == (struct lllys_node *)slist->keys[i]) {
                                     break;
                                 }
                             }
-                            if (diter && ((struct lyd_node_leaf_list *)diter)->value_str) {
-                                if (strchr(((struct lyd_node_leaf_list *)diter)->value_str, '\'')) {
+                            if (diter && ((struct lllyd_node_leaf_list *)diter)->value_str) {
+                                if (strchr(((struct lllyd_node_leaf_list *)diter)->value_str, '\'')) {
                                     val_start = "=\"";
                                     val_end = "\"]";
                                 } else {
@@ -703,69 +703,69 @@ ly_vlog_build_path(enum LY_VLOG_ELEM elem_type, const void *elem, char **path, i
                                 }
 
                                 /* print value */
-                                if (ly_vlog_build_path_print(path, &index, val_end, 2, &length)) {
+                                if (llly_vlog_build_path_print(path, &index, val_end, 2, &length)) {
                                     return -1;
                                 }
-                                len = strlen(((struct lyd_node_leaf_list *)diter)->value_str);
-                                if (ly_vlog_build_path_print(path, &index,
-                                        ((struct lyd_node_leaf_list *)diter)->value_str, len, &length)) {
+                                len = strlen(((struct lllyd_node_leaf_list *)diter)->value_str);
+                                if (llly_vlog_build_path_print(path, &index,
+                                        ((struct lllyd_node_leaf_list *)diter)->value_str, len, &length)) {
                                     return -1;
                                 }
 
                                 /* print schema name */
-                                if (ly_vlog_build_path_print(path, &index, val_start, 2, &length)) {
+                                if (llly_vlog_build_path_print(path, &index, val_start, 2, &length)) {
                                     return -1;
                                 }
                                 len = strlen(diter->schema->name);
-                                if (ly_vlog_build_path_print(path, &index, diter->schema->name, len, &length)) {
+                                if (llly_vlog_build_path_print(path, &index, diter->schema->name, len, &length)) {
                                     return -1;
                                 }
 
-                                if (lyd_node_module(dlist) != lyd_node_module(diter)) {
-                                    if (ly_vlog_build_path_print(path, &index, ":", 1, &length)) {
+                                if (lllyd_node_module(dlist) != lllyd_node_module(diter)) {
+                                    if (llly_vlog_build_path_print(path, &index, ":", 1, &length)) {
                                         return -1;
                                     }
-                                    len = strlen(lyd_node_module(diter)->name);
-                                    if (ly_vlog_build_path_print(path, &index, lyd_node_module(diter)->name, len, &length)) {
+                                    len = strlen(lllyd_node_module(diter)->name);
+                                    if (llly_vlog_build_path_print(path, &index, lllyd_node_module(diter)->name, len, &length)) {
                                         return -1;
                                     }
                                 }
 
-                                if (ly_vlog_build_path_print(path, &index, "[", 1, &length)) {
+                                if (llly_vlog_build_path_print(path, &index, "[", 1, &length)) {
                                     return -1;
                                 }
                             }
                         }
                     } else {
                         /* schema list without keys - use instance position */
-                        i = j = lyd_list_pos(dlist);
+                        i = j = lllyd_list_pos(dlist);
                         len = 1;
                         while (j > 9) {
                             ++len;
                             j /= 10;
                         }
 
-                        if (ly_vlog_build_path_print(path, &index, "]", 1, &length)) {
+                        if (llly_vlog_build_path_print(path, &index, "]", 1, &length)) {
                             return -1;
                         }
 
                         str = malloc(len + 1);
-                        LY_CHECK_ERR_RETURN(!str, LOGMEM(NULL), -1);
+                        LLLY_CHECK_ERR_RETURN(!str, LOGMEM(NULL), -1);
                         sprintf(str, "%d", i);
 
-                        if (ly_vlog_build_path_print(path, &index, str, len, &length)) {
+                        if (llly_vlog_build_path_print(path, &index, str, len, &length)) {
                             free(str);
                             return -1;
                         }
                         free(str);
 
-                        if (ly_vlog_build_path_print(path, &index, "[", 1, &length)) {
+                        if (llly_vlog_build_path_print(path, &index, "[", 1, &length)) {
                             return -1;
                         }
                     }
-                } else if (((struct lyd_node *)elem)->schema->nodetype == LYS_LEAFLIST &&
-                        ((struct lyd_node_leaf_list *)elem)->value_str) {
-                    if (strchr(((struct lyd_node_leaf_list *)elem)->value_str, '\'')) {
+                } else if (((struct lllyd_node *)elem)->schema->nodetype == LLLYS_LEAFLIST &&
+                        ((struct lllyd_node_leaf_list *)elem)->value_str) {
+                    if (strchr(((struct lllyd_node_leaf_list *)elem)->value_str, '\'')) {
                         val_start = "[.=\"";
                         val_end = "\"]";
                     } else {
@@ -773,27 +773,27 @@ ly_vlog_build_path(enum LY_VLOG_ELEM elem_type, const void *elem, char **path, i
                         val_end = "']";
                     }
 
-                    if (ly_vlog_build_path_print(path, &index, val_end, 2, &length)) {
+                    if (llly_vlog_build_path_print(path, &index, val_end, 2, &length)) {
                         return -1;
                     }
-                    len = strlen(((struct lyd_node_leaf_list *)elem)->value_str);
-                    if (ly_vlog_build_path_print(path, &index, ((struct lyd_node_leaf_list *)elem)->value_str, len, &length)) {
+                    len = strlen(((struct lllyd_node_leaf_list *)elem)->value_str);
+                    if (llly_vlog_build_path_print(path, &index, ((struct lllyd_node_leaf_list *)elem)->value_str, len, &length)) {
                         return -1;
                     }
-                    if (ly_vlog_build_path_print(path, &index, val_start, 4, &length)) {
+                    if (llly_vlog_build_path_print(path, &index, val_start, 4, &length)) {
                         return -1;
                     }
                 }
             }
 
             /* check if it is yang-data top element */
-            if (!((struct lyd_node *)elem)->parent) {
-                ext_name = lyp_get_yang_data_template_name(elem);
+            if (!((struct lllyd_node *)elem)->parent) {
+                ext_name = lllyp_get_yang_data_template_name(elem);
                 if (ext_name) {
-                    if (ly_vlog_build_path_print(path, &index, name, strlen(name), &length)) {
+                    if (llly_vlog_build_path_print(path, &index, name, strlen(name), &length)) {
                         return -1;
                     }
-                    if (ly_vlog_build_path_print(path, &index, "/", 1, &length)) {
+                    if (llly_vlog_build_path_print(path, &index, "/", 1, &length)) {
                         return -1;
                     }
                     yang_data_extension = 1;
@@ -801,11 +801,11 @@ ly_vlog_build_path(enum LY_VLOG_ELEM elem_type, const void *elem, char **path, i
                }
             }
 
-            elem = ((struct lyd_node *)elem)->parent;
+            elem = ((struct lllyd_node *)elem)->parent;
             break;
-        case LY_VLOG_STR:
+        case LLLY_VLOG_STR:
             len = strlen((const char *)elem);
-            if (ly_vlog_build_path_print(path, &index, (const char *)elem, len, &length)) {
+            if (llly_vlog_build_path_print(path, &index, (const char *)elem, len, &length)) {
                 return -1;
             }
             goto success;
@@ -815,27 +815,27 @@ ly_vlog_build_path(enum LY_VLOG_ELEM elem_type, const void *elem, char **path, i
             return -1;
         }
         if (name) {
-            if (ly_vlog_build_path_print(path, &index, name, strlen(name), &length)) {
+            if (llly_vlog_build_path_print(path, &index, name, strlen(name), &length)) {
                 return -1;
             }
             if (prefix) {
-                if (yang_data_extension && ly_vlog_build_path_print(path, &index, "#", 1, &length)) {
+                if (yang_data_extension && llly_vlog_build_path_print(path, &index, "#", 1, &length)) {
                     return -1;
                 }
-                if (ly_vlog_build_path_print(path, &index, ":", 1, &length)) {
+                if (llly_vlog_build_path_print(path, &index, ":", 1, &length)) {
                     return -1;
                 }
-                if (ly_vlog_build_path_print(path, &index, prefix, strlen(prefix), &length)) {
+                if (llly_vlog_build_path_print(path, &index, prefix, strlen(prefix), &length)) {
                     return -1;
                 }
             }
         }
-        if (ly_vlog_build_path_print(path, &index, "/", 1, &length)) {
+        if (llly_vlog_build_path_print(path, &index, "/", 1, &length)) {
             return -1;
         }
-        if ((elem_type == LY_VLOG_LYS) && !elem && sparent && (sparent->nodetype == LYS_AUGMENT)) {
-            len = strlen(((struct lys_node_augment *)sparent)->target_name);
-            if (ly_vlog_build_path_print(path, &index, ((struct lys_node_augment *)sparent)->target_name, len, &length)) {
+        if ((elem_type == LLLY_VLOG_LYS) && !elem && sparent && (sparent->nodetype == LLLYS_AUGMENT)) {
+            len = strlen(((struct lllys_node_augment *)sparent)->target_name);
+            if (llly_vlog_build_path_print(path, &index, ((struct lllys_node_augment *)sparent)->target_name, len, &length)) {
                 return -1;
             }
         }
@@ -848,21 +848,21 @@ success:
 }
 
 void
-ly_vlog(const struct ly_ctx *ctx, LY_ECODE ecode, enum LY_VLOG_ELEM elem_type, const void *elem, ...)
+llly_vlog(const struct llly_ctx *ctx, LLLY_ECODE ecode, enum LLLY_VLOG_ELEM elem_type, const void *elem, ...)
 {
     va_list ap;
     const char *fmt;
     char* path = NULL;
-    const struct ly_err_item *first;
+    const struct llly_err_item *first;
 
-    if ((ecode == LYE_PATH) && !path_flag) {
+    if ((ecode == LLLYE_PATH) && !path_flag) {
         return;
     }
 
-    if (path_flag && (elem_type != LY_VLOG_NONE)) {
-        if (elem_type == LY_VLOG_PREV) {
+    if (path_flag && (elem_type != LLLY_VLOG_NONE)) {
+        if (elem_type == LLLY_VLOG_PREV) {
             /* use previous path */
-            first = ly_err_first(ctx);
+            first = llly_err_first(ctx);
             if (first && first->prev->path) {
                 path = strdup(first->prev->path);
             }
@@ -872,7 +872,7 @@ ly_vlog(const struct ly_ctx *ctx, LY_ECODE ecode, enum LY_VLOG_ELEM elem_type, c
                 /* top-level */
                 path = strdup("/");
             } else {
-                ly_vlog_build_path(elem_type, elem, &path, 0, 0);
+                llly_vlog_build_path(elem_type, elem, &path, 0, 0);
             }
         }
     }
@@ -880,33 +880,33 @@ ly_vlog(const struct ly_ctx *ctx, LY_ECODE ecode, enum LY_VLOG_ELEM elem_type, c
     va_start(ap, elem);
     /* path is spent and should not be freed! */
     switch (ecode) {
-    case LYE_SPEC:
+    case LLLYE_SPEC:
         fmt = va_arg(ap, char *);
-        log_vprintf(ctx, LY_LLERR, LY_EVALID, LYVE_SUCCESS, path, fmt, ap);
+        log_vprintf(ctx, LLLY_LLERR, LLLY_EVALID, LLLYVE_SUCCESS, path, fmt, ap);
         break;
-    case LYE_PATH:
+    case LLLYE_PATH:
         assert(path);
-        log_vprintf(ctx, LY_LLERR, LY_EVALID, LYVE_SUCCESS, path, NULL, ap);
+        log_vprintf(ctx, LLLY_LLERR, LLLY_EVALID, LLLYVE_SUCCESS, path, NULL, ap);
         break;
     default:
-        log_vprintf(ctx, LY_LLERR, LY_EVALID, ecode2vecode[ecode], path, ly_errs[ecode], ap);
+        log_vprintf(ctx, LLLY_LLERR, LLLY_EVALID, ecode2vecode[ecode], path, llly_errs[ecode], ap);
         break;
     }
     va_end(ap);
 }
 
 void
-ly_vlog_str(const struct ly_ctx *ctx, enum LY_VLOG_ELEM elem_type, const char *str, ...)
+llly_vlog_str(const struct llly_ctx *ctx, enum LLLY_VLOG_ELEM elem_type, const char *str, ...)
 {
     va_list ap;
     char *path = NULL, *fmt, *ptr;
-    const struct ly_err_item *first;
+    const struct llly_err_item *first;
 
-    assert((elem_type == LY_VLOG_NONE) || (elem_type == LY_VLOG_PREV));
+    assert((elem_type == LLLY_VLOG_NONE) || (elem_type == LLLY_VLOG_PREV));
 
-    if (elem_type == LY_VLOG_PREV) {
+    if (elem_type == LLLY_VLOG_PREV) {
         /* use previous path */
-        first = ly_err_first(ctx);
+        first = llly_err_first(ctx);
         if (first && first->prev->path) {
             path = strdup(first->prev->path);
         }
@@ -926,18 +926,18 @@ ly_vlog_str(const struct ly_ctx *ctx, enum LY_VLOG_ELEM elem_type, const char *s
 
     va_start(ap, str);
     /* path is spent and should not be freed! */
-    log_vprintf(ctx, LY_LLERR, LY_EVALID, LYVE_SUCCESS, path, fmt, ap);
+    log_vprintf(ctx, LLLY_LLERR, LLLY_EVALID, LLLYVE_SUCCESS, path, fmt, ap);
     va_end(ap);
 
     free(fmt);
 }
 
 API void
-ly_err_print(struct ly_err_item *eitem)
+llly_err_print(struct llly_err_item *eitem)
 {
-    if (ly_log_opts & LY_LOLOG) {
-        if (ly_log_clb) {
-            ly_log_clb(eitem->level, eitem->msg, eitem->path);
+    if (llly_log_opts & LLLY_LOLOG) {
+        if (llly_log_clb) {
+            llly_log_clb(eitem->level, eitem->msg, eitem->path);
         } else {
             fprintf(stderr, "libyang[%d]: %s%s", eitem->level, eitem->msg, eitem->path ? " " : "\n");
             if (eitem->path) {
@@ -948,7 +948,7 @@ ly_err_print(struct ly_err_item *eitem)
 }
 
 static void
-err_print(struct ly_ctx *ctx, struct ly_err_item *last_eitem)
+err_print(struct llly_ctx *ctx, struct llly_err_item *last_eitem)
 {
     if (!last_eitem) {
         last_eitem = pthread_getspecific(ctx->errlist_key);
@@ -959,11 +959,11 @@ err_print(struct ly_ctx *ctx, struct ly_err_item *last_eitem)
 
     if ((log_opt != ILO_STORE) && (log_opt != ILO_IGNORE)) {
         for (; last_eitem; last_eitem = last_eitem->next) {
-            ly_err_print(last_eitem);
+            llly_err_print(last_eitem);
 
-            /* also properly update ly_errno */
-            if (last_eitem->level == LY_LLERR) {
-                ly_errno = last_eitem->no;
+            /* also properly update llly_errno */
+            if (last_eitem->level == LLLY_LLERR) {
+                llly_errno = last_eitem->no;
             }
         }
     }
@@ -973,12 +973,12 @@ err_print(struct ly_ctx *ctx, struct ly_err_item *last_eitem)
  * @brief Make \p last_eitem the last error item ignoring any logging options.
  */
 void
-ly_err_free_next(struct ly_ctx *ctx, struct ly_err_item *last_eitem)
+llly_err_free_next(struct llly_ctx *ctx, struct llly_err_item *last_eitem)
 {
     if (!last_eitem) {
-        ly_err_clean(ctx, NULL);
+        llly_err_clean(ctx, NULL);
     } else if (last_eitem->next) {
-        ly_err_clean(ctx, last_eitem->next);
+        llly_err_clean(ctx, last_eitem->next);
     }
 }
 
@@ -991,17 +991,17 @@ ly_err_free_next(struct ly_ctx *ctx, struct ly_err_item *last_eitem)
  * @param[in] keep Whether to keep the stored errors.
  */
 static void
-err_clean(struct ly_ctx *ctx, struct ly_err_item *prev_eitem, int keep)
+err_clean(struct llly_ctx *ctx, struct llly_err_item *prev_eitem, int keep)
 {
-    struct ly_err_item *first;
+    struct llly_err_item *first;
 
     /* internal options take precedence */
     if (log_opt == ILO_STORE) {
         /* keep all the new errors */
-    } else if ((log_opt == ILO_IGNORE) || !keep || !(ly_log_opts & LY_LOSTORE)) {
+    } else if ((log_opt == ILO_IGNORE) || !keep || !(llly_log_opts & LLLY_LOSTORE)) {
         /* throw away all the new errors */
-        ly_err_free_next(ctx, prev_eitem);
-    } else if ((ly_log_opts & LY_LOSTORE_LAST) == LY_LOSTORE_LAST) {
+        llly_err_free_next(ctx, prev_eitem);
+    } else if ((llly_log_opts & LLLY_LOSTORE_LAST) == LLLY_LOSTORE_LAST) {
         /* keep only the most recent error */
         first = pthread_getspecific(ctx->errlist_key);
         if (!first) {
@@ -1018,13 +1018,13 @@ err_clean(struct ly_ctx *ctx, struct ly_err_item *prev_eitem, int keep)
 
         /* free all the errlist items except the last one, do not free any if there is only one */
         if (prev_eitem != first) {
-            ly_err_free(first);
+            llly_err_free(first);
         }
     }
 }
 
 void
-ly_ilo_change(struct ly_ctx *ctx, enum int_log_opts new_ilo, enum int_log_opts *prev_ilo, struct ly_err_item **prev_last_eitem)
+llly_ilo_change(struct llly_ctx *ctx, enum int_log_opts new_ilo, enum int_log_opts *prev_ilo, struct llly_err_item **prev_last_eitem)
 {
     assert(prev_ilo);
 
@@ -1032,7 +1032,7 @@ ly_ilo_change(struct ly_ctx *ctx, enum int_log_opts new_ilo, enum int_log_opts *
     if (new_ilo == ILO_STORE) {
         /* only in this case the errors are only temporarily stored */
         assert(ctx && prev_last_eitem);
-        *prev_last_eitem = (struct ly_err_item *)ly_err_first(ctx);
+        *prev_last_eitem = (struct llly_err_item *)llly_err_first(ctx);
         if (*prev_last_eitem) {
             *prev_last_eitem = (*prev_last_eitem)->prev;
         }
@@ -1044,7 +1044,7 @@ ly_ilo_change(struct ly_ctx *ctx, enum int_log_opts new_ilo, enum int_log_opts *
 }
 
 void
-ly_ilo_restore(struct ly_ctx *ctx, enum int_log_opts prev_ilo, struct ly_err_item *prev_last_eitem, int keep_and_print)
+llly_ilo_restore(struct llly_ctx *ctx, enum int_log_opts prev_ilo, struct llly_err_item *prev_last_eitem, int keep_and_print)
 {
     assert(log_opt != ILO_LOG);
     if (log_opt != ILO_STORE) {
@@ -1064,12 +1064,12 @@ ly_ilo_restore(struct ly_ctx *ctx, enum int_log_opts prev_ilo, struct ly_err_ite
 }
 
 void
-ly_err_last_set_apptag(const struct ly_ctx *ctx, const char *apptag)
+llly_err_last_set_apptag(const struct llly_ctx *ctx, const char *apptag)
 {
-    struct ly_err_item *i;
+    struct llly_err_item *i;
 
     if (log_opt != ILO_IGNORE) {
-        i = ly_err_first(ctx);
+        i = llly_err_first(ctx);
         if (i) {
             i = i->prev;
             i->apptag = strdup(apptag);

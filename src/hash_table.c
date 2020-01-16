@@ -23,7 +23,7 @@
 #include "hash_table.h"
 
 static int
-lydict_val_eq(void *val1_p, void *val2_p, int UNUSED(mod), void *cb_data)
+lllydict_val_eq(void *val1_p, void *val2_p, int UNUSED(mod), void *cb_data)
 {
     if (!val1_p || !val2_p) {
         LOGARG;
@@ -46,20 +46,20 @@ lydict_val_eq(void *val1_p, void *val2_p, int UNUSED(mod), void *cb_data)
 }
 
 void
-lydict_init(struct dict_table *dict)
+lllydict_init(struct dict_table *dict)
 {
     if (!dict) {
         LOGARG;
         return;
     }
 
-    dict->hash_tab = lyht_new(1024, sizeof(struct dict_rec), lydict_val_eq, NULL, 1);
-    LY_CHECK_ERR_RETURN(!dict->hash_tab, LOGINT(NULL), );
+    dict->hash_tab = lllyht_new(1024, sizeof(struct dict_rec), lllydict_val_eq, NULL, 1);
+    LLLY_CHECK_ERR_RETURN(!dict->hash_tab, LOGINT(NULL), );
     pthread_mutex_init(&dict->lock, NULL);
 }
 
 void
-lydict_clean(struct dict_table *dict)
+lllydict_clean(struct dict_table *dict)
 {
     unsigned int i;
     struct dict_rec *dict_rec  = NULL;
@@ -76,8 +76,8 @@ lydict_clean(struct dict_table *dict)
         if (rec->hits == 1) {
             /*
              * this should not happen, all records inserted into
-             * dictionary are supposed to be removed using lydict_remove()
-             * before calling lydict_clean()
+             * dictionary are supposed to be removed using lllydict_remove()
+             * before calling lllydict_clean()
              */
             dict_rec  = (struct dict_rec *)rec->val;
             LOGWRN(NULL, "String \"%s\" not freed from the dictionary, refcount %d", dict_rec->value, dict_rec->refcount);
@@ -89,7 +89,7 @@ lydict_clean(struct dict_table *dict)
     }
 
     /* free table and destroy mutex */
-    lyht_free(dict->hash_tab);
+    lllyht_free(dict->hash_tab);
     pthread_mutex_destroy(&dict->lock);
 }
 
@@ -142,7 +142,7 @@ dict_hash_multi(uint32_t hash, const char *key_part, size_t len)
 }
 
 API void
-lydict_remove(struct ly_ctx *ctx, const char *value)
+lllydict_remove(struct llly_ctx *ctx, const char *value)
 {
     FUN_IN;
 
@@ -159,31 +159,31 @@ lydict_remove(struct ly_ctx *ctx, const char *value)
     len = strlen(value);
     hash = dict_hash(value, len);
 
-    /* create record for lyht_find call */
+    /* create record for lllyht_find call */
     rec.value = (char *)value;
     rec.refcount = 0;
 
     pthread_mutex_lock(&ctx->dict.lock);
     /* set len as data for compare callback */
-    lyht_set_cb_data(ctx->dict.hash_tab, (void *)&len);
+    lllyht_set_cb_data(ctx->dict.hash_tab, (void *)&len);
     /* check if value is already inserted */
-    ret = lyht_find(ctx->dict.hash_tab, &rec, hash, (void **)&match);
+    ret = lllyht_find(ctx->dict.hash_tab, &rec, hash, (void **)&match);
 
     if (ret == 0) {
-        LY_CHECK_ERR_GOTO(!match, LOGINT(ctx), finish);
+        LLLY_CHECK_ERR_GOTO(!match, LOGINT(ctx), finish);
 
         /* if value is already in dictionary, decrement reference counter */
         match->refcount--;
         if (match->refcount == 0) {
             /*
              * remove record
-             * save pointer to stored string before lyht_remove to
+             * save pointer to stored string before lllyht_remove to
              * free it after it is removed from hash table
              */
             val_p = match->value;
-            ret = lyht_remove(ctx->dict.hash_tab, &rec, hash);
+            ret = lllyht_remove(ctx->dict.hash_tab, &rec, hash);
             free(val_p);
-            LY_CHECK_ERR_GOTO(ret, LOGINT(ctx), finish);
+            LLLY_CHECK_ERR_GOTO(ret, LOGINT(ctx), finish);
         }
     }
 
@@ -192,7 +192,7 @@ finish:
 }
 
 static char *
-dict_insert(struct ly_ctx *ctx, char *value, size_t len, int zerocopy)
+dict_insert(struct llly_ctx *ctx, char *value, size_t len, int zerocopy)
 {
     struct dict_rec *match = NULL, rec;
     int ret = 0;
@@ -200,13 +200,13 @@ dict_insert(struct ly_ctx *ctx, char *value, size_t len, int zerocopy)
 
     hash = dict_hash(value, len);
     /* set len as data for compare callback */
-    lyht_set_cb_data(ctx->dict.hash_tab, (void *)&len);
-    /* create record for lyht_insert */
+    lllyht_set_cb_data(ctx->dict.hash_tab, (void *)&len);
+    /* create record for lllyht_insert */
     rec.value = value;
     rec.refcount = 1;
 
-    LOGDBG(LY_LDGDICT, "inserting \"%s\"", rec.value);
-    ret = lyht_insert(ctx->dict.hash_tab, (void *)&rec, hash, (void **)&match);
+    LOGDBG(LLLY_LDGDICT, "inserting \"%s\"", rec.value);
+    ret = lllyht_insert(ctx->dict.hash_tab, (void *)&rec, hash, (void **)&match);
     if (ret == 1) {
         match->refcount++;
         if (zerocopy) {
@@ -219,12 +219,12 @@ dict_insert(struct ly_ctx *ctx, char *value, size_t len, int zerocopy)
              * record is already inserted in hash table
              */
             match->value = malloc(sizeof *match->value * (len + 1));
-            LY_CHECK_ERR_RETURN(!match->value, LOGMEM(ctx), NULL);
+            LLLY_CHECK_ERR_RETURN(!match->value, LOGMEM(ctx), NULL);
             memcpy(match->value, value, len);
             match->value[len] = '\0';
         }
     } else {
-        /* lyht_insert returned error */
+        /* lllyht_insert returned error */
         LOGINT(ctx);
         return NULL;
     }
@@ -233,7 +233,7 @@ dict_insert(struct ly_ctx *ctx, char *value, size_t len, int zerocopy)
 }
 
 API const char *
-lydict_insert(struct ly_ctx *ctx, const char *value, size_t len)
+lllydict_insert(struct llly_ctx *ctx, const char *value, size_t len)
 {
     FUN_IN;
 
@@ -255,7 +255,7 @@ lydict_insert(struct ly_ctx *ctx, const char *value, size_t len)
 }
 
 API const char *
-lydict_insert_zc(struct ly_ctx *ctx, char *value)
+lllydict_insert_zc(struct llly_ctx *ctx, char *value)
 {
     FUN_IN;
 
@@ -273,13 +273,13 @@ lydict_insert_zc(struct ly_ctx *ctx, char *value)
 }
 
 struct ht_rec *
-lyht_get_rec(unsigned char *recs, uint16_t rec_size, uint32_t idx)
+lllyht_get_rec(unsigned char *recs, uint16_t rec_size, uint32_t idx)
 {
     return (struct ht_rec *)&recs[idx * rec_size];
 }
 
 struct hash_table *
-lyht_new(uint32_t size, uint16_t val_size, values_equal_cb val_equal, void *cb_data, int resize)
+lllyht_new(uint32_t size, uint16_t val_size, values_equal_cb val_equal, void *cb_data, int resize)
 {
     struct hash_table *ht;
 
@@ -288,12 +288,12 @@ lyht_new(uint32_t size, uint16_t val_size, values_equal_cb val_equal, void *cb_d
     assert(val_equal && val_size);
     assert(resize == 0 || resize == 1);
 
-    if (size < LYHT_MIN_SIZE) {
-        size = LYHT_MIN_SIZE;
+    if (size < LLLYHT_MIN_SIZE) {
+        size = LLLYHT_MIN_SIZE;
     }
 
     ht = malloc(sizeof *ht);
-    LY_CHECK_ERR_RETURN(!ht, LOGMEM(NULL), NULL);
+    LLLY_CHECK_ERR_RETURN(!ht, LOGMEM(NULL), NULL);
 
     ht->used = 0;
     ht->size = size;
@@ -304,13 +304,13 @@ lyht_new(uint32_t size, uint16_t val_size, values_equal_cb val_equal, void *cb_d
     ht->rec_size = (sizeof(struct ht_rec) - 1) + val_size;
     /* allocate the records correctly */
     ht->recs = calloc(size, ht->rec_size);
-    LY_CHECK_ERR_RETURN(!ht->recs, free(ht); LOGMEM(NULL), NULL);
+    LLLY_CHECK_ERR_RETURN(!ht->recs, free(ht); LOGMEM(NULL), NULL);
 
     return ht;
 }
 
 values_equal_cb
-lyht_set_cb(struct hash_table *ht, values_equal_cb new_val_equal)
+lllyht_set_cb(struct hash_table *ht, values_equal_cb new_val_equal)
 {
     values_equal_cb prev;
 
@@ -320,7 +320,7 @@ lyht_set_cb(struct hash_table *ht, values_equal_cb new_val_equal)
 }
 
 void *
-lyht_set_cb_data(struct hash_table *ht, void *new_cb_data)
+lllyht_set_cb_data(struct hash_table *ht, void *new_cb_data)
 {
     void *prev;
 
@@ -330,7 +330,7 @@ lyht_set_cb_data(struct hash_table *ht, void *new_cb_data)
 }
 
 struct hash_table *
-lyht_dup(const struct hash_table *orig)
+lllyht_dup(const struct hash_table *orig)
 {
     struct hash_table *ht;
 
@@ -338,7 +338,7 @@ lyht_dup(const struct hash_table *orig)
         return NULL;
     }
 
-    ht = lyht_new(orig->size, orig->rec_size - (sizeof(struct ht_rec) - 1), orig->val_equal, orig->cb_data, orig->resize ? 1 : 0);
+    ht = lllyht_new(orig->size, orig->rec_size - (sizeof(struct ht_rec) - 1), orig->val_equal, orig->cb_data, orig->resize ? 1 : 0);
     if (!ht) {
         return NULL;
     }
@@ -349,7 +349,7 @@ lyht_dup(const struct hash_table *orig)
 }
 
 void
-lyht_free(struct hash_table *ht)
+lllyht_free(struct hash_table *ht)
 {
     if (ht) {
         free(ht->recs);
@@ -358,7 +358,7 @@ lyht_free(struct hash_table *ht)
 }
 
 static int
-lyht_resize(struct hash_table *ht, int enlarge)
+lllyht_resize(struct hash_table *ht, int enlarge)
 {
     struct ht_rec *rec;
     unsigned char *old_recs;
@@ -377,16 +377,16 @@ lyht_resize(struct hash_table *ht, int enlarge)
     }
 
     ht->recs = calloc(ht->size, ht->rec_size);
-    LY_CHECK_ERR_RETURN(!ht->recs, LOGMEM(NULL); ht->recs = old_recs; ht->size = old_size, -1);
+    LLLY_CHECK_ERR_RETURN(!ht->recs, LOGMEM(NULL); ht->recs = old_recs; ht->size = old_size, -1);
 
     /* reset used, it will increase again */
     ht->used = 0;
 
     /* add all the old records into the new records array */
     for (i = 0; i < old_size; ++i) {
-        rec = lyht_get_rec(old_recs, ht->rec_size, i);
+        rec = lllyht_get_rec(old_recs, ht->rec_size, i);
         if (rec->hits > 0) {
-            ret = lyht_insert(ht, rec->val, rec->hash, NULL);
+            ret = lllyht_insert(ht, rec->val, rec->hash, NULL);
             assert(!ret);
             (void)ret;
         }
@@ -400,7 +400,7 @@ lyht_resize(struct hash_table *ht, int enlarge)
 /* return: 0 - hash found, returned its record,
  *         1 - hash not found, returned the record where it would be inserted */
 static int
-lyht_find_first(struct hash_table *ht, uint32_t hash, struct ht_rec **rec_p)
+lllyht_find_first(struct hash_table *ht, uint32_t hash, struct ht_rec **rec_p)
 {
     struct ht_rec *rec, *inval_rec = NULL;
     uint32_t i, idx;
@@ -410,7 +410,7 @@ lyht_find_first(struct hash_table *ht, uint32_t hash, struct ht_rec **rec_p)
     }
 
     idx = i = hash & (ht->size - 1);
-    rec = lyht_get_rec(ht->recs, ht->rec_size, idx);
+    rec = lllyht_get_rec(ht->recs, ht->rec_size, idx);
 
     /* skip through overflow and deleted records */
     while ((rec->hits != 0) && ((rec->hits == -1) || ((rec->hash & (ht->size - 1)) != idx))) {
@@ -428,7 +428,7 @@ lyht_find_first(struct hash_table *ht, uint32_t hash, struct ht_rec **rec_p)
             }
             return 1;
         }
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
     }
 
     if (rec->hits == 0) {
@@ -463,7 +463,7 @@ lyht_find_first(struct hash_table *ht, uint32_t hash, struct ht_rec **rec_p)
  *         1 when hash collision not found, \p last points to the record where it would be inserted.
  */
 static int
-lyht_find_collision(struct hash_table *ht, struct ht_rec **last, struct ht_rec *first)
+lllyht_find_collision(struct hash_table *ht, struct ht_rec **last, struct ht_rec *first)
 {
     struct ht_rec *inval_rec = NULL;
     uint32_t i, idx;
@@ -475,7 +475,7 @@ lyht_find_collision(struct hash_table *ht, struct ht_rec **last, struct ht_rec *
 
     do {
         i = (i + 1) % ht->size;
-        *last = lyht_get_rec(ht->recs, ht->rec_size, i);
+        *last = lllyht_get_rec(ht->recs, ht->rec_size, i);
         if (*last == first) {
             /* we went through all the records (very unlikely, but possible when many records are invalid),
              * just return an invalid record */
@@ -508,13 +508,13 @@ lyht_find_collision(struct hash_table *ht, struct ht_rec **last, struct ht_rec *
 }
 
 int
-lyht_find(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p)
+lllyht_find(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p)
 {
     struct ht_rec *rec, *crec;
     uint32_t i, c;
     int r;
 
-    if (lyht_find_first(ht, hash, &rec)) {
+    if (lllyht_find_first(ht, hash, &rec)) {
         /* not found */
         return 1;
     }
@@ -530,7 +530,7 @@ lyht_find(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p)
     crec = rec;
     c = rec->hits;
     for (i = 1; i < c; ++i) {
-        r = lyht_find_collision(ht, &rec, crec);
+        r = lllyht_find_collision(ht, &rec, crec);
         assert(!r);
         (void)r;
 
@@ -548,13 +548,13 @@ lyht_find(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p)
 }
 
 int
-lyht_find_next(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p)
+lllyht_find_next(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p)
 {
     struct ht_rec *rec, *crec;
     uint32_t i, c;
     int r, found = 0;
 
-    if (lyht_find_first(ht, hash, &rec)) {
+    if (lllyht_find_first(ht, hash, &rec)) {
         /* not found, cannot happen */
         assert(0);
     }
@@ -575,7 +575,7 @@ lyht_find_next(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p
     crec = rec;
     c = rec->hits;
     for (i = 1; i < c; ++i) {
-        r = lyht_find_collision(ht, &rec, crec);
+        r = lllyht_find_collision(ht, &rec, crec);
         assert(!r);
         (void)r;
 
@@ -608,7 +608,7 @@ lyht_find_next(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p
 
 /* prints little-endian numbers, will also work on big-endian just the values will look weird */
 static char *
-lyht_dbgprint_val2str(void *val_p, int32_t hits, uint16_t rec_size)
+lllyht_dbgprint_val2str(void *val_p, int32_t hits, uint16_t rec_size)
 {
     char *val;
     int32_t i, j, val_size;
@@ -628,18 +628,18 @@ lyht_dbgprint_val2str(void *val_p, int32_t hits, uint16_t rec_size)
 }
 
 static void
-lyht_dbgprint_ht(struct hash_table *ht, const char *info)
+lllyht_dbgprint_ht(struct hash_table *ht, const char *info)
 {
     struct ht_rec *rec;
     uint32_t i, i_len;
     char *val;
 
-    if (LY_LLDBG > ly_log_level) {
+    if (LLLY_LLDBG > llly_log_level) {
         return;
     }
 
-    LOGDBG(LY_LDGHASH, "");
-    LOGDBG(LY_LDGHASH, "hash table %s (used %u, size %u):", info, ht->used, ht->size);
+    LOGDBG(LLLY_LDGHASH, "");
+    LOGDBG(LLLY_LDGHASH, "hash table %s (used %u, size %u):", info, ht->used, ht->size);
 
     val = malloc(11);
     sprintf(val, "%u", ht->size);
@@ -647,34 +647,34 @@ lyht_dbgprint_ht(struct hash_table *ht, const char *info)
     free(val);
 
     for (i = 0; i < ht->size; ++i) {
-        rec = lyht_get_rec(ht->recs, ht->rec_size, i);
-        val = lyht_dbgprint_val2str(&rec->val, rec->hits, ht->rec_size);
+        rec = lllyht_get_rec(ht->recs, ht->rec_size, i);
+        val = lllyht_dbgprint_val2str(&rec->val, rec->hits, ht->rec_size);
         if (rec->hits > 0) {
-            LOGDBG(LY_LDGHASH, "[%*u] val  %s  hash  %10u %% %*u  hits  %2d",
+            LOGDBG(LLLY_LDGHASH, "[%*u] val  %s  hash  %10u %% %*u  hits  %2d",
                    (int)i_len, i, val, rec->hash, (int)i_len, rec->hash & (ht->size - 1), rec->hits);
         } else {
-            LOGDBG(LY_LDGHASH, "[%*u] val  %s  hash  %10s %% %*s  hits  %2d",
+            LOGDBG(LLLY_LDGHASH, "[%*u] val  %s  hash  %10s %% %*s  hits  %2d",
                    (int)i_len, i, val, "", (int)i_len, "", rec->hits);
         }
         free(val);
     }
-    LOGDBG(LY_LDGHASH, "");
+    LOGDBG(LLLY_LDGHASH, "");
 }
 
 static void
-lyht_dbgprint_value(void *val_p, uint32_t hash, uint16_t rec_size, const char *operation)
+lllyht_dbgprint_value(void *val_p, uint32_t hash, uint16_t rec_size, const char *operation)
 {
-    if (LY_LLDBG > ly_log_level) {
+    if (LLLY_LLDBG > llly_log_level) {
         return;
     }
 
-    char *val = lyht_dbgprint_val2str(val_p, 1, rec_size);
-    LOGDBG(LY_LDGHASH, "%s value %s with hash %u", operation, val, hash);
+    char *val = lllyht_dbgprint_val2str(val_p, 1, rec_size);
+    LOGDBG(LLLY_LDGHASH, "%s value %s with hash %u", operation, val, hash);
     free(val);
 }
 
 int
-lyht_insert_with_resize_cb(struct hash_table *ht, void *val_p, uint32_t hash,
+lllyht_insert_with_resize_cb(struct hash_table *ht, void *val_p, uint32_t hash,
                            values_equal_cb resize_val_equal, void **match_p)
 {
     struct ht_rec *rec, *crec = NULL;
@@ -682,10 +682,10 @@ lyht_insert_with_resize_cb(struct hash_table *ht, void *val_p, uint32_t hash,
     int r, ret;
     values_equal_cb old_val_equal;
 
-    lyht_dbgprint_ht(ht, "before");
-    lyht_dbgprint_value(val_p, hash, ht->rec_size, "inserting");
+    lllyht_dbgprint_ht(ht, "before");
+    lllyht_dbgprint_value(val_p, hash, ht->rec_size, "inserting");
 
-    if (!lyht_find_first(ht, hash, &rec)) {
+    if (!lllyht_find_first(ht, hash, &rec)) {
         /* we found matching shortened hash */
         if ((rec->hash == hash) && ht->val_equal(val_p, &rec->val, 1, ht->cb_data)) {
             /* even the value matches */
@@ -698,7 +698,7 @@ lyht_insert_with_resize_cb(struct hash_table *ht, void *val_p, uint32_t hash,
         /* some collisions, we need to go through them, too */
         crec = rec;
         for (i = 1; i < crec->hits; ++i) {
-            r = lyht_find_collision(ht, &rec, crec);
+            r = lllyht_find_collision(ht, &rec, crec);
             assert(!r);
 
             /* compare values */
@@ -711,7 +711,7 @@ lyht_insert_with_resize_cb(struct hash_table *ht, void *val_p, uint32_t hash,
         }
 
         /* value not found, get the record where it will be inserted */
-        r = lyht_find_collision(ht, &rec, crec);
+        r = lllyht_find_collision(ht, &rec, crec);
         assert(r);
     }
 
@@ -737,51 +737,51 @@ lyht_insert_with_resize_cb(struct hash_table *ht, void *val_p, uint32_t hash,
     ++ht->used;
     if (ht->resize) {
         r = (ht->used * 100) / ht->size;
-        if ((ht->resize == 1) && (r >= LYHT_FIRST_SHRINK_PERCENTAGE)) {
+        if ((ht->resize == 1) && (r >= LLLYHT_FIRST_SHRINK_PERCENTAGE)) {
             /* enable shrinking */
             ht->resize = 2;
         }
-        if ((ht->resize == 2) && (r >= LYHT_ENLARGE_PERCENTAGE)) {
+        if ((ht->resize == 2) && (r >= LLLYHT_ENLARGE_PERCENTAGE)) {
             if (resize_val_equal) {
-                old_val_equal = lyht_set_cb(ht, resize_val_equal);
+                old_val_equal = lllyht_set_cb(ht, resize_val_equal);
             }
 
             /* enlarge */
-            ret = lyht_resize(ht, 1);
+            ret = lllyht_resize(ht, 1);
             /* if hash_table was resized, we need to find new matching value */
             if (ret == 0 && match_p) {
-                lyht_find(ht, val_p, hash, match_p);
+                lllyht_find(ht, val_p, hash, match_p);
             }
 
             if (resize_val_equal) {
-                lyht_set_cb(ht, old_val_equal);
+                lllyht_set_cb(ht, old_val_equal);
             }
         }
     }
 
-    lyht_dbgprint_ht(ht, "after");
+    lllyht_dbgprint_ht(ht, "after");
     return ret;
 }
 
 int
-lyht_insert(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p)
+lllyht_insert(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p)
 {
-    return lyht_insert_with_resize_cb(ht, val_p, hash, NULL, match_p);
+    return lllyht_insert_with_resize_cb(ht, val_p, hash, NULL, match_p);
 }
 
 int
-lyht_remove(struct hash_table *ht, void *val_p, uint32_t hash)
+lllyht_remove(struct hash_table *ht, void *val_p, uint32_t hash)
 {
     struct ht_rec *rec, *crec;
     int32_t i;
     int first_matched = 0, r, ret;
 
-    lyht_dbgprint_ht(ht, "before");
-    lyht_dbgprint_value(val_p, hash, ht->rec_size, "removing");
+    lllyht_dbgprint_ht(ht, "before");
+    lllyht_dbgprint_value(val_p, hash, ht->rec_size, "removing");
 
-    if (lyht_find_first(ht, hash, &rec)) {
+    if (lllyht_find_first(ht, hash, &rec)) {
         /* hash not found */
-        LOGDBG(LY_LDGHASH, "remove failed");
+        LOGDBG(LLLY_LDGHASH, "remove failed");
         return 1;
     }
     if ((rec->hash == hash) && ht->val_equal(val_p, &rec->val, 1, ht->cb_data)) {
@@ -792,7 +792,7 @@ lyht_remove(struct hash_table *ht, void *val_p, uint32_t hash)
     /* we always need to go through collisions */
     crec = rec;
     for (i = 1; i < crec->hits; ++i) {
-        r = lyht_find_collision(ht, &rec, crec);
+        r = lllyht_find_collision(ht, &rec, crec);
         assert(!r);
 
         /* compare values */
@@ -819,7 +819,7 @@ lyht_remove(struct hash_table *ht, void *val_p, uint32_t hash)
     } else {
         /* value not found even in collisions */
         assert(!first_matched);
-        LOGDBG(LY_LDGHASH, "remove failed");
+        LOGDBG(LLLY_LDGHASH, "remove failed");
         return 1;
     }
 
@@ -828,12 +828,12 @@ lyht_remove(struct hash_table *ht, void *val_p, uint32_t hash)
     --ht->used;
     if (ht->resize == 2) {
         r = (ht->used * 100) / ht->size;
-        if ((r < LYHT_SHRINK_PERCENTAGE) && (ht->size > LYHT_MIN_SIZE)) {
+        if ((r < LLLYHT_SHRINK_PERCENTAGE) && (ht->size > LLLYHT_MIN_SIZE)) {
             /* shrink */
-            ret = lyht_resize(ht, 0);
+            ret = lllyht_resize(ht, 0);
         }
     }
 
-    lyht_dbgprint_ht(ht, "after");
+    lllyht_dbgprint_ht(ht, "after");
     return ret;
 }

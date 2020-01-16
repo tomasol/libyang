@@ -22,10 +22,10 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    const struct lys_module *mod;
-    struct lyd_node *dt;
-    struct lyd_node *dt2;
+    struct llly_ctx *ctx;
+    const struct lllys_module *mod;
+    struct lllyd_node *dt;
+    struct lllyd_node *dt2;
     char *xml;
 };
 
@@ -41,7 +41,7 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
@@ -50,7 +50,7 @@ setup_f(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -62,9 +62,9 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->dt);
-    lyd_free_withsiblings(st->dt2);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    lllyd_free_withsiblings(st->dt2);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st->xml);
     free(st);
     (*state) = NULL;
@@ -78,24 +78,24 @@ test_dependency_rpc(void **state)
     struct state *st = (struct state *)*state;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/must-dependrpc.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/must-dependrpc.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
-    if (!(st->mod->data->next->child->child->flags & LYS_XPCONF_DEP)) {
+    if (!(st->mod->data->next->child->child->flags & LLLYS_XPCONF_DEP)) {
         fail();
     }
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/must-dependrpc:rpc1/b", "val_b", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/must-dependrpc:rpc1/b", "val_b", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
 
-    st->dt2 = lyd_new_path(NULL, st->ctx, "/must-dependrpc:top/a", "val_a", 0, 0);
+    st->dt2 = lllyd_new_path(NULL, st->ctx, "/must-dependrpc:top/a", "val_a", 0, 0);
     assert_ptr_not_equal(st->dt2, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_RPC, st->dt2), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_RPC, st->dt2), 0);
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(st->xml, "<rpc1 xmlns=\"urn:libyang:tests:must-dependrpc\"><b>val_b</b></rpc1>");
     free(st->xml);
-    lyd_print_mem(&(st->xml), st->dt2, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&(st->xml), st->dt2, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(st->xml, "<top xmlns=\"urn:libyang:tests:must-dependrpc\"><a>val_a</a></top>");
 }
 
@@ -105,24 +105,24 @@ test_dependency_action(void **state)
     struct state *st = (struct state *)*state;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/must-dependact.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/must-dependact.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
-    if (!(st->mod->data->child->child->next->next->next->child->child->flags & LYS_XPCONF_DEP)) {
+    if (!(st->mod->data->child->child->next->next->next->child->child->flags & LLLYS_XPCONF_DEP)) {
         fail();
     }
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/must-dependact:top/list1[key1='a'][key2='b']/act1/b", "bb", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/must-dependact:top/list1[key1='a'][key2='b']/act1/b", "bb", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
 
-    st->dt2 = lyd_new_path(NULL, st->ctx, "/must-dependact:top/list1[key1='c'][key2='d']/a", "aa", 0, 0);
+    st->dt2 = lllyd_new_path(NULL, st->ctx, "/must-dependact:top/list1[key1='c'][key2='d']/a", "aa", 0, 0);
     assert_ptr_not_equal(st->dt2, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_RPC, st->dt2), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_RPC, st->dt2), 0);
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, LYP_WITHSIBLINGS | LYP_NETCONF);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, LLLYP_WITHSIBLINGS | LLLYP_NETCONF);
     assert_string_equal(st->xml, "<action xmlns=\"urn:ietf:params:xml:ns:yang:1\"><top xmlns=\"urn:libyang:tests:must-dependact\"><list1><key1>a</key1><key2>b</key2><act1><b>bb</b></act1></list1></top></action>");
     free(st->xml);
-    lyd_print_mem(&(st->xml), st->dt2, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&(st->xml), st->dt2, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(st->xml, "<top xmlns=\"urn:libyang:tests:must-dependact\"><list1><key1>c</key1><key2>d</key2><a>aa</a></list1></top>");
 }
 
@@ -130,55 +130,55 @@ static void
 test_inout(void **state)
 {
     struct state *st = (struct state *)*state;
-    struct lyd_node *node;
+    struct lllyd_node *node;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/must-inout.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/must-inout.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
 
     /* input */
-    st->dt = lyd_new_path(NULL, st->ctx, "/must-inout:rpc1/b", "bb", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/must-inout:rpc1/b", "bb", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_RPC, NULL), 1);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_RPC, NULL), 1);
 
-    node = lyd_new_path(st->dt, st->ctx, "/must-inout:rpc1/c", "5", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/must-inout:rpc1/c", "5", 0, 0);
     assert_ptr_not_equal(node, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_RPC, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_RPC, NULL), 0);
 
     /* output */
-    st->dt2 = lyd_new_path(NULL, st->ctx, "/must-inout:rpc1/d", "0", 0, LYD_PATH_OPT_OUTPUT);
+    st->dt2 = lllyd_new_path(NULL, st->ctx, "/must-inout:rpc1/d", "0", 0, LLLYD_PATH_OPT_OUTPUT);
     assert_ptr_not_equal(st->dt2, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt2), LYD_OPT_RPCREPLY, NULL), 1);
+    assert_int_equal(lllyd_validate(&(st->dt2), LLLYD_OPT_RPCREPLY, NULL), 1);
 
-    node = lyd_new_path(st->dt2, st->ctx, "/must-inout:rpc1/d", "6", 0, LYD_PATH_OPT_OUTPUT | LYD_PATH_OPT_UPDATE);
+    node = lllyd_new_path(st->dt2, st->ctx, "/must-inout:rpc1/d", "6", 0, LLLYD_PATH_OPT_OUTPUT | LLLYD_PATH_OPT_UPDATE);
     assert_ptr_not_equal(node, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt2), LYD_OPT_RPCREPLY, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt2), LLLYD_OPT_RPCREPLY, NULL), 0);
 }
 
 static void
 test_notif(void **state)
 {
     struct state *st = (struct state *)*state;
-    struct lyd_node *node;
+    struct lllyd_node *node;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/must-notif.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/must-notif.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
 
     /* notif */
-    st->dt = lyd_new_path(NULL, st->ctx, "/must-notif:notif1/b", "bb", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/must-notif:notif1/b", "bb", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_NOTIF, NULL), 1);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_NOTIF, NULL), 1);
 
-    node = lyd_new_path(st->dt, st->ctx, "/must-notif:notif1/a", "5", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/must-notif:notif1/a", "5", 0, 0);
     assert_ptr_not_equal(node, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_NOTIF, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_NOTIF, NULL), 0);
 }
 
 int main(void)

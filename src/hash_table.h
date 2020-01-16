@@ -13,8 +13,8 @@
  *     https://opensource.org/licenses/BSD-3-Clause
  */
 
-#ifndef LY_HASH_TABLE_H_
-#define LY_HASH_TABLE_H_
+#ifndef LLLY_HASH_TABLE_H_
+#define LLLY_HASH_TABLE_H_
 
 #include <stdint.h>
 #include <pthread.h>
@@ -44,16 +44,16 @@ uint32_t dict_hash_multi(uint32_t hash, const char *key_part, size_t len);
 typedef int (*values_equal_cb)(void *val1_p, void *val2_p, int mod, void *cb_data);
 
 /** when the table is at least this much percent full, it is enlarged (double the size) */
-#define LYHT_ENLARGE_PERCENTAGE 75
+#define LLLYHT_ENLARGE_PERCENTAGE 75
 
 /** only once the table is this much percent full, enable shrinking */
-#define LYHT_FIRST_SHRINK_PERCENTAGE 50
+#define LLLYHT_FIRST_SHRINK_PERCENTAGE 50
 
 /** when the table is less than this much percent full, it is shrunk (half the size) */
-#define LYHT_SHRINK_PERCENTAGE 25
+#define LLLYHT_SHRINK_PERCENTAGE 25
 
 /** never shrink beyond this size */
-#define LYHT_MIN_SIZE 8
+#define LLLYHT_MIN_SIZE 8
 
 /**
  * @brief Generic hash table record.
@@ -102,14 +102,14 @@ struct dict_table {
  *
  * @param[in] dict Dictionary table to initiate
  */
-void lydict_init(struct dict_table *dict);
+void lllydict_init(struct dict_table *dict);
 
 /**
  * @brief Cleanup the dictionary content
  *
  * @param[in] dict Dictionary table to cleanup
  */
-void lydict_clean(struct dict_table *dict);
+void lllydict_clean(struct dict_table *dict);
 
 /**
  * @brief Get a specific record from a hash table.
@@ -119,7 +119,7 @@ void lydict_clean(struct dict_table *dict);
  * @param[in] idx Index of the record.
  * @return Record from \p recs on index \p idx.
  */
-struct ht_rec *lyht_get_rec(unsigned char *recs, uint16_t rec_size, uint32_t idx);
+struct ht_rec *lllyht_get_rec(unsigned char *recs, uint16_t rec_size, uint32_t idx);
 
 /**
  * @brief Create new hash table.
@@ -131,7 +131,7 @@ struct ht_rec *lyht_get_rec(unsigned char *recs, uint16_t rec_size, uint32_t idx
  * @param[in] resize Whether to resize the table on too few/too many records taken.
  * @return Empty hash table, NULL on error.
  */
-struct hash_table *lyht_new(uint32_t size, uint16_t val_size, values_equal_cb val_equal, void *cb_data, int resize);
+struct hash_table *lllyht_new(uint32_t size, uint16_t val_size, values_equal_cb val_equal, void *cb_data, int resize);
 
 /**
  * @brief Set hash table value equal callback.
@@ -140,7 +140,7 @@ struct hash_table *lyht_new(uint32_t size, uint16_t val_size, values_equal_cb va
  * @param[in] new_val_equal New callback for checking value equivalence.
  * @return Previous callback for checking value equivalence.
  */
-values_equal_cb lyht_set_cb(struct hash_table *ht, values_equal_cb new_val_equal);
+values_equal_cb lllyht_set_cb(struct hash_table *ht, values_equal_cb new_val_equal);
 
 /**
  * @brief Set hash table value equal callback user data.
@@ -149,7 +149,7 @@ values_equal_cb lyht_set_cb(struct hash_table *ht, values_equal_cb new_val_equal
  * @param[in] new_cb_data New data for values callback.
  * @return Previous data for values callback.
  */
-void *lyht_set_cb_data(struct hash_table *ht, void *new_cb_data);
+void *lllyht_set_cb_data(struct hash_table *ht, void *new_cb_data);
 
 /**
  * @brief Make a duplicate of an existing hash table.
@@ -157,14 +157,14 @@ void *lyht_set_cb_data(struct hash_table *ht, void *new_cb_data);
  * @param[in] orig Original hash table to duplicate.
  * @return Duplicated hash table \p orig, NULL on error.
  */
-struct hash_table *lyht_dup(const struct hash_table *orig);
+struct hash_table *lllyht_dup(const struct hash_table *orig);
 
 /**
  * @brief Free a hash table.
  *
  * @param[in] ht Hash table to be freed.
  */
-void lyht_free(struct hash_table *ht);
+void lllyht_free(struct hash_table *ht);
 
 /**
  * @brief Find a value in a hash table.
@@ -175,7 +175,7 @@ void lyht_free(struct hash_table *ht);
  * @param[out] match_p Pointer to the matching value, optional.
  * @return 0 on success, 1 on not found.
  */
-int lyht_find(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p);
+int lllyht_find(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p);
 
 /**
  * @brief Find another equal value in the hash table.
@@ -186,7 +186,7 @@ int lyht_find(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p)
  * @param[out] match_p Pointer to the matching value, optional.
  * @return 0 on success, 1 on not found.
  */
-int lyht_find_next(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p);
+int lllyht_find_next(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p);
 
 /**
  * @brief Insert a value into a hash table.
@@ -198,10 +198,10 @@ int lyht_find_next(struct hash_table *ht, void *val_p, uint32_t hash, void **mat
  * @param[out] match_p Pointer to the stored value, optional
  * @return 0 on success, 1 if already inserted, -1 on error.
  */
-int lyht_insert(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p);
+int lllyht_insert(struct hash_table *ht, void *val_p, uint32_t hash, void **match_p);
 
 /**
- * @brief Insert a value into hash table. Same functionality as lyht_insert()
+ * @brief Insert a value into hash table. Same functionality as lllyht_insert()
  * but allows to specify a temporary val equal callback to be used in case the hash table
  * will be resized after successful insertion.
  *
@@ -213,7 +213,7 @@ int lyht_insert(struct hash_table *ht, void *val_p, uint32_t hash, void **match_
  * @param[out] match_p Pointer to the stored value, optional
  * @return 0 on success, 1 if already inserted, -1 on error.
  */
-int lyht_insert_with_resize_cb(struct hash_table *ht, void *val_p, uint32_t hash, values_equal_cb resize_val_equal,
+int lllyht_insert_with_resize_cb(struct hash_table *ht, void *val_p, uint32_t hash, values_equal_cb resize_val_equal,
                                void **match_p);
 
 /**
@@ -225,6 +225,6 @@ int lyht_insert_with_resize_cb(struct hash_table *ht, void *val_p, uint32_t hash
  * @param[in] hash Hash of the stored value.
  * @return 0 on success, 1 if value was not found, -1 on error.
  */
-int lyht_remove(struct hash_table *ht, void *val_p, uint32_t hash);
+int lllyht_remove(struct hash_table *ht, void *val_p, uint32_t hash);
 
-#endif /* LY_HASH_TABLE_H_ */
+#endif /* LLLY_HASH_TABLE_H_ */

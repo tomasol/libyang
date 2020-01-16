@@ -22,8 +22,8 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *dt;
+    struct llly_ctx *ctx;
+    struct lllyd_node *dt;
 };
 
 static const char *if_data =
@@ -452,7 +452,7 @@ static const char *string_data_024 =
 static int
 setup_f(struct state **state, const char *search_dir, const char **modules, int module_count)
 {
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     int i;
 
     (*state) = calloc(1, sizeof **state);
@@ -462,7 +462,7 @@ setup_f(struct state **state, const char *search_dir, const char **modules, int 
     }
 
     /* libyang context */
-    (*state)->ctx = ly_ctx_new(search_dir, 0);
+    (*state)->ctx = llly_ctx_new(search_dir, 0);
     if (!(*state)->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
@@ -470,18 +470,18 @@ setup_f(struct state **state, const char *search_dir, const char **modules, int 
 
     /* schemas */
     for (i = 0; i < module_count; ++i) {
-        mod = ly_ctx_load_module((*state)->ctx, modules[i], NULL);
+        mod = llly_ctx_load_module((*state)->ctx, modules[i], NULL);
         if (!mod) {
             fprintf(stderr, "Failed to load data module \"%s\".\n", modules[i]);
             goto error;
         }
-        lys_features_enable(mod, "*");
+        lllys_features_enable(mod, "*");
     }
 
     return 0;
 
 error:
-    ly_ctx_destroy((*state)->ctx, NULL);
+    llly_ctx_destroy((*state)->ctx, NULL);
     free(*state);
     (*state) = NULL;
 
@@ -493,8 +493,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->dt);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -514,14 +514,14 @@ test_parse_if(void **state)
 
     (*state) = st;
 
-    st->dt = lyd_parse_mem(st->ctx, if_data, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, if_data, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
 }
 
 static void
 test_parse_numbers(void **state)
 {
-    struct lyd_node_leaf_list *leaf;
+    struct lllyd_node_leaf_list *leaf;
     struct state *st;
     const char *modules[] = {"numbers"};
     int module_count = 1;
@@ -532,44 +532,44 @@ test_parse_numbers(void **state)
 
     (*state) = st;
 
-    st->dt = lyd_parse_mem(st->ctx, num_data, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, num_data, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
 
     /* num1 */
-    leaf = (struct lyd_node_leaf_list *)st->dt->child;
+    leaf = (struct lllyd_node_leaf_list *)st->dt->child;
 
     /* num2 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
     /* num3 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
     /* num4 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
     /* num5 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
     /* num6 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
     /* num7 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
     /* num8 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
     /* num9 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
     /* num10 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
     /* num11 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
     /* num12 */
-    leaf = (struct lyd_node_leaf_list *)leaf->next;
+    leaf = (struct lllyd_node_leaf_list *)leaf->next;
 
 }
 
@@ -586,19 +586,19 @@ test_parse_error_numbers(void **state)
 
     (*state) = st;
 
-    st->dt = lyd_parse_mem(st->ctx, error_num_data_001, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, error_num_data_001, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, error_num_data_002, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, error_num_data_002, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, error_num_data_003, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, error_num_data_003, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, error_num_data_004, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, error_num_data_004, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, error_num_data_005, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, error_num_data_005, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 }
 
@@ -608,7 +608,7 @@ test_parse_string(void **state)
     struct state *st;
     const char *modules[] = {"ietf-interfaces"};
     int module_count = 1;
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
     if (setup_f(&st, TESTS_DIR "/schema/yin/ietf", modules, module_count)) {
         fail();
@@ -616,81 +616,81 @@ test_parse_string(void **state)
 
     (*state) = st;
 
-    mod = lys_parse_mem(st->ctx, text_schema, LYS_IN_YIN);
+    mod = lllys_parse_mem(st->ctx, text_schema, LLLYS_IN_YIN);
     assert_ptr_not_equal(mod, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_001, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_001, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_002, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_002, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_003, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_003, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_004, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_004, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_005, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_005, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_006, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_006, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_007, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_007, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_008, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_008, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_009, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_009, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_010, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_010, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_011, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_011, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_012, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_012, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_013, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_013, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_014, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_014, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_015, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_015, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_016, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_016, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_017, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_017, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
-    lyd_free_withsiblings(st->dt);
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_018, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_018, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_019, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_019, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_020, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_020, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_021, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_021, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
-    lyd_free_withsiblings(st->dt);
+    lllyd_free_withsiblings(st->dt);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_022, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_022, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_023, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_023, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 
-    st->dt = lyd_parse_mem(st->ctx, string_data_024, LYD_JSON, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, string_data_024, LLLYD_JSON, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
 }
 

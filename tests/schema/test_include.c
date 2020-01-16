@@ -34,7 +34,7 @@
 static int
 setup_ctx(void **state)
 {
-    *state = ly_ctx_new(NULL, 0);
+    *state = llly_ctx_new(NULL, 0);
     if (!*state) {
         return -1;
     }
@@ -44,14 +44,14 @@ setup_ctx(void **state)
 static int
 teardown_ctx(void **state)
 {
-    ly_ctx_destroy(*state, NULL);
+    llly_ctx_destroy(*state, NULL);
     return 0;
 }
 
 static void
 test_mult_revisions(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *sch_yang = "module main_mod {"
         "namespace \"urn:cesnet:test:a\";"
         "prefix \"a\";"
@@ -71,22 +71,22 @@ test_mult_revisions(void **state)
         "<include module=\"submod_r\"/>"
         "<include module=\"submod1\"/></module>";
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
 
-    assert_ptr_equal(lys_parse_mem(ctx, sch_yin, LYS_IN_YIN), NULL);
-    assert_ptr_not_equal(lys_parse_mem(ctx, sch_correct_yin, LYS_IN_YIN), NULL);
+    assert_ptr_equal(lllys_parse_mem(ctx, sch_yin, LLLYS_IN_YIN), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, sch_correct_yin, LLLYS_IN_YIN), NULL);
 
-    ly_ctx_destroy(*state, NULL);
-    *state = ctx = ly_ctx_new(SCHEMA_FOLDER_YANG, 0);
+    llly_ctx_destroy(*state, NULL);
+    *state = ctx = llly_ctx_new(SCHEMA_FOLDER_YANG, 0);
 
-    assert_ptr_equal(lys_parse_mem(ctx, sch_yang, LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_mem(ctx, sch_correct_yang, LYS_IN_YANG), NULL);
+    assert_ptr_equal(lllys_parse_mem(ctx, sch_yang, LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, sch_correct_yang, LLLYS_IN_YANG), NULL);
 }
 
 static void
 test_circular_include(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *sch_yang = "module main-mod {"
         "namespace \"urn:cesnet:test:a\";"
         "prefix \"a\";"
@@ -95,15 +95,15 @@ test_circular_include(void **state)
         "<namespace uri=\"urn:cesnet:test:a\"/><prefix value=\"a\"/>"
         "<include module=\"circ_inc1\"/></module>";
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
 
-    assert_ptr_equal(lys_parse_mem(ctx, sch_yin, LYS_IN_YIN), NULL);
-    assert_int_equal(ly_vecode(ctx), LYVE_CIRC_INCLUDES);
+    assert_ptr_equal(lllys_parse_mem(ctx, sch_yin, LLLYS_IN_YIN), NULL);
+    assert_int_equal(llly_vecode(ctx), LLLYVE_CIRC_INCLUDES);
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
 
-    assert_ptr_equal(lys_parse_mem(ctx, sch_yang, LYS_IN_YANG), NULL);
-    assert_int_equal(ly_vecode(ctx), LYVE_CIRC_INCLUDES);
+    assert_ptr_equal(lllys_parse_mem(ctx, sch_yang, LLLYS_IN_YANG), NULL);
+    assert_int_equal(llly_vecode(ctx), LLLYVE_CIRC_INCLUDES);
 }
 
 int

@@ -60,15 +60,15 @@ help(void)
 void
 version(void)
 {
-    fprintf(stdout, "yangre %d.%d.%d\n", LY_VERSION_MAJOR, LY_VERSION_MINOR, LY_VERSION_MICRO);
+    fprintf(stdout, "yangre %d.%d.%d\n", LLLY_VERSION_MAJOR, LLLY_VERSION_MINOR, LLLY_VERSION_MICRO);
 }
 
 void
-pattern_error(LY_LOG_LEVEL level, const char *msg, const char *path)
+pattern_error(LLLY_LOG_LEVEL level, const char *msg, const char *path)
 {
     (void) path; /* unused */
 
-    if (level == LY_LLERR && strcmp(msg, "Module \"yangre\" parsing failed.")) {
+    if (level == LLLY_LLERR && strcmp(msg, "Module \"yangre\" parsing failed.")) {
         fprintf(stderr, "yangre error: %s\n", msg);
     }
 }
@@ -121,8 +121,8 @@ main(int argc, char* argv[])
     char **patterns = NULL, *str = NULL, *modstr = NULL, *s;
     int *invert_match = NULL;
     int patterns_count = 0;
-    struct ly_ctx *ctx = NULL;
-    const struct lys_module *mod;
+    struct llly_ctx *ctx = NULL;
+    const struct lllys_module *mod;
     FILE *infile = NULL;
     size_t len = 0;
     ssize_t l;
@@ -256,18 +256,18 @@ main(int argc, char* argv[])
     }
     modstr = s;
 
-    ctx = ly_ctx_new(NULL, 0);
+    ctx = llly_ctx_new(NULL, 0);
     if (!ctx) {
         goto cleanup;
     }
 
-    ly_set_log_clb(pattern_error, 0);
-    mod = lys_parse_mem(ctx, modstr, LYS_IN_YANG);
+    llly_set_log_clb(pattern_error, 0);
+    mod = lllys_parse_mem(ctx, modstr, LLLYS_IN_YANG);
     if (!mod || !mod->data) {
         goto cleanup;
     }
 
-    ret = lyd_validate_value(mod->data, str);
+    ret = lllyd_validate_value(mod->data, str);
     if (verbose) {
         for (i = 0; i < patterns_count; i++) {
             fprintf(stdout, "pattern  %d: %s\n", i + 1, patterns[i]);
@@ -278,7 +278,7 @@ main(int argc, char* argv[])
     }
 
 cleanup:
-    ly_ctx_destroy(ctx, NULL);
+    llly_ctx_destroy(ctx, NULL);
     for (i = 0; i < patterns_count; i++) {
         free(patterns[i]);
     }

@@ -12,26 +12,26 @@
  *     https://opensource.org/licenses/BSD-3-Clause
  */
 
-#ifndef LY_PLUGIN_CONFIG_H_
-#define LY_PLUGIN_CONFIG_H_
+#ifndef LLLY_PLUGIN_CONFIG_H_
+#define LLLY_PLUGIN_CONFIG_H_
 
-#define LYEXT_PLUGINS_DIR "@EXTENSIONS_PLUGINS_DIR_MACRO@" /**< directory with YANG extension plugins */
-#define LY_USER_TYPES_PLUGINS_DIR "@USER_TYPES_PLUGINS_DIR_MACRO@" /**< directory with user YANG types plugins */
+#define LLLYEXT_PLUGINS_DIR "@EXTENSIONS_PLUGINS_DIR_MACRO@" /**< directory with YANG extension plugins */
+#define LLLY_USER_TYPES_PLUGINS_DIR "@USER_TYPES_PLUGINS_DIR_MACRO@" /**< directory with user YANG types plugins */
 
 #if defined __linux__ || defined __unix__
-#  define LY_PLUGIN_SUFFIX ".so"
-#  define LY_PLUGIN_SUFFIX_LEN 3
+#  define LLLY_PLUGIN_SUFFIX ".so"
+#  define LLLY_PLUGIN_SUFFIX_LEN 3
 #elif defined __APPLE__
-#  define LY_PLUGIN_SUFFIX ".dylib"
-#  define LY_PLUGIN_SUFFIX_LEN 6
+#  define LLLY_PLUGIN_SUFFIX ".dylib"
+#  define LLLY_PLUGIN_SUFFIX_LEN 6
 #endif
 
 #ifdef STATIC
 @EXTERN_EXTENSIONS_LIST@
 @EXTERN_USER_TYPE_LIST@
 
-int lytype_size(struct lytype_plugin_list plugin[]) {
-    struct lytype_plugin_list *tmp;
+int lllytype_size(struct lllytype_plugin_list plugin[]) {
+    struct lllytype_plugin_list *tmp;
     int i = 0;
     while (1) {
         tmp = &plugin[i];
@@ -43,8 +43,8 @@ int lytype_size(struct lytype_plugin_list plugin[]) {
     return i;
 }
 
-void lytype_add(struct lytype_plugin_list *type_plugins, uint16_t *type_plugins_count, struct lytype_plugin_list plugin[]) {
-    struct lytype_plugin_list *tmp;
+void lllytype_add(struct lllytype_plugin_list *type_plugins, uint16_t *type_plugins_count, struct lllytype_plugin_list plugin[]) {
+    struct lllytype_plugin_list *tmp;
     int i = 0;
     while (1) {
         tmp = &plugin[i];
@@ -59,8 +59,8 @@ void lytype_add(struct lytype_plugin_list *type_plugins, uint16_t *type_plugins_
 }
 
 
-int lyext_size(struct lyext_plugin_list plugin[]) {
-    struct lyext_plugin_list *tmp;
+int lllyext_size(struct lllyext_plugin_list plugin[]) {
+    struct lllyext_plugin_list *tmp;
     int i = 0;
     while (1) {
         tmp = &plugin[i];
@@ -72,8 +72,8 @@ int lyext_size(struct lyext_plugin_list plugin[]) {
     return i;
 }
 
-void lyext_add(struct lyext_plugin_list *ext_plugins, uint16_t *ext_plugins_count, struct lyext_plugin_list plugin[]) {
-    struct lyext_plugin_list *tmp;
+void lllyext_add(struct lllyext_plugin_list *ext_plugins, uint16_t *ext_plugins_count, struct lllyext_plugin_list plugin[]) {
+    struct lllyext_plugin_list *tmp;
     int i = 0;
     while (1) {
         tmp = &plugin[i];
@@ -87,9 +87,9 @@ void lyext_add(struct lyext_plugin_list *ext_plugins, uint16_t *ext_plugins_coun
     return;
 }
 
-struct lyext_plugin_list *static_load_lyext_plugins(uint16_t *count)
+struct lllyext_plugin_list *static_load_lyext_plugins(uint16_t *count)
 {
-    struct lyext_plugin_list *plugin;
+    struct lllyext_plugin_list *plugin;
     uint16_t size = @EXTENSIONS_LIST_SIZE@;
 
     plugin = malloc(size * (sizeof *plugin));
@@ -103,9 +103,9 @@ struct lyext_plugin_list *static_load_lyext_plugins(uint16_t *count)
     return plugin;
 }
 
-struct lytype_plugin_list *static_load_lytype_plugins(uint16_t *count)
+struct lllytype_plugin_list *static_load_lytype_plugins(uint16_t *count)
 {
-    struct lytype_plugin_list *plugin;
+    struct lllytype_plugin_list *plugin;
     uint16_t size = @USER_TYPE_LIST_SIZE@;
 
     plugin = malloc(size * (sizeof *plugin));
@@ -124,4 +124,4 @@ char *static_loaded_plugins[] = {@STATIC_LOADED_PLUGINS@};
 
 #endif /* STATIC */
 
-#endif /* LY_PLUGIN_CONFIG_H_ */
+#endif /* LLLY_PLUGIN_CONFIG_H_ */

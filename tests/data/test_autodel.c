@@ -22,16 +22,16 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *dt;
-    struct lyd_node *aux;
+    struct llly_ctx *ctx;
+    struct lllyd_node *dt;
+    struct lllyd_node *aux;
     char *xml;
 };
 static int
 setup_f(void **state)
 {
     struct state *st;
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *schemafile = TESTS_DIR"/data/files/autodel.yin";
 
     (*state) = st = calloc(1, sizeof *st);
@@ -41,21 +41,21 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
     }
 
     /* schema */
-    mod = lys_parse_path(st->ctx, schemafile, LYS_IN_YIN);
+    mod = lllys_parse_path(st->ctx, schemafile, LLLYS_IN_YIN);
     if (!mod) {
         fprintf(stderr, "Failed to load data model \"%s\".\n", schemafile);
         goto error;
     }
 
     /* root */
-    st->dt = lyd_new(NULL, mod, "c");
+    st->dt = lllyd_new(NULL, mod, "c");
     if (!st->dt) {
         fprintf(stderr, "Failed to create data root.\n");
         goto error;
@@ -64,8 +64,8 @@ setup_f(void **state)
     return 0;
 
 error:
-    lyd_free_withsiblings(st->dt);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -77,9 +77,9 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->dt);
-    lyd_free_withsiblings(st->aux);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    lllyd_free_withsiblings(st->aux);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st->xml);
     free(st);
     (*state) = NULL;
@@ -91,22 +91,22 @@ static void
 test_atob(void **state)
 {
     struct state *st = (*state);
-    struct lyd_node *node;
+    struct lllyd_node *node;
 
-    node = lyd_new_leaf(st->dt, NULL, "a", "x");
+    node = lllyd_new_leaf(st->dt, NULL, "a", "x");
     assert_ptr_not_equal(node, NULL);
     assert_ptr_equal(st->dt->child, node);
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, 0);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, 0);
     assert_string_equal(st->xml, "<c xmlns=\"urn:autodel\"><a>x</a></c>");
 
-    node = lyd_new(st->dt, NULL, "b1");
+    node = lllyd_new(st->dt, NULL, "b1");
     assert_ptr_not_equal(node, NULL);
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 
     free(st->xml);
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, 0);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, 0);
     assert_string_equal(st->xml, "<c xmlns=\"urn:autodel\"><b1/></c>");
 }
 
@@ -114,23 +114,23 @@ static void
 test_btoa(void **state)
 {
     struct state *st = (*state);
-    struct lyd_node *node;
+    struct lllyd_node *node;
 
-    node = lyd_new(st->dt, NULL, "b1");
+    node = lllyd_new(st->dt, NULL, "b1");
     assert_ptr_not_equal(node, NULL);
-    node = lyd_new_leaf(st->dt, NULL, "b2", "z");
+    node = lllyd_new_leaf(st->dt, NULL, "b2", "z");
     assert_ptr_not_equal(node, NULL);
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, 0);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, 0);
     assert_string_equal(st->xml, "<c xmlns=\"urn:autodel\"><b1/><b2>z</b2></c>");
 
-    node = lyd_new_leaf(st->dt, NULL, "a", "x");
+    node = lllyd_new_leaf(st->dt, NULL, "a", "x");
     assert_ptr_not_equal(node, NULL);
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 
     free(st->xml);
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, 0);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, 0);
     assert_string_equal(st->xml, "<c xmlns=\"urn:autodel\"><a>x</a></c>");
 }
 
@@ -138,44 +138,44 @@ static void
 test_insert_fail(void **state)
 {
     struct state *st = (*state);
-    struct lyd_node *node;
+    struct lllyd_node *node;
 
-    node = lyd_new_leaf(st->dt, NULL, "a", "x");
+    node = lllyd_new_leaf(st->dt, NULL, "a", "x");
     assert_ptr_not_equal(node, NULL);
     assert_ptr_equal(st->dt->child, node);
 
-    st->aux = lyd_new(NULL, st->dt->schema->module, "c");
+    st->aux = lllyd_new(NULL, st->dt->schema->module, "c");
     assert_ptr_not_equal(st->aux, NULL);
-    node = lyd_new(st->aux, NULL, "b1");
+    node = lllyd_new(st->aux, NULL, "b1");
     assert_ptr_not_equal(node, NULL);
-    assert_int_equal(lyd_validate(&(st->aux), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->aux), LLLYD_OPT_CONFIG, NULL), 0);
 
-    assert_int_not_equal(lyd_insert_after(st->dt->child, node), 0);
-    assert_string_equal(ly_errmsg(st->ctx), "Insert request refers node (/autodel:c/a) that is going to be auto-deleted.");
+    assert_int_not_equal(lllyd_insert_after(st->dt->child, node), 0);
+    assert_string_equal(llly_errmsg(st->ctx), "Insert request refers node (/autodel:c/a) that is going to be auto-deleted.");
 }
 
 static void
 test_insert_correct(void **state)
 {
     struct state *st = (*state);
-    struct lyd_node *node, *node2;
+    struct lllyd_node *node, *node2;
 
-    node = lyd_new_leaf(st->dt, NULL, "a", "x");
+    node = lllyd_new_leaf(st->dt, NULL, "a", "x");
     assert_ptr_not_equal(node, NULL);
     assert_ptr_equal(st->dt->child, node);
-    node2 = lyd_new_leaf(st->dt, NULL, "x", "node");
+    node2 = lllyd_new_leaf(st->dt, NULL, "x", "node");
     assert_ptr_not_equal(node, NULL);
 
-    st->aux = lyd_new(NULL, st->dt->schema->module, "c");
+    st->aux = lllyd_new(NULL, st->dt->schema->module, "c");
     assert_ptr_not_equal(st->aux, NULL);
-    node = lyd_new(st->aux, NULL, "b1");
+    node = lllyd_new(st->aux, NULL, "b1");
     assert_ptr_not_equal(node, NULL);
-    assert_int_equal(lyd_validate(&(st->aux), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->aux), LLLYD_OPT_CONFIG, NULL), 0);
 
-    assert_int_equal(lyd_insert_after(node2, node), 0);
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, 0);
+    assert_int_equal(lllyd_insert_after(node2, node), 0);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, 0);
     assert_string_equal(st->xml, "<c xmlns=\"urn:autodel\"><x>node</x><b1/></c>");
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 }
 
 

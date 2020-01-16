@@ -12,23 +12,23 @@ main(int argc, char **argv)
 {
     int i;
     char *path;
-    struct ly_ctx *ctx;
-    struct lyd_node *data;
+    struct llly_ctx *ctx;
+    struct lllyd_node *data;
 
     if (argc < 3) {
         return 1;
     }
 
-    ctx = ly_ctx_new(NULL, 0);
+    ctx = llly_ctx_new(NULL, 0);
     if (!ctx) {
         return 1;
     }
 
     for (i = 1; i < argc - 1; ++i) {
         asprintf(&path, "%s/callgrind/files/%s", TESTS_DIR, argv[i]);
-        if (!lys_parse_path(ctx, path, LYS_YANG)) {
+        if (!lllys_parse_path(ctx, path, LLLYS_YANG)) {
             free(path);
-            ly_ctx_destroy(ctx, NULL);
+            llly_ctx_destroy(ctx, NULL);
             return 1;
         }
         free(path);
@@ -37,16 +37,16 @@ main(int argc, char **argv)
     asprintf(&path, "%s/callgrind/files/%s", TESTS_DIR, argv[argc - 1]);
 
     CALLGRIND_START_INSTRUMENTATION;
-    data = lyd_parse_path(ctx, path, LYD_XML, LYD_OPT_STRICT | LYD_OPT_DATA_NO_YANGLIB);
+    data = lllyd_parse_path(ctx, path, LLLYD_XML, LLLYD_OPT_STRICT | LLLYD_OPT_DATA_NO_YANGLIB);
     CALLGRIND_STOP_INSTRUMENTATION;
 
     free(path);
     if (!data) {
-        ly_ctx_destroy(ctx, NULL);
+        llly_ctx_destroy(ctx, NULL);
         return 1;
     }
 
-    lyd_free_withsiblings(data);
-    ly_ctx_destroy(ctx, NULL);
+    lllyd_free_withsiblings(data);
+    llly_ctx_destroy(ctx, NULL);
     return 0;
 }

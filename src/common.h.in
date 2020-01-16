@@ -12,8 +12,8 @@
  *     https://opensource.org/licenses/BSD-3-Clause
  */
 
-#ifndef LY_COMMON_H_
-#define LY_COMMON_H_
+#ifndef LLLY_COMMON_H_
+#define LLLY_COMMON_H_
 
 #include <stdint.h>
 #include <errno.h>
@@ -59,10 +59,10 @@
 #define MAP_ANONYMOUS MAP_ANON
 #endif /* !MAP_ANONYMOUS */
 
-#define LY_CHECK_GOTO(COND, GOTO) if (COND) {goto GOTO;}
-#define LY_CHECK_ERR_GOTO(COND, ERR, GOTO) if (COND) {ERR; goto GOTO;}
-#define LY_CHECK_RETURN(COND, RETVAL) if (COND) {return RETVAL;}
-#define LY_CHECK_ERR_RETURN(COND, ERR, RETVAL) if (COND) {ERR; return RETVAL;}
+#define LLLY_CHECK_GOTO(COND, GOTO) if (COND) {goto GOTO;}
+#define LLLY_CHECK_ERR_GOTO(COND, ERR, GOTO) if (COND) {ERR; goto GOTO;}
+#define LLLY_CHECK_RETURN(COND, RETVAL) if (COND) {return RETVAL;}
+#define LLLY_CHECK_ERR_RETURN(COND, ERR, RETVAL) if (COND) {ERR; return RETVAL;}
 
 /*
  * If the compiler supports attribute to mark objects as hidden, mark all
@@ -80,7 +80,7 @@ char *get_current_dir_name(void);
 #endif
 
 /* how many bytes add when enlarging buffers */
-#define LY_BUF_STEP 128
+#define LLLY_BUF_STEP 128
 
 /* internal logging options */
 enum int_log_opts {
@@ -90,29 +90,29 @@ enum int_log_opts {
     ILO_ERR2WRN, /* change errors to warnings */
 };
 
-void ly_err_free(void *ptr);
-void ly_err_free_next(struct ly_ctx *ctx, struct ly_err_item *last_eitem);
-void ly_ilo_change(struct ly_ctx *ctx, enum int_log_opts new_ilo, enum int_log_opts *prev_ilo, struct ly_err_item **prev_last_eitem);
-void ly_ilo_restore(struct ly_ctx *ctx, enum int_log_opts prev_ilo, struct ly_err_item *prev_last_eitem, int keep_and_print);
-void ly_err_last_set_apptag(const struct ly_ctx *ctx, const char *apptag);
+void llly_err_free(void *ptr);
+void llly_err_free_next(struct llly_ctx *ctx, struct llly_err_item *last_eitem);
+void llly_ilo_change(struct llly_ctx *ctx, enum int_log_opts new_ilo, enum int_log_opts *prev_ilo, struct llly_err_item **prev_last_eitem);
+void llly_ilo_restore(struct llly_ctx *ctx, enum int_log_opts prev_ilo, struct llly_err_item *prev_last_eitem, int keep_and_print);
+void llly_err_last_set_apptag(const struct llly_ctx *ctx, const char *apptag);
 extern THREAD_LOCAL enum int_log_opts log_opt;
 
 /*
  * logger
  */
-extern volatile uint8_t ly_log_level;
-extern volatile uint8_t ly_log_opts;
+extern volatile uint8_t llly_log_level;
+extern volatile uint8_t llly_log_opts;
 
-void ly_log(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, const char *format, ...);
+void llly_log(const struct llly_ctx *ctx, LLLY_LOG_LEVEL level, LLLY_ERR no, const char *format, ...);
 
 #define LOGERR(ctx, errno, str, args...)                            \
-    ly_log(ctx, LY_LLERR, errno, str, ##args);
+    llly_log(ctx, LLLY_LLERR, errno, str, ##args);
 
 #define LOGWRN(ctx, str, args...)                                   \
-    ly_log(ctx, LY_LLWRN, 0, str, ##args);
+    llly_log(ctx, LLLY_LLWRN, 0, str, ##args);
 
 #define LOGVRB(str, args...)                                        \
-    ly_log(NULL, LY_LLVRB, 0, str, ##args);
+    llly_log(NULL, LLLY_LLVRB, 0, str, ##args);
 
 #ifdef NDEBUG
 
@@ -121,134 +121,134 @@ void ly_log(const struct ly_ctx *ctx, LY_LOG_LEVEL level, LY_ERR no, const char 
 #else
 
 #define LOGDBG(dbg_group, str, args...)                             \
-    ly_log_dbg(dbg_group, str, ##args);
+    llly_log_dbg(dbg_group, str, ##args);
 
-void ly_log_dbg(int group, const char *format, ...);
+void llly_log_dbg(int group, const char *format, ...);
 
 #endif
 
-#define FUN_IN LOGDBG(LY_LDGAPI, "%s", __func__);
+#define FUN_IN LOGDBG(LLLY_LDGAPI, "%s", __func__);
 
-#define LOGMEM(ctx) LOGERR(ctx, LY_EMEM, "Memory allocation failed (%s()).", __func__)
+#define LOGMEM(ctx) LOGERR(ctx, LLLY_EMEM, "Memory allocation failed (%s()).", __func__)
 
-#define LOGINT(ctx) LOGERR(ctx, LY_EINT, "Internal error (%s:%d).", __FILE__, __LINE__)
+#define LOGINT(ctx) LOGERR(ctx, LLLY_EINT, "Internal error (%s:%d).", __FILE__, __LINE__)
 
-#define LOGARG LOGERR(NULL, LY_EINVAL, "Invalid arguments (%s()).", __func__)
+#define LOGARG LOGERR(NULL, LLLY_EINVAL, "Invalid arguments (%s()).", __func__)
 
 typedef enum {
-    LYE_PATH = -2,    /**< error path set */
-    LYE_SPEC = -1,    /**< generic error */
+    LLLYE_PATH = -2,    /**< error path set */
+    LLLYE_SPEC = -1,    /**< generic error */
 
-    LYE_SUCCESS = 0,
+    LLLYE_SUCCESS = 0,
 
-    LYE_XML_MISS,
-    LYE_XML_INVAL,
-    LYE_XML_INCHAR,
+    LLLYE_XML_MISS,
+    LLLYE_XML_INVAL,
+    LLLYE_XML_INCHAR,
 
-    LYE_EOF,
-    LYE_INSTMT,
-    LYE_INCHILDSTMT,
-    LYE_INPAR,
-    LYE_INID,
-    LYE_INDATE,
-    LYE_INARG,
-    LYE_MISSSTMT,
-    LYE_MISSCHILDSTMT,
-    LYE_MISSARG,
-    LYE_TOOMANY,
-    LYE_DUPID,
-    LYE_DUPLEAFLIST,
-    LYE_DUPLIST,
-    LYE_NOUNIQ,
-    LYE_ENUM_INVAL,
-    LYE_ENUM_INNAME,
-    LYE_ENUM_DUPVAL,
-    LYE_ENUM_DUPNAME,
-    LYE_ENUM_WS,
-    LYE_BITS_INVAL,
-    LYE_BITS_INNAME,
-    LYE_BITS_DUPVAL,
-    LYE_BITS_DUPNAME,
-    LYE_INMOD,
-    LYE_INMOD_LEN,
-    LYE_KEY_NLEAF,
-    LYE_KEY_TYPE,
-    LYE_KEY_CONFIG,
-    LYE_KEY_MISS,
-    LYE_KEY_DUP,
-    LYE_INREGEX,
-    LYE_INRESOLV,
-    LYE_INSTATUS,
-    LYE_CIRC_LEAFREFS,
-    LYE_CIRC_FEATURES,
-    LYE_CIRC_IMPORTS,
-    LYE_CIRC_INCLUDES,
-    LYE_INVER,
-    LYE_SUBMODULE,
+    LLLYE_EOF,
+    LLLYE_INSTMT,
+    LLLYE_INCHILDSTMT,
+    LLLYE_INPAR,
+    LLLYE_INID,
+    LLLYE_INDATE,
+    LLLYE_INARG,
+    LLLYE_MISSSTMT,
+    LLLYE_MISSCHILDSTMT,
+    LLLYE_MISSARG,
+    LLLYE_TOOMANY,
+    LLLYE_DUPID,
+    LLLYE_DUPLEAFLIST,
+    LLLYE_DUPLIST,
+    LLLYE_NOUNIQ,
+    LLLYE_ENUM_INVAL,
+    LLLYE_ENUM_INNAME,
+    LLLYE_ENUM_DUPVAL,
+    LLLYE_ENUM_DUPNAME,
+    LLLYE_ENUM_WS,
+    LLLYE_BITS_INVAL,
+    LLLYE_BITS_INNAME,
+    LLLYE_BITS_DUPVAL,
+    LLLYE_BITS_DUPNAME,
+    LLLYE_INMOD,
+    LLLYE_INMOD_LEN,
+    LLLYE_KEY_NLEAF,
+    LLLYE_KEY_TYPE,
+    LLLYE_KEY_CONFIG,
+    LLLYE_KEY_MISS,
+    LLLYE_KEY_DUP,
+    LLLYE_INREGEX,
+    LLLYE_INRESOLV,
+    LLLYE_INSTATUS,
+    LLLYE_CIRC_LEAFREFS,
+    LLLYE_CIRC_FEATURES,
+    LLLYE_CIRC_IMPORTS,
+    LLLYE_CIRC_INCLUDES,
+    LLLYE_INVER,
+    LLLYE_SUBMODULE,
 
-    LYE_OBSDATA,
-    LYE_OBSTYPE,
-    LYE_NORESOLV,
-    LYE_INELEM,
-    LYE_INELEM_LEN,
-    LYE_MISSELEM,
-    LYE_INVAL,
-    LYE_INMETA,
-    LYE_INATTR,
-    LYE_MISSATTR,
-    LYE_NOCONSTR,
-    LYE_INCHAR,
-    LYE_INPRED,
-    LYE_MCASEDATA,
-    LYE_NOMUST,
-    LYE_NOWHEN,
-    LYE_INORDER,
-    LYE_INWHEN,
-    LYE_NOMIN,
-    LYE_NOMAX,
-    LYE_NOREQINS,
-    LYE_NOLEAFREF,
-    LYE_NOMANDCHOICE,
+    LLLYE_OBSDATA,
+    LLLYE_OBSTYPE,
+    LLLYE_NORESOLV,
+    LLLYE_INELEM,
+    LLLYE_INELEM_LEN,
+    LLLYE_MISSELEM,
+    LLLYE_INVAL,
+    LLLYE_INMETA,
+    LLLYE_INATTR,
+    LLLYE_MISSATTR,
+    LLLYE_NOCONSTR,
+    LLLYE_INCHAR,
+    LLLYE_INPRED,
+    LLLYE_MCASEDATA,
+    LLLYE_NOMUST,
+    LLLYE_NOWHEN,
+    LLLYE_INORDER,
+    LLLYE_INWHEN,
+    LLLYE_NOMIN,
+    LLLYE_NOMAX,
+    LLLYE_NOREQINS,
+    LLLYE_NOLEAFREF,
+    LLLYE_NOMANDCHOICE,
 
-    LYE_XPATH_INTOK,
-    LYE_XPATH_EOF,
-    LYE_XPATH_INOP_1,
-    LYE_XPATH_INOP_2,
-    LYE_XPATH_INCTX,
-    LYE_XPATH_INMOD,
-    LYE_XPATH_INFUNC,
-    LYE_XPATH_INARGCOUNT,
-    LYE_XPATH_INARGTYPE,
-    LYE_XPATH_DUMMY,
-    LYE_XPATH_NOEND,
+    LLLYE_XPATH_INTOK,
+    LLLYE_XPATH_EOF,
+    LLLYE_XPATH_INOP_1,
+    LLLYE_XPATH_INOP_2,
+    LLLYE_XPATH_INCTX,
+    LLLYE_XPATH_INMOD,
+    LLLYE_XPATH_INFUNC,
+    LLLYE_XPATH_INARGCOUNT,
+    LLLYE_XPATH_INARGTYPE,
+    LLLYE_XPATH_DUMMY,
+    LLLYE_XPATH_NOEND,
 
-    LYE_PATH_INCHAR,
-    LYE_PATH_INMOD,
-    LYE_PATH_MISSMOD,
-    LYE_PATH_INNODE,
-    LYE_PATH_INKEY,
-    LYE_PATH_MISSKEY,
-    LYE_PATH_INIDENTREF,
-    LYE_PATH_EXISTS,
-    LYE_PATH_MISSPAR,
-    LYE_PATH_PREDTOOMANY,
-} LY_ECODE;
+    LLLYE_PATH_INCHAR,
+    LLLYE_PATH_INMOD,
+    LLLYE_PATH_MISSMOD,
+    LLLYE_PATH_INNODE,
+    LLLYE_PATH_INKEY,
+    LLLYE_PATH_MISSKEY,
+    LLLYE_PATH_INIDENTREF,
+    LLLYE_PATH_EXISTS,
+    LLLYE_PATH_MISSPAR,
+    LLLYE_PATH_PREDTOOMANY,
+} LLLY_ECODE;
 
-enum LY_VLOG_ELEM {
-    LY_VLOG_NONE = 0,
-    LY_VLOG_XML, /* struct lyxml_elem* */
-    LY_VLOG_LYS, /* struct lys_node* */
-    LY_VLOG_LYD, /* struct lyd_node* */
-    LY_VLOG_STR, /* const char* */
-    LY_VLOG_PREV /* use exact same previous path */
+enum LLLY_VLOG_ELEM {
+    LLLY_VLOG_NONE = 0,
+    LLLY_VLOG_XML, /* struct lllyxml_elem* */
+    LLLY_VLOG_LYS, /* struct lllys_node* */
+    LLLY_VLOG_LYD, /* struct lllyd_node* */
+    LLLY_VLOG_STR, /* const char* */
+    LLLY_VLOG_PREV /* use exact same previous path */
 };
 
-void ly_vlog(const struct ly_ctx *ctx, LY_ECODE code, enum LY_VLOG_ELEM elem_type, const void *elem, ...);
+void llly_vlog(const struct llly_ctx *ctx, LLLY_ECODE code, enum LLLY_VLOG_ELEM elem_type, const void *elem, ...);
 #define LOGVAL(ctx, code, elem_type, elem, args...)                      \
-    ly_vlog(ctx, code, elem_type, elem, ##args);
+    llly_vlog(ctx, code, elem_type, elem, ##args);
 
 #define LOGPATH(ctx, elem_type, elem)                                    \
-    ly_vlog(ctx, LYE_PATH, elem_type, elem);
+    llly_vlog(ctx, LLLYE_PATH, elem_type, elem);
 
 /**
  * @brief Print additional validation information string.
@@ -256,11 +256,11 @@ void ly_vlog(const struct ly_ctx *ctx, LY_ECODE code, enum LY_VLOG_ELEM elem_typ
  * All special characters will be escaped ('%').
  *
  * @param[in] ctx Context to use for logging.
- * @param[in] elem_type Identify the element at issue. Either #LY_VLOG_NONE or #LY_VLOG_PREV.
+ * @param[in] elem_type Identify the element at issue. Either #LLLY_VLOG_NONE or #LLLY_VLOG_PREV.
  * @param[in] str String to print that will be escaped.
  * @param[in] ... Always leave empty (needed for compiler to accept va_start() call).
  */
-void ly_vlog_str(const struct ly_ctx *ctx, enum LY_VLOG_ELEM elem_type, const char *str, ...);
+void llly_vlog_str(const struct llly_ctx *ctx, enum LLLY_VLOG_ELEM elem_type, const char *str, ...);
 
 /**
  * @brief Build path of \p elem.
@@ -272,7 +272,7 @@ void ly_vlog_str(const struct ly_ctx *ctx, enum LY_VLOG_ELEM elem_type, const ch
  * @param[in] data_no_last_predicate Whether to skip generating predicate for the last node (only for data paths).
  * @return 0 on success, -1 on error.
  */
-int ly_vlog_build_path(enum LY_VLOG_ELEM elem_type, const void *elem, char **path, int schema_all_prefixes, int data_no_last_predicate);
+int llly_vlog_build_path(enum LLLY_VLOG_ELEM elem_type, const void *elem, char **path, int schema_all_prefixes, int data_no_last_predicate);
 
 /**
  * @brief Get module from a context based on its name and revision.
@@ -284,7 +284,7 @@ int ly_vlog_build_path(enum LY_VLOG_ELEM elem_type, const void *elem, char **pat
  * @param[in] implemented Whether only implemented modules should be returned.
  * @return Matching module, NULL if not found.
  */
-const struct lys_module *ly_ctx_nget_module(const struct ly_ctx *ctx, const char *name, size_t name_len,
+const struct lllys_module *llly_ctx_nget_module(const struct llly_ctx *ctx, const char *name, size_t name_len,
                                             const char *revision, int implemented);
 
 /*
@@ -296,7 +296,7 @@ const struct lys_module *ly_ctx_nget_module(const struct ly_ctx *ctx, const char
  *     then checks that the schema loaded from the same source isn't already in context. If the source wasn't
  *     previously loaded, it is parsed.
  */
-const struct lys_module *ly_ctx_load_sub_module(struct ly_ctx *ctx, struct lys_module *module, const char *name,
+const struct lllys_module *llly_ctx_load_sub_module(struct llly_ctx *ctx, struct lllys_module *module, const char *name,
                                                 const char *revision, int implement, struct unres_schema *unres);
 
 /**
@@ -314,7 +314,7 @@ const char *strpbrk_backwards(const char *s, const char *accept, unsigned int s_
 
 char *strnchr(const char *s, int c, unsigned int len);
 
-const char *strnodetype(LYS_NODE type);
+const char *strnodetype(LLLYS_NODE type);
 
 /**
  * @brief Transform a module name (JSON format prefix) to a prefix as defined
@@ -323,10 +323,10 @@ const char *strnodetype(LYS_NODE type);
  * @param[in] module Module with imports to use.
  * @param[in] module_name Module name to transform.
  *
- * @return Module import prefix (do not modify, free, or lydict_remove),
+ * @return Module import prefix (do not modify, free, or lllydict_remove),
  * NULL on error.
  */
-const char *transform_module_name2import_prefix(const struct lys_module *module, const char *module_name);
+const char *transform_module_name2import_prefix(const struct lllys_module *module, const char *module_name);
 
 /**
  * @brief Transform expression from JSON format to XML format.
@@ -348,7 +348,7 @@ const char *transform_module_name2import_prefix(const struct lys_module *module,
  *
  * @return Transformed XML expression in the dictionary, NULL on error.
  */
-const char *transform_json2xml(const struct lys_module *module, const char *expr, int inst_id, const char ***prefixes,
+const char *transform_json2xml(const struct lllys_module *module, const char *expr, int inst_id, const char ***prefixes,
                                const char ***namespaces, uint32_t *ns_count);
 
 /**
@@ -361,7 +361,7 @@ const char *transform_json2xml(const struct lys_module *module, const char *expr
  *
  * @return Transformed XML expression in the dictionary, NULL on error.
  */
-const char *transform_json2schema(const struct lys_module *module, const char *expr);
+const char *transform_json2schema(const struct lllys_module *module, const char *expr);
 
 /**
  * @brief Transform expression from XML data format (prefixes and separate NS definitions) to
@@ -375,7 +375,7 @@ const char *transform_json2schema(const struct lys_module *module, const char *e
  *
  * @return Transformed JSON expression in the dictionary, NULL on error.
  */
-const char *transform_xml2json(struct ly_ctx *ctx, const char *expr, struct lyxml_elem *xml, int inst_id,
+const char *transform_xml2json(struct llly_ctx *ctx, const char *expr, struct lllyxml_elem *xml, int inst_id,
                                int use_ctx_data_clb);
 
 /**
@@ -387,19 +387,19 @@ const char *transform_xml2json(struct ly_ctx *ctx, const char *expr, struct lyxm
  *
  * @return Transformed JSON expression in the dictionary, NULL on error.
  */
-const char *transform_schema2json(const struct lys_module *module, const char *expr);
+const char *transform_schema2json(const struct lllys_module *module, const char *expr);
 
 /**
  * @brief Same as transform_schema2json, but dumbed down, because if-feature expressions
  *        are not valid XPath expressions.
  */
-const char *transform_iffeat_schema2json(const struct lys_module *module, const char *expr);
+const char *transform_iffeat_schema2json(const struct lllys_module *module, const char *expr);
 
 /**
  * @brief Transform an XPath expression in JSON node naming conventions into
  *        standard YANG XPath.
  */
-char *transform_json2xpath(const struct lys_module *cur_module, const char *expr);
+char *transform_json2xpath(const struct lllys_module *cur_module, const char *expr);
 
 /**
  * @brief Get a new node (non-validated) validity value.
@@ -408,7 +408,7 @@ char *transform_json2xpath(const struct lys_module *cur_module, const char *expr
  *
  * @return Validity of the new node.
  */
-int ly_new_node_validity(const struct lys_node *schema);
+int llly_new_node_validity(const struct lllys_node *schema);
 
 /**
  * @brief Wrapper for realloc() call. The only difference is that if it fails to
@@ -419,7 +419,7 @@ int ly_new_node_validity(const struct lys_node *schema);
  *
  * @return Pointer to the new memory, NULL on error.
  */
-void *ly_realloc(void *ptr, size_t size);
+void *llly_realloc(void *ptr, size_t size);
 
 /**
  * @brief Compare strings
@@ -429,10 +429,10 @@ void *ly_realloc(void *ptr, size_t size);
  * This parameter is supposed to be a number (digit) known in compile time, not a variable or expression!
  * @return 1 if both strings are the same, 0 if they differ.
  */
-int ly_strequal_(const char *s1, const char *s2);
-#define ly_strequal0(s1, s2) ly_strequal_(s1, s2)
-#define ly_strequal1(s1, s2) (s1 == s2)
-#define ly_strequal(s1, s2, d) ly_strequal##d(s1, s2)
+int llly_strequal_(const char *s1, const char *s2);
+#define llly_strequal0(s1, s2) llly_strequal_(s1, s2)
+#define llly_strequal1(s1, s2) (s1 == s2)
+#define llly_strequal(s1, s2, d) llly_strequal##d(s1, s2)
 
 int64_t dec_pow(uint8_t exp);
 
@@ -443,6 +443,6 @@ int dec64cmp(int64_t num1, uint8_t dig1, int64_t num2, uint8_t dig2);
  * @param[in] str String to examine.
  * @return Number of characters in (possibly) multibyte characters string.
  */
-size_t ly_strlen_utf8(const char *str);
+size_t llly_strlen_utf8(const char *str);
 
-#endif /* LY_COMMON_H_ */
+#endif /* LLLY_COMMON_H_ */

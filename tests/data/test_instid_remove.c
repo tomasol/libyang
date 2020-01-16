@@ -22,8 +22,8 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *data;
+    struct llly_ctx *ctx;
+    struct lllyd_node *data;
 };
 
 static int
@@ -40,20 +40,20 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         return -1;
     }
 
     /* schema */
-    if (!lys_parse_path(st->ctx, schemafile, LYS_IN_YIN)) {
+    if (!lllys_parse_path(st->ctx, schemafile, LLLYS_IN_YIN)) {
         fprintf(stderr, "Failed to load data model \"%s\".\n", schemafile);
         return -1;
     }
 
     /* data */
-    st->data = lyd_parse_path(st->ctx, datafile, LYD_XML, LYD_OPT_CONFIG);
+    st->data = lllyd_parse_path(st->ctx, datafile, LLLYD_XML, LLLYD_OPT_CONFIG);
     if (!st->data) {
         fprintf(stderr, "Failed to load initial data file.\n");
         return -1;
@@ -67,8 +67,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free(st->data);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free(st->data);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -79,16 +79,16 @@ static void
 test_instid_unlink(void **state)
 {
     struct state *st = (*state);
-    struct lyd_node *node;
+    struct lllyd_node *node;
     int r;
 
     node = st->data->child->prev;
-    lyd_unlink(node);
-    r = lyd_validate(&(st->data), LYD_OPT_CONFIG, NULL);
+    lllyd_unlink(node);
+    r = lllyd_validate(&(st->data), LLLYD_OPT_CONFIG, NULL);
     assert_int_not_equal(r, 0);
 
-    lyd_insert(st->data, node);
-    r = lyd_validate(&(st->data), LYD_OPT_CONFIG, NULL);
+    lllyd_insert(st->data, node);
+    r = lllyd_validate(&(st->data), LLLYD_OPT_CONFIG, NULL);
     assert_int_equal(r, 0);
 }
 

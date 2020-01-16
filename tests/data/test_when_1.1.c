@@ -22,9 +22,9 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    const struct lys_module *mod;
-    struct lyd_node *dt;
+    struct llly_ctx *ctx;
+    const struct lllys_module *mod;
+    struct lllyd_node *dt;
     char *xml;
 };
 
@@ -40,7 +40,7 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
@@ -49,7 +49,7 @@ setup_f(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -61,8 +61,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->dt);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st->xml);
     free(st);
     (*state) = NULL;
@@ -76,15 +76,15 @@ test_unlink_uses(void **state)
     struct state *st = (struct state *)*state;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/when-unlink.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/when-unlink.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/when-unlink:top/e", "val_e", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/when-unlink:top/e", "val_e", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(st->xml, "<top xmlns=\"urn:libyang:tests:when-unlink\"><e>val_e</e></top>");
 }
 
@@ -94,15 +94,15 @@ test_unlink_choice(void **state)
     struct state *st = (struct state *)*state;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/when-unlink.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/when-unlink.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/when-unlink:top/cas2", NULL, 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/when-unlink:top/cas2", NULL, 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(st->xml, "<top xmlns=\"urn:libyang:tests:when-unlink\"><cas2/></top>");
 }
 
@@ -110,20 +110,20 @@ static void
 test_unlink_case(void **state)
 {
     struct state *st = (struct state *)*state;
-    struct lyd_node *node;
+    struct lllyd_node *node;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/when-unlink.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/when-unlink.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/when-unlink:top/a", "val_a", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/when-unlink:top/a", "val_a", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
-    node = lyd_new_path(st->dt, st->ctx, "/when-unlink:top/b", "val_b", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/when-unlink:top/b", "val_b", 0, 0);
     assert_ptr_not_equal(node, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(st->xml, "<top xmlns=\"urn:libyang:tests:when-unlink\"><a>val_a</a><b>val_b</b></top>");
 }
 
@@ -131,20 +131,20 @@ static void
 test_unlink_augment(void **state)
 {
     struct state *st = (struct state *)*state;
-    struct lyd_node *node;
+    struct lllyd_node *node;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/when-unlink.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/when-unlink.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/when-unlink:top/d", "1", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/when-unlink:top/d", "1", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
-    node = lyd_new_path(st->dt, st->ctx, "/when-unlink:top/d", "2", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/when-unlink:top/d", "2", 0, 0);
     assert_ptr_not_equal(node, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(st->xml, "<top xmlns=\"urn:libyang:tests:when-unlink\"><d>1</d><d>2</d></top>");
 }
 
@@ -154,67 +154,67 @@ test_dummy(void **state)
     struct state *st = (struct state *)*state;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/when-dummy.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/when-dummy.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/when-dummy:c", "value", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/when-dummy:c", "value", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 1);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_XPATH_DUMMY);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 1);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_XPATH_DUMMY);
 }
 
 static void
 test_dependency_noautodel(void **state)
 {
     struct state *st = (struct state *)*state;
-    struct lyd_node *node;
+    struct lllyd_node *node;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/when-depend.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/when-depend.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/when-depend:top/a", "val_a", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/when-depend:top/a", "val_a", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
-    node = lyd_new_path(st->dt, st->ctx, "/when-depend:top/b", "val_b", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/when-depend:top/b", "val_b", 0, 0);
     assert_ptr_not_equal(node, NULL);
-    node = lyd_new_path(st->dt, st->ctx, "/when-depend:top/d", "1", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/when-depend:top/d", "1", 0, 0);
     assert_ptr_not_equal(node, NULL);
-    node = lyd_new_path(st->dt, st->ctx, "/when-depend:top/d", "2", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/when-depend:top/d", "2", 0, 0);
     assert_ptr_not_equal(node, NULL);
-    node = lyd_new_path(st->dt, st->ctx, "/when-depend:top/e", "val_e", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/when-depend:top/e", "val_e", 0, 0);
     assert_ptr_not_equal(node, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG | LYD_OPT_WHENAUTODEL, NULL), 1);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_NOWHEN);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG | LLLYD_OPT_WHENAUTODEL, NULL), 1);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_NOWHEN);
 }
 
 static void
 test_dependency_circular(void **state)
 {
     struct state *st = (struct state *)*state;
-    struct lyd_node *node;
+    struct lllyd_node *node;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/when-circdepend.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/when-circdepend.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/when-circdepend:top/a", "val_a", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/when-circdepend:top/a", "val_a", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
-    node = lyd_new_path(st->dt, st->ctx, "/when-circdepend:top/b", "val_b", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/when-circdepend:top/b", "val_b", 0, 0);
     assert_ptr_not_equal(node, NULL);
-    node = lyd_new_path(st->dt, st->ctx, "/when-circdepend:top/d", "1", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/when-circdepend:top/d", "1", 0, 0);
     assert_ptr_not_equal(node, NULL);
-    node = lyd_new_path(st->dt, st->ctx, "/when-circdepend:top/d", "2", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/when-circdepend:top/d", "2", 0, 0);
     assert_ptr_not_equal(node, NULL);
-    node = lyd_new_path(st->dt, st->ctx, "/when-circdepend:top/e", "val_e", 0, 0);
+    node = lllyd_new_path(st->dt, st->ctx, "/when-circdepend:top/e", "val_e", 0, 0);
     assert_ptr_not_equal(node, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 1);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INWHEN);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 1);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INWHEN);
 }
 
 static void
@@ -223,15 +223,15 @@ test_unlink_all(void **state)
     struct state *st = (struct state *)*state;
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, TESTS_DIR"/data/files/when-unlinkall.yin", LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, TESTS_DIR"/data/files/when-unlinkall.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(st->mod, NULL);
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/when-unlinkall:a", "val_a", 0, 0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/when-unlinkall:a", "val_a", 0, 0);
     assert_ptr_not_equal(st->dt, NULL);
 
-    assert_int_equal(lyd_validate(&(st->dt), LYD_OPT_CONFIG, NULL), 0);
+    assert_int_equal(lllyd_validate(&(st->dt), LLLYD_OPT_CONFIG, NULL), 0);
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, LYP_WITHSIBLINGS);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, LLLYP_WITHSIBLINGS);
     assert_string_equal(st->xml, "<a xmlns=\"urn:libyang:tests:when-unlinkall\">val_a</a>");
 }
 

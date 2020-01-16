@@ -12,8 +12,8 @@
  *     https://opensource.org/licenses/BSD-3-Clause
  */
 
-#ifndef LY_DICT_H_
-#define LY_DICT_H_
+#ifndef LLLY_DICT_H_
+#define LLLY_DICT_H_
 
 #include <stdint.h>
 
@@ -24,7 +24,7 @@ extern "C" {
 /*
  * structure definition from context.h
  */
-struct ly_ctx;
+struct llly_ctx;
 
 /**
  * @defgroup dict Dictionary
@@ -47,7 +47,7 @@ struct ly_ctx;
  * byte is added automatically.
  * @return pointer to the string stored in the dictionary
  */
-const char *lydict_insert(struct ly_ctx *ctx, const char *value, size_t len);
+const char *lllydict_insert(struct llly_ctx *ctx, const char *value, size_t len);
 
 /**
  * @brief Insert string into dictionary - zerocopy version. If the string is
@@ -63,7 +63,7 @@ const char *lydict_insert(struct ly_ctx *ctx, const char *value, size_t len);
  * value address anymore.
  * @return pointer to the string stored in the dictionary
  */
-const char *lydict_insert_zc(struct ly_ctx *ctx, char *value);
+const char *lllydict_insert_zc(struct llly_ctx *ctx, char *value);
 
 /**
  * @brief Remove specified string from the dictionary. It decrement reference
@@ -74,7 +74,7 @@ const char *lydict_insert_zc(struct ly_ctx *ctx, char *value);
  * must match the stored value, but also the address is being compared and the
  * counter is decremented only if it matches.
  */
-void lydict_remove(struct ly_ctx *ctx, const char *value);
+void lllydict_remove(struct llly_ctx *ctx, const char *value);
 
 /**@} dict */
 
@@ -82,4 +82,4 @@ void lydict_remove(struct ly_ctx *ctx, const char *value);
 }
 #endif
 
-#endif /* LY_DICT_H_ */
+#endif /* LLLY_DICT_H_ */

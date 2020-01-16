@@ -32,8 +32,8 @@
 
 #define TMP_TEMPLATE "/tmp/libyang-XXXXXX"
 
-struct ly_ctx *ctx = NULL;
-struct lyd_node *root = NULL;
+struct llly_ctx *ctx = NULL;
+struct lllyd_node *root = NULL;
 
 const char *a_data_xml = "\
 <x xmlns=\"urn:a\">\n\
@@ -100,7 +100,7 @@ const char *a_correct_data_xml_008 = "\
 int
 generic_init(char *yang_file, char *yang_folder)
 {
-    LYS_INFORMAT yang_format;
+    LLLYS_INFORMAT yang_format;
     char *schema = NULL;
     struct stat sb_schema;
     int fd = -1;
@@ -109,9 +109,9 @@ generic_init(char *yang_file, char *yang_folder)
         goto error;
     }
 
-    yang_format = LYS_IN_YIN;
+    yang_format = LLLYS_IN_YIN;
 
-    ctx = ly_ctx_new(yang_folder, 0);
+    ctx = llly_ctx_new(yang_folder, 0);
     if (!ctx) {
         goto error;
     }
@@ -124,7 +124,7 @@ generic_init(char *yang_file, char *yang_folder)
     schema = mmap(NULL, sb_schema.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     close(fd);
 
-    if (!lys_parse_mem(ctx, schema, yang_format)) {
+    if (!lllys_parse_mem(ctx, schema, yang_format)) {
         goto error;
     }
 
@@ -166,9 +166,9 @@ teardown_f(void **state)
 {
     (void) state; /* unused */
     if (root)
-        lyd_free(root);
+        lllyd_free(root);
     if (ctx)
-        ly_ctx_destroy(ctx, NULL);
+        llly_ctx_destroy(ctx, NULL);
 
     return 0;
 }
@@ -177,53 +177,53 @@ static void
 test_lyxml_parse_mem(void **state)
 {
     (void) state; /* unused */
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
 
-    xml = lyxml_parse_mem(ctx, a_data_xml, 0);
+    xml = lllyxml_parse_mem(ctx, a_data_xml, 0);
 
     assert_string_equal("x", xml->name);
 
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 }
 
 static void
 test_lyxml_free(void **state)
 {
     (void) state; /* unused */
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
 
-    xml = lyxml_parse_mem(ctx, a_data_xml, 0);
+    xml = lllyxml_parse_mem(ctx, a_data_xml, 0);
 
     assert_string_equal("x", xml->name);
 
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 }
 
 static void
 test_lyxml_parse_path(void **state)
 {
     (void) state; /* unused */
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
     const char *path = TESTS_DIR"/api/files/a.xml";
 
-    xml = lyxml_parse_path(ctx, path, 0);
+    xml = lllyxml_parse_path(ctx, path, 0);
     if (!xml) {
         fail();
     }
 
     assert_string_equal("x", xml->name);
 
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 }
 
 static void
 test_lyxml_print_fd(void **state)
 {
     (void) state; /* unused */
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
     const char *path = TESTS_DIR"/api/files/a.xml";
 
-    xml = lyxml_parse_path(ctx, path, 0);
+    xml = lllyxml_parse_path(ctx, path, 0);
     if (!xml) {
         fail();
     }
@@ -245,7 +245,7 @@ test_lyxml_print_fd(void **state)
         goto error;
     }
 
-    rc = lyxml_print_fd(fd, xml, 0);
+    rc = lllyxml_print_fd(fd, xml, 0);
     if (!rc) {
         goto error;
     }
@@ -260,7 +260,7 @@ test_lyxml_print_fd(void **state)
 
     close(fd);
     unlink(file_name);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
     return;
 error:
@@ -269,7 +269,7 @@ error:
         unlink(file_name);
     }
     if (!xml)
-        lyxml_free(ctx, xml);
+        lllyxml_free(ctx, xml);
     fail();
 }
 
@@ -277,7 +277,7 @@ static void
 test_lyxml_print_file(void **state)
 {
     (void) state; /* unused */
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
     const char *path = TESTS_DIR"/api/files/a.xml";
     struct stat sb;
     char file_name[20];
@@ -286,7 +286,7 @@ test_lyxml_print_file(void **state)
     int rc;
     int fd;
 
-    xml = lyxml_parse_path(ctx, path, 0);
+    xml = lllyxml_parse_path(ctx, path, 0);
     if (!xml) {
         fail();
     }
@@ -307,7 +307,7 @@ test_lyxml_print_file(void **state)
         goto error;
     }
 
-    rc = lyxml_print_file(f, xml, 0);
+    rc = lllyxml_print_file(f, xml, 0);
     if (!rc) {
         goto error;
     }
@@ -325,7 +325,7 @@ test_lyxml_print_file(void **state)
 
     close(fd);
     unlink(file_name);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
     return;
 error:
@@ -336,7 +336,7 @@ error:
         close(fd);
     }
     if (xml)
-        lyxml_free(ctx, xml);
+        lllyxml_free(ctx, xml);
     fail();
 }
 
@@ -344,27 +344,27 @@ static void
 test_lyxml_print_mem(void **state)
 {
     (void) state; /* unused */
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
     const char *path = TESTS_DIR"/api/files/a.xml";
     char *result = NULL;
     int rc;
 
-    xml = lyxml_parse_path(ctx, path, 0);
+    xml = lllyxml_parse_path(ctx, path, 0);
     if (!xml) {
         fail();
     }
 
     assert_string_equal("x", xml->name);
 
-    rc = lyxml_print_mem(&result, xml, 0);
+    rc = lllyxml_print_mem(&result, xml, 0);
     if (!rc) {
-        lyxml_free(ctx, xml);
+        lllyxml_free(ctx, xml);
         fail();
     }
 
     assert_string_equal(res_xml, result);
 
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
     free(result);
 }
 
@@ -395,11 +395,11 @@ static void
 test_lyxml_print_clb(void **state)
 {
     (void) state; /* unused */
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
     const char *path = TESTS_DIR"/api/files/a.xml";
     int rc;
 
-    xml = lyxml_parse_path(ctx, path, 0);
+    xml = lllyxml_parse_path(ctx, path, 0);
     if (!xml) {
         fail();
     }
@@ -409,92 +409,92 @@ test_lyxml_print_clb(void **state)
     struct buff *buf = calloc(1, sizeof(struct buff));
     if (!buf) {
         fail();
-        lyxml_free(ctx, xml);
+        lllyxml_free(ctx, xml);
     }
 
     buf->len = 0;
     buf->cmp = res_xml;
     void *arg = buf;
 
-    rc = lyxml_print_clb(custom_lyxml_print_clb, arg, xml, 0);
+    rc = lllyxml_print_clb(custom_lyxml_print_clb, arg, xml, 0);
     if (!rc) {
         fail();
         free(buf);
-        lyxml_free(ctx, xml);
+        lllyxml_free(ctx, xml);
     }
 
     free(buf);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 }
 
 static void
 test_lyxml_unlink(void **state)
 {
     (void) state; /* unused */
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
 
-    xml = lyxml_parse_mem(ctx, a_data_xml, 0);
+    xml = lllyxml_parse_mem(ctx, a_data_xml, 0);
 
     assert_string_equal("bubba", xml->child->name);
-    lyxml_free(ctx, xml->child);
-    lyxml_unlink(ctx, xml->child);
+    lllyxml_free(ctx, xml->child);
+    lllyxml_unlink(ctx, xml->child);
 
     if (xml->child) {
         fail();
     }
 
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 }
 
 static void
 test_lyxml_get_attr(void **state)
 {
     (void) state; /* unused */
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
     const char *result = NULL;
 
-    xml = lyxml_parse_mem(ctx, a_data_xml_attr, 0);
+    xml = lllyxml_parse_mem(ctx, a_data_xml_attr, 0);
 
-    result = lyxml_get_attr(xml, "bubba", NULL);
+    result = lllyxml_get_attr(xml, "bubba", NULL);
     if (!result) {
-        lyxml_free(ctx, xml);
+        lllyxml_free(ctx, xml);
         fail();
     }
 
     assert_string_equal("test", result);
 
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 }
 
 static void
 test_lyxml_get_ns(void **state)
 {
     (void) state; /* unused */
-    struct lyxml_elem *xml = NULL;
-    const struct lyxml_ns *ns = NULL;
+    struct lllyxml_elem *xml = NULL;
+    const struct lllyxml_ns *ns = NULL;
 
-    xml = lyxml_parse_mem(ctx, a_data_xml, 0);
+    xml = lllyxml_parse_mem(ctx, a_data_xml, 0);
 
-    ns = lyxml_get_ns(xml, NULL);
+    ns = lllyxml_get_ns(xml, NULL);
     if (!ns) {
-        lyxml_free(ctx, xml);
+        lllyxml_free(ctx, xml);
         fail();
     }
 
     assert_string_equal("urn:a", ns->value);
 
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 }
 
 void
 test_lyxml_dup(void **state)
 {
     (void) state;
-    struct lyxml_elem *first_xml = NULL;
-    struct lyxml_elem *second_xml = NULL;
+    struct lllyxml_elem *first_xml = NULL;
+    struct lllyxml_elem *second_xml = NULL;
     const char *path = TESTS_DIR"/api/files/a.xml";
 
-    first_xml = lyxml_parse_path(ctx, path, 0);
+    first_xml = lllyxml_parse_path(ctx, path, 0);
 
     if (!first_xml) {
         fail();
@@ -505,7 +505,7 @@ test_lyxml_dup(void **state)
         fail();
     }
 
-    second_xml = lyxml_dup(ctx, first_xml);
+    second_xml = lllyxml_dup(ctx, first_xml);
 
     /* Checking whether the first element is duplicated into the second */
     if (!second_xml) {
@@ -513,17 +513,17 @@ test_lyxml_dup(void **state)
     }
 
     /* Freeing the elements */
-    lyxml_free(ctx, first_xml);
-    lyxml_free(ctx, second_xml);
+    lllyxml_free(ctx, first_xml);
+    lllyxml_free(ctx, second_xml);
 }
 
 void
 test_lyxml_free_withsiblings(void **state)
 {
     (void) state;
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
     const char *path = TESTS_DIR"/api/files/a.xml";
-    xml = lyxml_parse_path(ctx, path, 0);
+    xml = lllyxml_parse_path(ctx, path, 0);
 
     /* Making sure the element is not null */
     if (!xml) {
@@ -531,65 +531,65 @@ test_lyxml_free_withsiblings(void **state)
     }
 
     /* Freeing the element with its siblings */
-    lyxml_free_withsiblings(ctx, xml);
+    lllyxml_free_withsiblings(ctx, xml);
 }
 
 void
 test_lyxml_xmlns_wrong_format(void **state)
 {
     (void)state;
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
 
-    xml = lyxml_parse_mem(ctx, a_err_data_xml_001, 0);
+    xml = lllyxml_parse_mem(ctx, a_err_data_xml_001, 0);
     assert_ptr_equal(xml, NULL);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
-    xml = lyxml_parse_mem(ctx, a_err_data_xml_002, 0);
+    xml = lllyxml_parse_mem(ctx, a_err_data_xml_002, 0);
     assert_ptr_equal(xml, NULL);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
-    xml = lyxml_parse_mem(ctx, a_err_data_xml_003, 0);
+    xml = lllyxml_parse_mem(ctx, a_err_data_xml_003, 0);
     assert_ptr_equal(xml, NULL);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 }
 
 void
 test_lyxml_xmlns_correct_format(void **state)
 {
     (void)state;
-    struct lyxml_elem *xml = NULL;
+    struct lllyxml_elem *xml = NULL;
 
-    xml = lyxml_parse_mem(ctx, a_correct_data_xml_001, 0);
+    xml = lllyxml_parse_mem(ctx, a_correct_data_xml_001, 0);
     assert_string_equal("α阳𪐕", xml->name);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
-    xml = lyxml_parse_mem(ctx, a_correct_data_xml_002, 0);
+    xml = lllyxml_parse_mem(ctx, a_correct_data_xml_002, 0);
     assert_string_equal("' and \"", xml->child->content);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
-    xml = lyxml_parse_mem(ctx, a_correct_data_xml_003, 0);
+    xml = lllyxml_parse_mem(ctx, a_correct_data_xml_003, 0);
     assert_ptr_not_equal(xml, NULL);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
-    xml = lyxml_parse_mem(ctx, a_correct_data_xml_004, 0);
+    xml = lllyxml_parse_mem(ctx, a_correct_data_xml_004, 0);
     assert_ptr_not_equal(xml, NULL);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
-    xml = lyxml_parse_mem(ctx, a_correct_data_xml_005, 0);
+    xml = lllyxml_parse_mem(ctx, a_correct_data_xml_005, 0);
     assert_ptr_not_equal(xml, NULL);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
-    xml = lyxml_parse_mem(ctx, a_correct_data_xml_006, 0);
+    xml = lllyxml_parse_mem(ctx, a_correct_data_xml_006, 0);
     assert_ptr_not_equal(xml, NULL);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
-    xml = lyxml_parse_mem(ctx, a_correct_data_xml_007, 0);
+    xml = lllyxml_parse_mem(ctx, a_correct_data_xml_007, 0);
     assert_ptr_not_equal(xml, NULL);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 
-    xml = lyxml_parse_mem(ctx, a_correct_data_xml_008, 0);
+    xml = lllyxml_parse_mem(ctx, a_correct_data_xml_008, 0);
     assert_ptr_not_equal(xml, NULL);
-    lyxml_free(ctx, xml);
+    lllyxml_free(ctx, xml);
 }
 
 int main(void)

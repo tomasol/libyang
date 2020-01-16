@@ -36,7 +36,7 @@
 #define YANG_MOD_IDX(idx) (idx)
 #define YIN_MOD_IDX(idx) (MOD_COUNT + idx)
 
-struct ly_ctx *ctx;
+struct llly_ctx *ctx;
 char *yang_modules[2 * MOD_COUNT] = {0};
 char *yin_modules[2 * MOD_COUNT] = {0};
 
@@ -48,7 +48,7 @@ setup_ctx_yin(void **state)
     assert_non_null(*state);
     memcpy(*state, SCHEMA_FOLDER_YIN, strlen(SCHEMA_FOLDER_YIN) + 1);
 
-    ctx = ly_ctx_new(NULL, 0);
+    ctx = llly_ctx_new(NULL, 0);
     if (!ctx) {
         return -1;
     }
@@ -63,7 +63,7 @@ setup_ctx_yang(void **state)
     assert_non_null(*state);
     memcpy(*state, SCHEMA_FOLDER_YANG, strlen(SCHEMA_FOLDER_YANG) + 1);
 
-    ctx = ly_ctx_new(NULL, 0);
+    ctx = llly_ctx_new(NULL, 0);
     if (!ctx) {
         return -1;
     }
@@ -75,7 +75,7 @@ static int
 teardown_ctx(void **state)
 {
     free(*state);
-    ly_ctx_destroy(ctx, NULL);
+    llly_ctx_destroy(ctx, NULL);
 
     return 0;
 }
@@ -85,24 +85,24 @@ test_target_include_submodule(void **state)
 {
     int length;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/a.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
-        lys_print_mem(&yin_modules[YANG_MOD_IDX(0)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yin_modules[YIN_MOD_IDX(0)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YANG_MOD_IDX(0)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YIN_MOD_IDX(0)], module, LLLYS_OUT_YIN, NULL, 0, 0);
     } else {
         strcpy(path + length, "/a.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
-        lys_print_mem(&yang_modules[YANG_MOD_IDX(0)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yang_modules[YIN_MOD_IDX(0)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YANG_MOD_IDX(0)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YIN_MOD_IDX(0)], module, LLLYS_OUT_YIN, NULL, 0, 0);
     }
 }
 
@@ -111,38 +111,38 @@ test_leafref(void **state)
 {
     int length;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/b1.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
-        lys_print_mem(&yin_modules[YANG_MOD_IDX(1)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yin_modules[YIN_MOD_IDX(1)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YANG_MOD_IDX(1)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YIN_MOD_IDX(1)], module, LLLYS_OUT_YIN, NULL, 0, 0);
 
         strcpy(path + length, "/b2.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
-        lys_print_mem(&yin_modules[YANG_MOD_IDX(2)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yin_modules[YIN_MOD_IDX(2)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YANG_MOD_IDX(2)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YIN_MOD_IDX(2)], module, LLLYS_OUT_YIN, NULL, 0, 0);
     } else {
         strcpy(path + length, "/b1.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
-        lys_print_mem(&yang_modules[YANG_MOD_IDX(1)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yang_modules[YIN_MOD_IDX(1)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YANG_MOD_IDX(1)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YIN_MOD_IDX(1)], module, LLLYS_OUT_YIN, NULL, 0, 0);
 
         strcpy(path + length, "/b2.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
-        lys_print_mem(&yang_modules[YANG_MOD_IDX(2)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yang_modules[YIN_MOD_IDX(2)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YANG_MOD_IDX(2)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YIN_MOD_IDX(2)], module, LLLYS_OUT_YIN, NULL, 0, 0);
     }
 }
 
@@ -154,18 +154,18 @@ test_leafref_w_feature1(void **state)
 {
     int length, i;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/leafref_w_feature1-mod3.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
     } else {
         strcpy(path + length, "/leafref_w_feature1-mod3.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
     }
@@ -185,18 +185,18 @@ test_leafref_w_feature2(void **state)
 {
     int length, i;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/leafref_w_feature2-mod1.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
     } else {
         strcpy(path + length, "/leafref_w_feature2-mod1.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
     }
@@ -217,18 +217,18 @@ test_leafref_w_feature3(void **state)
 {
     int length, i;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/leafref_w_feature1-mod4.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
     } else {
         strcpy(path + length, "/leafref_w_feature1-mod4.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
     }
@@ -251,18 +251,18 @@ test_imp_aug(void **state)
 {
     int length;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/imp_aug_m1.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
     } else {
         strcpy(path + length, "/imp_aug_m1.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
     }
@@ -273,52 +273,52 @@ test_target_augment(void **state)
 {
     int length;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/c1.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
-        lys_print_mem(&yin_modules[YANG_MOD_IDX(3)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yin_modules[YIN_MOD_IDX(3)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YANG_MOD_IDX(3)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YIN_MOD_IDX(3)], module, LLLYS_OUT_YIN, NULL, 0, 0);
 
         strcpy(path + length, "/c2.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
-        lys_print_mem(&yin_modules[YANG_MOD_IDX(4)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yin_modules[YIN_MOD_IDX(4)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YANG_MOD_IDX(4)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YIN_MOD_IDX(4)], module, LLLYS_OUT_YIN, NULL, 0, 0);
 
         strcpy(path + length, "/c3.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
-        lys_print_mem(&yin_modules[YANG_MOD_IDX(5)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yin_modules[YIN_MOD_IDX(5)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YANG_MOD_IDX(5)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YIN_MOD_IDX(5)], module, LLLYS_OUT_YIN, NULL, 0, 0);
     } else {
         strcpy(path + length, "/c1.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
-        lys_print_mem(&yang_modules[YANG_MOD_IDX(3)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yang_modules[YIN_MOD_IDX(3)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YANG_MOD_IDX(3)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YIN_MOD_IDX(3)], module, LLLYS_OUT_YIN, NULL, 0, 0);
 
         strcpy(path + length, "/c2.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
-        lys_print_mem(&yang_modules[YANG_MOD_IDX(4)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yang_modules[YIN_MOD_IDX(4)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YANG_MOD_IDX(4)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YIN_MOD_IDX(4)], module, LLLYS_OUT_YIN, NULL, 0, 0);
 
         strcpy(path + length, "/c3.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
-        lys_print_mem(&yang_modules[YANG_MOD_IDX(5)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yang_modules[YIN_MOD_IDX(5)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YANG_MOD_IDX(5)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YIN_MOD_IDX(5)], module, LLLYS_OUT_YIN, NULL, 0, 0);
     }
 }
 
@@ -327,24 +327,24 @@ test_unres_augment(void **state)
 {
     int length;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/emod.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
-        lys_print_mem(&yin_modules[YANG_MOD_IDX(6)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yin_modules[YIN_MOD_IDX(6)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YANG_MOD_IDX(6)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yin_modules[YIN_MOD_IDX(6)], module, LLLYS_OUT_YIN, NULL, 0, 0);
     } else {
         strcpy(path + length, "/emod.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
-        lys_print_mem(&yang_modules[YANG_MOD_IDX(6)], module, LYS_OUT_YANG, NULL, 0, 0);
-        lys_print_mem(&yang_modules[YIN_MOD_IDX(6)], module, LYS_OUT_YIN, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YANG_MOD_IDX(6)], module, LLLYS_OUT_YANG, NULL, 0, 0);
+        lllys_print_mem(&yang_modules[YIN_MOD_IDX(6)], module, LLLYS_OUT_YIN, NULL, 0, 0);
     }
 }
 
@@ -353,24 +353,24 @@ test_import_augment_target(void **state)
 {
     int length;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/g1.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
-        /*lys_print_mem(&yin_modules[7], module, LYS_OUT_YANG, NULL);
-        lys_print_mem(&yin_modules[14], module, LYS_OUT_YIN, NULL);*/
+        /*lllys_print_mem(&yin_modules[7], module, LLLYS_OUT_YANG, NULL);
+        lllys_print_mem(&yin_modules[14], module, LLLYS_OUT_YIN, NULL);*/
     } else {
         strcpy(path + length, "/g1.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
-        /*lys_print_mem(&yin_modules[7], module, LYS_OUT_YANG, NULL);
-        lys_print_mem(&yin_modules[14], module, LYS_OUT_YIN, NULL);*/
+        /*lllys_print_mem(&yin_modules[7], module, LLLYS_OUT_YANG, NULL);
+        lllys_print_mem(&yin_modules[14], module, LLLYS_OUT_YIN, NULL);*/
     }
 }
 
@@ -379,29 +379,29 @@ test_import_augment_leafref_implemented(void **state)
 {
     int length;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/mainmodule.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
     } else {
         strcpy(path + length, "/mainmodule.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
     }
 
-    module = ly_ctx_get_module(ctx, "mainmodule", NULL, 0);
+    module = llly_ctx_get_module(ctx, "mainmodule", NULL, 0);
     assert_true(module && module->implemented);
-    module = ly_ctx_get_module(ctx, "augmentbase", NULL, 0);
+    module = llly_ctx_get_module(ctx, "augmentbase", NULL, 0);
     assert_true(module && module->implemented);
-    module = ly_ctx_get_module(ctx, "augmentone", NULL, 0);
+    module = llly_ctx_get_module(ctx, "augmentone", NULL, 0);
     assert_true(module && module->implemented);
-    module = ly_ctx_get_module(ctx, "augmenttwo", NULL, 0);
+    module = llly_ctx_get_module(ctx, "augmenttwo", NULL, 0);
     assert_true(module && module->implemented);
 
 }
@@ -411,29 +411,29 @@ test_import_augment_leafref_imported(void **state)
 {
     int length;
     char *path = *state;
-    const struct lys_module *module;
+    const struct lllys_module *module;
 
-    ly_ctx_set_searchdir(ctx, path);
+    llly_ctx_set_searchdir(ctx, path);
     length = strlen(path);
     if (!strcmp(path, SCHEMA_FOLDER_YIN)) {
         strcpy(path + length, "/installme.yin");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YIN))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YIN))) {
             fail();
         }
     } else {
         strcpy(path + length, "/installme.yang");
-        if (!(module = lys_parse_path(ctx, path, LYS_IN_YANG))) {
+        if (!(module = lllys_parse_path(ctx, path, LLLYS_IN_YANG))) {
             fail();
         }
     }
 
-    module = ly_ctx_get_module(ctx, "installme", NULL, 0);
+    module = llly_ctx_get_module(ctx, "installme", NULL, 0);
     assert_true(module && module->implemented);
 
-    module = ly_ctx_get_module(ctx, "aug", NULL, 0);
+    module = llly_ctx_get_module(ctx, "aug", NULL, 0);
     assert_true(module && !module->implemented);
 
-    module = ly_ctx_get_module(ctx, "base", NULL, 0);
+    module = llly_ctx_get_module(ctx, "base", NULL, 0);
     assert_true(module && !module->implemented);
 }
 
@@ -472,7 +472,7 @@ teardown_output(void **state)
 int
 main(void)
 {
-    ly_verb(LY_LLWRN);
+    llly_verb(LLLY_LLWRN);
     const struct CMUnitTest cmut[] = {
         cmocka_unit_test_setup_teardown(test_target_include_submodule, setup_ctx_yin, teardown_ctx),
         cmocka_unit_test_setup_teardown(test_leafref, setup_ctx_yin, teardown_ctx),

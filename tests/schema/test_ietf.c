@@ -50,11 +50,11 @@ char yin_files[34][50] = {};
 static int
 setup_ctx(void **state, int format, int flags)
 {
-    //ly_verb(LY_LLVRB);
-    if (format == LYS_IN_YANG){
-        (*state) = ly_ctx_new(SCHEMA_FOLDER_YANG, flags);
+    //llly_verb(LLLY_LLVRB);
+    if (format == LLLYS_IN_YANG){
+        (*state) = llly_ctx_new(SCHEMA_FOLDER_YANG, flags);
     } else {
-        (*state) = ly_ctx_new(SCHEMA_FOLDER_YIN, flags);
+        (*state) = llly_ctx_new(SCHEMA_FOLDER_YIN, flags);
     }
     if (!(*state)) {
         return -1;
@@ -66,38 +66,38 @@ setup_ctx(void **state, int format, int flags)
 static int
 setup_ctx_yin(void **state)
 {
-    return setup_ctx(state, LYS_IN_YIN, 0);
+    return setup_ctx(state, LLLYS_IN_YIN, 0);
 }
 
 static int
 setup_ctx_yang(void **state)
 {
-    return setup_ctx(state, LYS_IN_YANG, 0);
+    return setup_ctx(state, LLLYS_IN_YANG, 0);
 }
 
 static int
 setup_ctx_yin_trusted(void **state)
 {
-    return setup_ctx(state, LYS_IN_YIN, LY_CTX_TRUSTED);
+    return setup_ctx(state, LLLYS_IN_YIN, LLLY_CTX_TRUSTED);
 }
 
 static int
 setup_ctx_yang_trusted(void **state)
 {
-    return setup_ctx(state, LYS_IN_YANG, LY_CTX_TRUSTED);
+    return setup_ctx(state, LLLYS_IN_YANG, LLLY_CTX_TRUSTED);
 }
 
 static int
 teardown_ctx(void **state)
 {
-    ly_ctx_destroy((struct ly_ctx *)(*state), NULL);
+    llly_ctx_destroy((struct llly_ctx *)(*state), NULL);
     (*state) = NULL;
 
     return 0;
 }
 
 static void
-write_file(char *filename, const char *name, const struct lys_module *module, LYS_OUTFORMAT format)
+write_file(char *filename, const char *name, const struct lllys_module *module, LLLYS_OUTFORMAT format)
 {
     FILE *f;
 
@@ -109,24 +109,24 @@ write_file(char *filename, const char *name, const struct lys_module *module, LY
         fprintf(stderr, "unable to open \"%s\" file.\n", filename);
         fail();
     }
-    lys_print_file(f, module, format, NULL, 0, 0);
+    lllys_print_file(f, module, format, NULL, 0, 0);
     fclose(f);
 }
 
 static void
 test_modules(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     char *extension, path[PATH_MAX];
-    const struct lys_module *module;
+    const struct lllys_module *module;
     int i, format;
 
     if (!strcmp(ctx->models.search_paths[0], realpath(SCHEMA_FOLDER_YIN, path))) {
         extension = ".yin";
-        format = LYS_IN_YIN;
+        format = LLLYS_IN_YIN;
     }  else {
         extension = ".yang";
-        format = LYS_IN_YANG;
+        format = LLLYS_IN_YANG;
     }
 
     if (chdir(ctx->models.search_paths[0])) {
@@ -137,17 +137,17 @@ test_modules(void **state)
     for (i = 0; i < SCHEMA_COUNT; i++) {
         sprintf(path, "%s%s", files[i], extension);
         fprintf(stdout, "Loading \"%s\" module ... ", path);
-        if (!(module = lys_parse_path(ctx, path, format))) {
+        if (!(module = lllys_parse_path(ctx, path, format))) {
             fprintf(stdout, "failed\n");
             fail();
         }
         fprintf(stdout, "ok\n");
-        if (format == LYS_IN_YIN) {
-            write_file(yang_files[i], "tmp1", module, LYS_OUT_YANG);
-            write_file(yin_files[i], "tmp3", module, LYS_OUT_YIN);
+        if (format == LLLYS_IN_YIN) {
+            write_file(yang_files[i], "tmp1", module, LLLYS_OUT_YANG);
+            write_file(yin_files[i], "tmp3", module, LLLYS_OUT_YIN);
         } else {
-            write_file(yang_files[i + SCHEMA_COUNT], "tmp2", module, LYS_OUT_YANG);
-            write_file(yin_files[i + SCHEMA_COUNT], "tmp4", module, LYS_OUT_YIN);
+            write_file(yang_files[i + SCHEMA_COUNT], "tmp2", module, LLLYS_OUT_YANG);
+            write_file(yin_files[i + SCHEMA_COUNT], "tmp4", module, LLLYS_OUT_YIN);
         }
     }
 }

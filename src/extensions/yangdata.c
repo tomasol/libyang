@@ -24,9 +24,9 @@
 /**
  * @brief Storage for ID used to check plugin API version compatibility.
  */
-LYEXT_VERSION_CHECK
+LLLYEXT_VERSION_CHECK
 
-int check_node(struct lys_node *node);
+int check_node(struct lllys_node *node);
 
 /**
  * @brief Callback to check that the yang-data can be instantiated inside the provided node
@@ -34,16 +34,16 @@ int check_node(struct lys_node *node);
  * @param[in] parent The parent of the instantiated extension.
  * @param[in] parent_type The type of the structure provided as \p parent.
  * @param[in] substmt_type libyang does not store all the extension instances in the structures where they are
- *                         instantiated in the module. In some cases (see #LYEXT_SUBSTMT) they are stored in parent
+ *                         instantiated in the module. In some cases (see #LLLYEXT_SUBSTMT) they are stored in parent
  *                         structure and marked with flag to know in which substatement of the parent the extension
  *                         was originally instantiated.
  * @return 0 - ok
  *         1 - error
  */
-int yang_data_position(const void * UNUSED(parent), LYEXT_PAR parent_type, LYEXT_SUBSTMT UNUSED(substmt_type))
+int yang_data_position(const void * UNUSED(parent), LLLYEXT_PAR parent_type, LLLYEXT_SUBSTMT UNUSED(substmt_type))
 {
     /* yang-data can appear only at the top level of a YANG module or submodule */
-    if (parent_type == LYEXT_PAR_MODULE) {
+    if (parent_type == LLLYEXT_PAR_MODULE) {
         return 0;
     } else {
         return 1;
@@ -54,12 +54,12 @@ int yang_data_position(const void * UNUSED(parent), LYEXT_PAR parent_type, LYEXT
  *                 1 - Something wrong
  *                -1 - Absolute wrong
  */
-int check_choice(struct lys_node *root) {
-    struct lys_node *node, *next;
+int check_choice(struct lllys_node *root) {
+    struct lllys_node *node, *next;
     int result = 1, tmp_result;
 
-    LY_TREE_FOR_SAFE(root->child, next, node) {
-        tmp_result = (node->nodetype == LYS_CASE) ? check_node(node->child) : check_node(node);
+    LLLY_TREE_FOR_SAFE(root->child, next, node) {
+        tmp_result = (node->nodetype == LLLYS_CASE) ? check_node(node->child) : check_node(node);
         if (tmp_result == -1) {
             return -1;
         } else if (tmp_result == 0) {
@@ -74,7 +74,7 @@ int check_choice(struct lys_node *root) {
  *                 1 - Something wrong
  *                -1 - Absolute wrong
  */
-int check_node(struct lys_node *node) {
+int check_node(struct lllys_node *node) {
 
     int result = 0;
 
@@ -83,11 +83,11 @@ int check_node(struct lys_node *node) {
     }
 
     /* check nodes and find only one container */
-    if (node->nodetype == LYS_CHOICE) {
+    if (node->nodetype == LLLYS_CHOICE) {
         result = check_choice(node);
-    } else if (node->nodetype == LYS_USES) {
-        result = check_node(((struct lys_node_uses*)node)->grp->child);
-    } else if (node->nodetype != LYS_CONTAINER || (node->next != NULL || node->prev != node)) {
+    } else if (node->nodetype == LLLYS_USES) {
+        result = check_node(((struct lllys_node_uses*)node)->grp->child);
+    } else if (node->nodetype != LLLYS_CONTAINER || (node->next != NULL || node->prev != node)) {
         result = -1;
     }
 
@@ -95,21 +95,21 @@ int check_node(struct lys_node *node) {
 }
 
 
-void remove_iffeature(struct lys_iffeature **iffeature, uint8_t *iffeature_size, struct ly_ctx *ctx) {
+void remove_iffeature(struct lllys_iffeature **iffeature, uint8_t *iffeature_size, struct llly_ctx *ctx) {
 
-    lys_iffeature_free(ctx, *iffeature, *iffeature_size, 0, NULL);
+    lllys_iffeature_free(ctx, *iffeature, *iffeature_size, 0, NULL);
     *iffeature_size = 0;
     *iffeature = NULL;
 }
 
-void remove_iffeature_type(struct lys_type *type, struct ly_ctx *ctx) {
+void remove_iffeature_type(struct lllys_type *type, struct llly_ctx *ctx) {
     unsigned int i;
 
-    if (type->base == LY_TYPE_ENUM) {
+    if (type->base == LLLY_TYPE_ENUM) {
         for (i = 0; i < type->info.enums.count; ++i) {
             remove_iffeature(&type->info.enums.enm[i].iffeature, &type->info.enums.enm[i].iffeature_size, ctx);
         }
-    } else if (type->base == LY_TYPE_BITS) {
+    } else if (type->base == LLLY_TYPE_BITS) {
         for (i = 0; i < type->info.bits.count; ++i) {
             remove_iffeature(&type->info.bits.bit[i].iffeature, &type->info.bits.bit[i].iffeature_size, ctx);
         }
@@ -117,46 +117,46 @@ void remove_iffeature_type(struct lys_type *type, struct ly_ctx *ctx) {
 }
 
 /* fix schema - ignore config flag, iffeature */
-void fix_schema(struct lys_node *root, struct ly_ctx *ctx) {
-    struct lys_node *node, *next;
-    struct lys_node_container *cont;
-    struct lys_node_rpc_action *action;
-    struct lys_node_grp *grp;
-    struct lys_node_uses *uses;
+void fix_schema(struct lllys_node *root, struct llly_ctx *ctx) {
+    struct lllys_node *node, *next;
+    struct lllys_node_container *cont;
+    struct lllys_node_rpc_action *action;
+    struct lllys_node_grp *grp;
+    struct lllys_node_uses *uses;
     int i;
 
-    LY_TREE_DFS_BEGIN(root, next, node) {
+    LLLY_TREE_DFS_BEGIN(root, next, node) {
         /* ignore config flag */
-        node->flags = node->flags & (~(LYS_CONFIG_MASK | LYS_CONFIG_SET));
+        node->flags = node->flags & (~(LLLYS_CONFIG_MASK | LLLYS_CONFIG_SET));
         remove_iffeature(&node->iffeature, &node->iffeature_size, ctx);
         switch (node->nodetype) {
-            case LYS_CONTAINER:
-                cont = (struct lys_node_container *)node;
+            case LLLYS_CONTAINER:
+                cont = (struct lllys_node_container *)node;
                 for (i = 0; i < cont->tpdf_size; ++i) {
                     remove_iffeature_type(&cont->tpdf[i].type, ctx);
                 }
                 break;
-            case LYS_LEAF:
-                remove_iffeature_type(&((struct lys_node_leaf *)node)->type, ctx);
+            case LLLYS_LEAF:
+                remove_iffeature_type(&((struct lllys_node_leaf *)node)->type, ctx);
                 break;
-            case LYS_LEAFLIST:
-                remove_iffeature_type(&((struct lys_node_leaflist *)node)->type, ctx);
+            case LLLYS_LEAFLIST:
+                remove_iffeature_type(&((struct lllys_node_leaflist *)node)->type, ctx);
                 break;
-            case LYS_ACTION:
-            case LYS_NOTIF:
-                action = (struct lys_node_rpc_action *)node;
+            case LLLYS_ACTION:
+            case LLLYS_NOTIF:
+                action = (struct lllys_node_rpc_action *)node;
                 for (i = 0; i < action->tpdf_size; ++i) {
                     remove_iffeature_type(&action->tpdf[i].type, ctx);
                 }
                 break;
-            case LYS_GROUPING:
-                grp = (struct lys_node_grp *)node;
+            case LLLYS_GROUPING:
+                grp = (struct lllys_node_grp *)node;
                 for (i = 0; i < grp->tpdf_size; ++i) {
                     remove_iffeature_type(&grp->tpdf[i].type, ctx);
                 }
                 break;
-            case LYS_USES:
-                uses = (struct lys_node_uses *)node;
+            case LLLYS_USES:
+                uses = (struct lllys_node_uses *)node;
                 for (i = 0; i < uses->augment_size; ++i) {
                     remove_iffeature(&uses->augment[i].iffeature, &uses->augment[i].iffeature_size, ctx);
                     fix_schema(uses->augment[i].child, ctx);
@@ -168,14 +168,14 @@ void fix_schema(struct lys_node *root, struct ly_ctx *ctx) {
             default:
                 break;
         }
-        LY_TREE_DFS_END(root, next, node)
+        LLLY_TREE_DFS_END(root, next, node)
     }
 }
 
-int yang_data_result(struct lys_ext_instance *ext) {
-    struct lys_node **root;
+int yang_data_result(struct lllys_ext_instance *ext) {
+    struct lllys_node **root;
 
-    root = lys_ext_complex_get_substmt(LY_STMT_CONTAINER, (struct lys_ext_instance_complex *)ext, NULL);
+    root = lllys_ext_complex_get_substmt(LLLY_STMT_CONTAINER, (struct lllys_ext_instance_complex *)ext, NULL);
     if (!root || !(*root) || (*root)->next != NULL || check_node(*root)) {
         return 1;
     }
@@ -184,18 +184,18 @@ int yang_data_result(struct lys_ext_instance *ext) {
     return 0;
 }
 
-struct lyext_substmt yang_data_substmt[] = {
-    {LY_STMT_USES,        0, LY_STMT_CARD_OPT},
-    {LY_STMT_CONTAINER,   0, LY_STMT_CARD_OPT},
-    {LY_STMT_CHOICE,      0, LY_STMT_CARD_OPT},
+struct lllyext_substmt yang_data_substmt[] = {
+    {LLLY_STMT_USES,        0, LLLY_STMT_CARD_OPT},
+    {LLLY_STMT_CONTAINER,   0, LLLY_STMT_CARD_OPT},
+    {LLLY_STMT_CHOICE,      0, LLLY_STMT_CARD_OPT},
     {0, 0, 0} /* terminating item */
 };
 
 /**
  * @brief Plugin for the RFC 8040 restconf extension
  */
-struct lyext_plugin_complex yang_data = {
-    .type = LYEXT_COMPLEX,
+struct lllyext_plugin_complex yang_data = {
+    .type = LLLYEXT_COMPLEX,
     .flags = 0,
     .check_position = &yang_data_position,
     .check_result = &yang_data_result,
@@ -205,7 +205,7 @@ struct lyext_plugin_complex yang_data = {
     .substmt = yang_data_substmt,
 
     /* final size of the extension instance structure with the space for storing the substatements */
-    .instance_size = (sizeof(struct lys_ext_instance_complex) - 1) + 2 * sizeof(void*)
+    .instance_size = (sizeof(struct lllys_ext_instance_complex) - 1) + 2 * sizeof(void*)
 };
 
 /**
@@ -213,7 +213,7 @@ struct lyext_plugin_complex yang_data = {
  *
  * MANDATORY object for all libyang extension plugins, the name must match the <name>.so
  */
-struct lyext_plugin_list yangdata[] = {
-    {"ietf-restconf", "2017-01-26", "yang-data", (struct lyext_plugin*)&yang_data},
+struct lllyext_plugin_list yangdata[] = {
+    {"ietf-restconf", "2017-01-26", "yang-data", (struct lllyext_plugin*)&yang_data},
     {NULL, NULL, NULL, NULL} /* terminating item */
 };

@@ -31,7 +31,7 @@
 static int
 setup_ctx(void **state)
 {
-    *state = ly_ctx_new(NULL, 0);
+    *state = llly_ctx_new(NULL, 0);
     if (!*state) {
         return -1;
     }
@@ -41,15 +41,15 @@ setup_ctx(void **state)
 static int
 teardown_ctx(void **state)
 {
-    ly_ctx_destroy(*state, NULL);
+    llly_ctx_destroy(*state, NULL);
     return 0;
 }
 
 static void
 test_multdfltvalues_yin(void **state)
 {
-    struct ly_ctx *ctx = *state;
-    struct lyd_node *root;
+    struct llly_ctx *ctx = *state;
+    struct lllyd_node *root;
     const char *yin_cfg = "<module name=\"x\" xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\">"
 "  <namespace uri=\"urn:x\"/>"
 "  <prefix value=\"x\"/>"
@@ -95,27 +95,27 @@ test_multdfltvalues_yin(void **state)
     /* only config leaflists must be unique, so in case of default data
      * the same value can be specified as default multiple times */
 
-    assert_ptr_equal(lys_parse_mem(ctx, yin_cfg, LYS_IN_YIN), NULL);
-    assert_ptr_equal(lys_parse_mem(ctx, yin_status_10, LYS_IN_YIN), NULL);
-    assert_ptr_not_equal(lys_parse_mem(ctx, yin_status, LYS_IN_YIN), NULL);
+    assert_ptr_equal(lllys_parse_mem(ctx, yin_cfg, LLLYS_IN_YIN), NULL);
+    assert_ptr_equal(lllys_parse_mem(ctx, yin_status_10, LLLYS_IN_YIN), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, yin_status, LLLYS_IN_YIN), NULL);
     /* for validating complete data tree, we need data from ietf-yang-library */
-    root = ly_ctx_info(ctx);
-    assert_int_equal(lyd_validate(&root, LYD_OPT_DATA, ctx), 0);
+    root = llly_ctx_info(ctx);
+    assert_int_equal(lllyd_validate(&root, LLLYD_OPT_DATA, ctx), 0);
     assert_ptr_not_equal(root, NULL); /* ietf-yang-library */
     assert_ptr_not_equal(root->next, NULL); /* added default nodes from module x */
 
-    lyd_print_mem(&printed, root->prev, LYD_XML, LYP_WD_ALL); /* print only the default nodes from module x */
+    lllyd_print_mem(&printed, root->prev, LLLYD_XML, LLLYP_WD_ALL); /* print only the default nodes from module x */
     assert_string_equal(printed, xml);
 
     free(printed);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 static void
 test_multdfltvalues_yang(void **state)
 {
-    struct ly_ctx *ctx = *state;
-    struct lyd_node *root;
+    struct llly_ctx *ctx = *state;
+    struct lllyd_node *root;
     const char *yang_cfg = "module x {"
 "  namespace urn:x;"
 "  prefix x;"
@@ -159,20 +159,20 @@ test_multdfltvalues_yang(void **state)
     /* only config leaflists must be unique, so in case of default data
      * the same value can be specified as default multiple times */
 
-    assert_ptr_equal(lys_parse_mem(ctx, yang_cfg, LYS_IN_YANG), NULL);
-    assert_ptr_equal(lys_parse_mem(ctx, yang_status_10, LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_mem(ctx, yang_status, LYS_IN_YANG), NULL);
+    assert_ptr_equal(lllys_parse_mem(ctx, yang_cfg, LLLYS_IN_YANG), NULL);
+    assert_ptr_equal(lllys_parse_mem(ctx, yang_status_10, LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, yang_status, LLLYS_IN_YANG), NULL);
     /* for validating complete data tree, we need data from ietf-yang-library */
-    root = ly_ctx_info(ctx);
-    assert_int_equal(lyd_validate(&root, LYD_OPT_DATA, ctx), 0);
+    root = llly_ctx_info(ctx);
+    assert_int_equal(lllyd_validate(&root, LLLYD_OPT_DATA, ctx), 0);
     assert_ptr_not_equal(root, NULL); /* ietf-yang-library */
     assert_ptr_not_equal(root->next, NULL); /* added default nodes from module x */
 
-    lyd_print_mem(&printed, root->prev, LYD_XML, LYP_WD_ALL); /* print only the default nodes from module x */
+    lllyd_print_mem(&printed, root->prev, LLLYD_XML, LLLYP_WD_ALL); /* print only the default nodes from module x */
     assert_string_equal(printed, xml);
 
     free(printed);
-    lyd_free_withsiblings(root);
+    lllyd_free_withsiblings(root);
 }
 
 int

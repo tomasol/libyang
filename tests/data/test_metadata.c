@@ -22,8 +22,8 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *data;
+    struct llly_ctx *ctx;
+    struct lllyd_node *data;
     char *str;
 };
 
@@ -39,7 +39,7 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(TESTS_DIR"/schema/yang/ietf/", 0);
+    st->ctx = llly_ctx_new(TESTS_DIR"/schema/yang/ietf/", 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
@@ -48,7 +48,7 @@ setup_f(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -61,8 +61,8 @@ teardown_f(void **state)
     struct state *st = (*state);
 
     free(st->str);
-    lyd_free_withsiblings(st->data);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->data);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -83,11 +83,11 @@ test_leafref_type(void **state)
                     "  md:annotation x { type leafref { path \"/x:a\"; } }"
                     "  leaf a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
 
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_equal(mod, NULL);
-    assert_int_equal(ly_errno, LY_EPLUGIN);
+    assert_int_equal(llly_errno, LLLY_EPLUGIN);
 }
 
 /*
@@ -102,21 +102,21 @@ test_unknown_metadata_xml(void **state)
                     "  prefix x;"
                     "  leaf a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "<a xmlns=\"urn:x\" xmlns:x=\"urn:x\" x:attribute=\"not-defined\">a</a>";
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
     /* parse input with strict - error */
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_CONFIG | LYD_OPT_STRICT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_CONFIG | LLLYD_OPT_STRICT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 
     /* parse input without strict - passes, but the attribute is not present */
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_CONFIG, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_CONFIG, NULL);
     assert_ptr_not_equal(st->data, NULL);
     assert_ptr_equal(st->data->attr, NULL);
 }
@@ -130,7 +130,7 @@ test_unknown_metadata_json(void **state)
                     "  prefix x;"
                     "  leaf a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\": \"a\","
         "\"@x:a\": {"
@@ -139,17 +139,17 @@ test_unknown_metadata_json(void **state)
     "}";
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
     /* parse input with strict - error */
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_CONFIG | LYD_OPT_STRICT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_CONFIG | LLLYD_OPT_STRICT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INMETA);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INMETA);
 
     /* parse input without strict - passes, but the attribute is not present */
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_CONFIG, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_CONFIG, NULL);
     assert_ptr_not_equal(st->data, NULL);
     assert_ptr_equal(st->data->attr, NULL);
 }
@@ -167,11 +167,11 @@ test_nc_filter1_xml(void **state)
                     "</modules-state></filter></get>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
-    st->data = lyd_parse_mem(st->ctx, filter_subtree, LYD_XML, LYD_OPT_RPC, NULL);
+    st->data = lllyd_parse_mem(st->ctx, filter_subtree, LLLYD_XML, LLLYD_OPT_RPC, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_XML, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_XML, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, filter_subtree);
 }
@@ -179,7 +179,7 @@ test_nc_filter1_xml(void **state)
 static void
 test_nc_filter2_xml(void **state)
 {
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     struct state *st = (*state);
     const char *filter_xpath = "<get xmlns=\"urn:ietf:params:xml:ns:netconf:base:1.0\">"
                     "<filter type=\"xpath\" "
@@ -187,12 +187,12 @@ test_nc_filter2_xml(void **state)
                     "select=\"/yanglib:modules-state/yanglib:module-set-id\"/></get>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal((mod = lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG)), NULL);
-    assert_int_equal(lys_features_enable(mod, "xpath"), 0);
+    assert_ptr_not_equal((mod = lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG)), NULL);
+    assert_int_equal(lllys_features_enable(mod, "xpath"), 0);
 
-    st->data = lyd_parse_mem(st->ctx, filter_xpath, LYD_XML, LYD_OPT_RPC, NULL);
+    st->data = lllyd_parse_mem(st->ctx, filter_xpath, LLLYD_XML, LLLYD_OPT_RPC, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_XML, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_XML, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, filter_xpath);
 }
@@ -216,14 +216,14 @@ test_nc_filter3_xml(void **state)
         "</get-config>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_RPC | LYD_OPT_STRICT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_RPC | LLLYD_OPT_STRICT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_RPC, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_RPC, NULL);
     assert_ptr_not_equal(st->data, NULL);
     assert_ptr_equal(st->data->child->next->attr, NULL);
 }
@@ -247,12 +247,12 @@ test_nc_filter4_xml(void **state)
         "</get-config>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_RPC, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_RPC, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INMETA);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INMETA);
 }
 
 /*
@@ -274,12 +274,12 @@ test_nc_filter5_xml(void **state)
         "</get-config>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_RPC, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_RPC, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INMETA);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INMETA);
 }
 
 /*
@@ -289,7 +289,7 @@ test_nc_filter5_xml(void **state)
 static void
 test_nc_filter6_xml(void **state)
 {
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     struct state *st = (*state);
     const char *input =
         "<get-config xmlns=\"urn:ietf:params:xml:ns:netconf:base:1.0\">"
@@ -301,13 +301,13 @@ test_nc_filter6_xml(void **state)
         "</get-config>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal((mod = lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG)), NULL);
-    assert_int_equal(lys_features_enable(mod, "xpath"), 0);
+    assert_ptr_not_equal((mod = lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG)), NULL);
+    assert_int_equal(lllys_features_enable(mod, "xpath"), 0);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_RPC, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_RPC, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 /*
@@ -317,7 +317,7 @@ test_nc_filter6_xml(void **state)
 static void
 test_nc_filter7_xml(void **state)
 {
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     struct state *st = (*state);
     const char *input =
         "<get-config xmlns=\"urn:ietf:params:xml:ns:netconf:base:1.0\">"
@@ -329,13 +329,13 @@ test_nc_filter7_xml(void **state)
         "</get-config>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal((mod = lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG)), NULL);
-    assert_int_equal(lys_features_enable(mod, "xpath"), 0);
+    assert_ptr_not_equal((mod = lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG)), NULL);
+    assert_int_equal(lllys_features_enable(mod, "xpath"), 0);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_RPC, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_RPC, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_MISSATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_MISSATTR);
 }
 
 /*
@@ -351,22 +351,22 @@ test_nc_editconfig1_xml(void **state)
                     "  prefix x;"
                     "  leaf a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" "
                     "nc:operation=\"not-defined\">a</a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
     /* operation attribute is valid, but its value is invalid so the parsing fails no matter if strict is used */
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INMETA);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INMETA);
 }
 
 static void
@@ -378,7 +378,7 @@ test_nc_editconfig1_json(void **state)
                     "  prefix x;"
                     "  leaf a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":\"a\","
         "\"@x:a\":{"
@@ -387,17 +387,17 @@ test_nc_editconfig1_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
     /* operation attribute is valid, but its value is invalid so the parsing fails no matter if strict is used */
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INMETA);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INMETA);
 }
 
 /*
@@ -413,22 +413,22 @@ test_nc_editconfig2_xml(void **state)
                     "  prefix x;"
                     "  leaf a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" "
                     "nc:operation=\"merge\" nc:operation=\"replace\" nc:operation=\"create\" "
                     "nc:operation=\"delete\" nc:operation=\"remove\">a</a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 static void
@@ -440,7 +440,7 @@ test_nc_editconfig2_json(void **state)
                     "  prefix x;"
                     "  leaf a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":\"a\","
         "\"@x:a\":{"
@@ -453,16 +453,16 @@ test_nc_editconfig2_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 /*
@@ -478,20 +478,20 @@ test_nc_editconfig3_xml(void **state)
                     "  prefix x;"
                     "  leaf a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" "
                     "nc:operation=\"create\">a</a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_XML, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_XML, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, input);
 }
@@ -505,7 +505,7 @@ test_nc_editconfig3_json(void **state)
                     "  prefix x;"
                     "  leaf a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":\"a\","
         "\"@x:a\":{"
@@ -514,15 +514,15 @@ test_nc_editconfig3_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_JSON, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_JSON, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, input);
 }
@@ -540,21 +540,21 @@ test_nc_editconfig4_xml(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" yang:insert=\"before\" yang:value=\"b\">a</a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 static void
@@ -566,7 +566,7 @@ test_nc_editconfig4_json(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[\"a\"],"
         "\"@x:a\":[{"
@@ -576,16 +576,16 @@ test_nc_editconfig4_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 /*
@@ -601,22 +601,22 @@ test_nc_editconfig5_xml(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" "
             "nc:operation=\"delete\" yang:insert=\"first\">a</a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 static void
@@ -628,7 +628,7 @@ test_nc_editconfig5_json(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[\"a\"],"
         "\"@x:a\":[{"
@@ -638,16 +638,16 @@ test_nc_editconfig5_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 /*
@@ -663,22 +663,22 @@ test_nc_editconfig6_xml(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" "
             "nc:operation=\"create\" yang:insert=\"first\" yang:insert=\"last\">a</a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 static void
@@ -690,7 +690,7 @@ test_nc_editconfig6_json(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[\"a\"],"
         "\"@x:a\":[{"
@@ -701,16 +701,16 @@ test_nc_editconfig6_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 /*
@@ -726,22 +726,22 @@ test_nc_editconfig7_xml(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" "
             "nc:operation=\"create\" yang:insert=\"before\" yang:value=\"b\" yang:value=\"d\">a</a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 static void
@@ -753,7 +753,7 @@ test_nc_editconfig7_json(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[\"a\"],"
         "\"@x:a\":[{"
@@ -765,16 +765,16 @@ test_nc_editconfig7_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 /*
@@ -790,21 +790,21 @@ test_nc_editconfig8_xml(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" "
             "nc:operation=\"create\" yang:insert=\"first\">a</a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_XML, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_XML, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, input);
 }
@@ -818,7 +818,7 @@ test_nc_editconfig8_json(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[\"a\"],"
         "\"@x:a\":[{"
@@ -828,15 +828,15 @@ test_nc_editconfig8_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_JSON, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_JSON, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, input);
 }
@@ -854,21 +854,21 @@ test_nc_editconfig9_xml(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" "
             "nc:operation=\"replace\" yang:insert=\"before\" yang:value=\"b\">a</a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_XML, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_XML, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, input);
 }
@@ -882,7 +882,7 @@ test_nc_editconfig9_json(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[\"a\"],"
         "\"@x:a\":[{"
@@ -893,15 +893,15 @@ test_nc_editconfig9_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_JSON, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_JSON, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, input);
 }
@@ -919,22 +919,22 @@ test_nc_editconfig10_xml(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by system; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" "
             "nc:operation=\"create\" yang:insert=\"before\" yang:key=\"[...]\"><k>a</k></a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 static void
@@ -946,7 +946,7 @@ test_nc_editconfig10_json(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by system; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[{"
             "\"@\":{"
@@ -959,16 +959,16 @@ test_nc_editconfig10_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 /*
@@ -984,22 +984,22 @@ test_nc_editconfig11_xml(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" "
             "nc:operation=\"delete\" yang:insert=\"first\"><k>a</k></a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 static void
@@ -1011,7 +1011,7 @@ test_nc_editconfig11_json(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[{"
             "\"@\":{"
@@ -1023,16 +1023,16 @@ test_nc_editconfig11_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 /*
@@ -1048,22 +1048,22 @@ test_nc_editconfig12_xml(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" "
             "nc:operation=\"create\" yang:insert=\"before\" yang:insert=\"last\"><k>a</k></a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 static void
@@ -1075,7 +1075,7 @@ test_nc_editconfig12_json(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[{"
             "\"@\":{"
@@ -1088,16 +1088,16 @@ test_nc_editconfig12_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT , NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 /*
@@ -1113,22 +1113,22 @@ test_nc_editconfig13_xml(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" "
             "nc:operation=\"create\" yang:insert=\"before\" yang:key=\"[...]\" yang:key=\"[...]\"><k>a</k></a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 static void
@@ -1140,7 +1140,7 @@ test_nc_editconfig13_json(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[{"
             "\"@\":{"
@@ -1154,16 +1154,16 @@ test_nc_editconfig13_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_TOOMANY);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_TOOMANY);
 }
 
 /*
@@ -1179,21 +1179,21 @@ test_nc_editconfig14_xml(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" "
             "nc:operation=\"create\" yang:insert=\"first\"><k>a</k></a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_XML, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_XML, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, input);
 }
@@ -1207,7 +1207,7 @@ test_nc_editconfig14_json(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[{"
             "\"@\":{"
@@ -1219,15 +1219,15 @@ test_nc_editconfig14_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_JSON, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_JSON, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, input);
 }
@@ -1245,21 +1245,21 @@ test_nc_editconfig15_xml(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" "
             "nc:operation=\"replace\" yang:insert=\"before\" yang:key=\"[...]\"><k>a</k></a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_XML, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_XML, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, input);
 }
@@ -1273,7 +1273,7 @@ test_nc_editconfig15_json(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[{"
             "\"@\":{"
@@ -1286,15 +1286,15 @@ test_nc_editconfig15_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_not_equal(st->data, NULL);
-    lyd_print_mem(&st->str, st->data, LYD_JSON, 0);
+    lllyd_print_mem(&st->str, st->data, LLLYD_JSON, 0);
     assert_ptr_not_equal(st->str, NULL);
     assert_string_equal(st->str, input);
 }
@@ -1312,22 +1312,22 @@ test_nc_editconfig16_xml(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" "
             "nc:operation=\"create\" yang:insert=\"before\" yang:value=\"d\"><k>a</k></a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 static void
@@ -1339,7 +1339,7 @@ test_nc_editconfig16_json(void **state)
                     "  prefix x;"
                     "  list a { key \"k\"; leaf k { type string; } ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[{"
             "\"@\":{"
@@ -1352,16 +1352,16 @@ test_nc_editconfig16_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 /*
@@ -1377,22 +1377,22 @@ test_nc_editconfig17_xml(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:yang=\"urn:ietf:params:xml:ns:yang:1\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" "
             "nc:operation=\"create\" yang:insert=\"before\" yang:key=\"[...]\">a</a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 static void
@@ -1404,7 +1404,7 @@ test_nc_editconfig17_json(void **state)
                     "  prefix x;"
                     "  leaf-list a { type string; ordered-by user; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input = "{"
         "\"x:a\":[\"a\"],"
         "\"@x:a\":[{"
@@ -1415,16 +1415,16 @@ test_nc_editconfig17_json(void **state)
     "}";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_JSON, LYD_OPT_EDIT, NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_JSON, LLLYD_OPT_EDIT, NULL);
     assert_ptr_equal(st->data, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INATTR);
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INATTR);
 }
 
 /*
@@ -1440,19 +1440,19 @@ test_nc_editconfig18_xml(void **state)
                     "  prefix x;"
                     "  leaf a { type string; }"
                     "}";
-    const struct lys_module *mod;
+    const struct lllys_module *mod;
     const char *input =
         "<a xmlns=\"urn:x\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" "
             "nc:operation=\"delete\"></a>";
 
     /* load ietf-netconf schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf.yang", LLLYS_IN_YANG), NULL);
 
     /* load schema */
-    mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     assert_ptr_not_equal(mod, NULL);
 
-    st->data = lyd_parse_mem(st->ctx, input, LYD_XML, LYD_OPT_EDIT , NULL);
+    st->data = lllyd_parse_mem(st->ctx, input, LLLYD_XML, LLLYD_OPT_EDIT , NULL);
     assert_ptr_not_equal(st->data, NULL);
     assert_ptr_not_equal(st->data->attr, NULL);
     assert_ptr_not_equal(st->data->attr->name, NULL);

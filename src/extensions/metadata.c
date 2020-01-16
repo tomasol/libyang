@@ -23,7 +23,7 @@
 /**
  * @brief Storage for ID used to check plugin API version compatibility.
  */
-LYEXT_VERSION_CHECK
+LLLYEXT_VERSION_CHECK
 
 /**
  * @brief Callback to check that the annotation can be instantiated inside the provided node
@@ -31,16 +31,16 @@ LYEXT_VERSION_CHECK
  * @param[in] parent The parent of the instantiated extension.
  * @param[in] parent_type The type of the structure provided as \p parent.
  * @param[in] substmt_type libyang does not store all the extension instances in the structures where they are
- *                         instantiated in the module. In some cases (see #LYEXT_SUBSTMT) they are stored in parent
+ *                         instantiated in the module. In some cases (see #LLLYEXT_SUBSTMT) they are stored in parent
  *                         structure and marked with flag to know in which substatement of the parent the extension
  *                         was originally instantiated.
  * @return 0 - ok
  *         1 - error
  */
-int annotation_position(const void * UNUSED(parent), LYEXT_PAR parent_type, LYEXT_SUBSTMT UNUSED(substmt_type))
+int annotation_position(const void * UNUSED(parent), LLLYEXT_PAR parent_type, LLLYEXT_SUBSTMT UNUSED(substmt_type))
 {
     /* annotations can appear only at the top level of a YANG module or submodule */
-    if (parent_type == LYEXT_PAR_MODULE) {
+    if (parent_type == LLLYEXT_PAR_MODULE) {
         return 0;
     } else {
         return 1;
@@ -58,19 +58,19 @@ int annotation_position(const void * UNUSED(parent), LYEXT_PAR parent_type, LYEX
  *         1 - error
  */
 int
-annotation_final_check(struct lys_ext_instance *ext)
+annotation_final_check(struct lllys_ext_instance *ext)
 {
     uint8_t  i, j, c;
-    struct lys_module *mod;
-    struct lys_submodule *submod;
-    struct lys_type *type;
+    struct lllys_module *mod;
+    struct lllys_submodule *submod;
+    struct lllys_type *type;
 
     /*
      * check type - leafref is not allowed
      */
-    type = *(struct lys_type**)lys_ext_complex_get_substmt(LY_STMT_TYPE, (struct lys_ext_instance_complex *)ext, NULL);
-    if (type->base == LY_TYPE_LEAFREF) {
-        LYEXT_LOG(ext->module->ctx, LY_LLERR, "Annotations", "The leafref type is not supported for annotations (annotation %s).",
+    type = *(struct lllys_type**)lllys_ext_complex_get_substmt(LLLY_STMT_TYPE, (struct lllys_ext_instance_complex *)ext, NULL);
+    if (type->base == LLLY_TYPE_LEAFREF) {
+        LLLYEXT_LOG(ext->module->ctx, LLLY_LLERR, "Annotations", "The leafref type is not supported for annotations (annotation %s).",
                   ext->arg_value);
         return 1;
     }
@@ -78,13 +78,13 @@ annotation_final_check(struct lys_ext_instance *ext)
     /*
      * check duplication
      */
-    if (ext->flags & LYEXT_OPT_PLUGIN1) {
+    if (ext->flags & LLLYEXT_OPT_PLUGIN1) {
         /* already checked */
-        ext->flags &= ~LYEXT_OPT_PLUGIN1;
+        ext->flags &= ~LLLYEXT_OPT_PLUGIN1;
         return 0;
     }
 
-    mod = lys_main_module((struct lys_module *)ext->parent);
+    mod = lllys_main_module((struct lllys_module *)ext->parent);
 
     for (i = c = 0; i < mod->ext_size; i++) {
         /* note, that it is not necessary to check also ext->insubstmt since
@@ -93,7 +93,7 @@ annotation_final_check(struct lys_ext_instance *ext)
         if (mod->ext[i]->def == ext->def && mod->ext[i]->arg_value == ext->arg_value) {
             if (mod->ext[i] != ext) {
                 /* do not mark the instance being checked */
-                mod->ext[i]->flags |= LYEXT_OPT_PLUGIN1;
+                mod->ext[i]->flags |= LLLYEXT_OPT_PLUGIN1;
             }
             c++;
         }
@@ -105,7 +105,7 @@ annotation_final_check(struct lys_ext_instance *ext)
             if (submod->ext[i]->def == ext->def && submod->ext[i]->arg_value == ext->arg_value) {
                 if (submod->ext[i] != ext) {
                     /* do not mark the instance being checked */
-                    submod->ext[i]->flags |= LYEXT_OPT_PLUGIN1;
+                    submod->ext[i]->flags |= LLLYEXT_OPT_PLUGIN1;
                 }
                 c++;
             }
@@ -113,9 +113,9 @@ annotation_final_check(struct lys_ext_instance *ext)
     }
 
     if (c > 1) {
-        LYEXT_LOG(ext->module->ctx, LY_LLERR, "Annotations",
+        LLLYEXT_LOG(ext->module->ctx, LLLY_LLERR, "Annotations",
                   "Annotation instance %s is not unique, there are %d instances with the same name in module %s.",
-                  ext->arg_value, c, ((struct lys_module *)ext->parent)->name);
+                  ext->arg_value, c, ((struct lllys_module *)ext->parent)->name);
         return 1;
     } else {
         return 0;
@@ -123,31 +123,31 @@ annotation_final_check(struct lys_ext_instance *ext)
 }
 /**
  * extension instance's content:
- * struct lys_type *type;
+ * struct lllys_type *type;
  * const char* dsc;
  * const char* ref;
  * const char* units;
- * struct lys_iffeature **iff;
+ * struct lllys_iffeature **iff;
  * uint16_t status;
  *
  * - placement in the structure is specified via offsets
- * - the order in lyext_substmt structure specified the canonical order in which the items are printed
+ * - the order in lllyext_substmt structure specified the canonical order in which the items are printed
  */
-struct lyext_substmt annotation_substmt[] = {
-    {LY_STMT_IFFEATURE, 4 * sizeof(void *),  LY_STMT_CARD_ANY},
-    {LY_STMT_TYPE, 0, LY_STMT_CARD_MAND},
-    {LY_STMT_UNITS, 3 * sizeof(void *),  LY_STMT_CARD_OPT},
-    {LY_STMT_STATUS, 5 * sizeof(void *),  LY_STMT_CARD_OPT},
-    {LY_STMT_DESCRIPTION, 1 * sizeof(void *),  LY_STMT_CARD_OPT},
-    {LY_STMT_REFERENCE, 2 * sizeof(void *),  LY_STMT_CARD_OPT},
+struct lllyext_substmt annotation_substmt[] = {
+    {LLLY_STMT_IFFEATURE, 4 * sizeof(void *),  LLLY_STMT_CARD_ANY},
+    {LLLY_STMT_TYPE, 0, LLLY_STMT_CARD_MAND},
+    {LLLY_STMT_UNITS, 3 * sizeof(void *),  LLLY_STMT_CARD_OPT},
+    {LLLY_STMT_STATUS, 5 * sizeof(void *),  LLLY_STMT_CARD_OPT},
+    {LLLY_STMT_DESCRIPTION, 1 * sizeof(void *),  LLLY_STMT_CARD_OPT},
+    {LLLY_STMT_REFERENCE, 2 * sizeof(void *),  LLLY_STMT_CARD_OPT},
     {0, 0, 0} /* terminating item */
 };
 
 /**
  * @brief Plugin for the RFC 7952's annotation extension
  */
-struct lyext_plugin_complex annotation = {
-    .type = LYEXT_COMPLEX,
+struct lllyext_plugin_complex annotation = {
+    .type = LLLYEXT_COMPLEX,
     .flags = 0,
     .check_position = &annotation_position,
     .check_result = &annotation_final_check,
@@ -157,7 +157,7 @@ struct lyext_plugin_complex annotation = {
     .substmt = annotation_substmt,
 
     /* final size of the extension instance structure with the space for storing the substatements */
-    .instance_size = (sizeof(struct lys_ext_instance_complex) - 1) + 5 * sizeof(void*) + sizeof(uint16_t)
+    .instance_size = (sizeof(struct lllys_ext_instance_complex) - 1) + 5 * sizeof(void*) + sizeof(uint16_t)
 };
 
 /**
@@ -165,7 +165,7 @@ struct lyext_plugin_complex annotation = {
  *
  * MANDATORY object for all libyang extension plugins, the name must match the <name>.so
  */
-struct lyext_plugin_list metadata[] = {
-    {"ietf-yang-metadata", "2016-08-05", "annotation", (struct lyext_plugin*)&annotation},
+struct lllyext_plugin_list metadata[] = {
+    {"ietf-yang-metadata", "2016-08-05", "annotation", (struct lllyext_plugin*)&annotation},
     {NULL, NULL, NULL, NULL} /* terminating item */
 };

@@ -35,7 +35,7 @@ enum UNRES_ITEM {
     UNRES_TYPE_IDENTREF = 0x00000200, /* check identityref value */
     UNRES_FEATURE = 0x00000400,       /* feature for circular check, it must be postponed when all if-features are resolved */
     UNRES_TYPEDEF_DFLT = 0x00000800,  /* validate default type value (from typedef) */
-    UNRES_TYPE_DFLT = 0x00001000,     /* validate default type value (from lys_node) */
+    UNRES_TYPE_DFLT = 0x00001000,     /* validate default type value (from lllys_node) */
     UNRES_LIST_KEYS = 0x00002000,     /* list keys */
     UNRES_LIST_UNIQ = 0x00004000,     /* list uniques */
     UNRES_MOD_IMPLEMENT = 0x00008000, /* unimplemented module */
@@ -63,16 +63,16 @@ enum UNRES_ITEM {
  */
 struct unres_ext {
     union {
-        struct lyxml_elem *yin;         /**< YIN content of the extension instance */
+        struct lllyxml_elem *yin;         /**< YIN content of the extension instance */
         struct yang_ext_substmt *yang;  /**< YANG content of strings */
     } data;
-    LYS_INFORMAT datatype;              /**< type of the data in data union */
+    LLLYS_INFORMAT datatype;              /**< type of the data in data union */
 
-    /* data for lys_ext_instance structure */
+    /* data for lllys_ext_instance structure */
     void *parent;
-    struct lys_module *mod;
-    LYEXT_PAR parent_type;
-    LYEXT_SUBSTMT substmt;
+    struct lllys_module *mod;
+    LLLYEXT_PAR parent_type;
+    LLLYEXT_SUBSTMT substmt;
     uint8_t substmt_index;
     uint8_t ext_index;
 };
@@ -81,7 +81,7 @@ struct unres_ext {
  * @brief auxiliary structure to hold all necessary information for UNRES_LIST_UNIQ
  */
 struct unres_list_uniq {
-    struct lys_node *list;
+    struct lllys_node *list;
     const char *expr;
     uint8_t *trg_type;
 };
@@ -90,12 +90,12 @@ struct unres_list_uniq {
  * @brief Unresolved items in DATA
  */
 struct unres_data {
-    struct lyd_node **node;
+    struct lllyd_node **node;
     enum UNRES_ITEM *type;
     uint32_t count;
 
     int store_diff;
-    struct lyd_difflist *diff;
+    struct lllyd_difflist *diff;
     unsigned int diff_size;
     unsigned int diff_idx;
 };
@@ -104,10 +104,10 @@ struct unres_data {
  * @brief Unresolved items in a SCHEMA
  */
 struct unres_schema {
-    void **item;            /* array of pointers, each is determined by the type (one of lys_* structures) */
+    void **item;            /* array of pointers, each is determined by the type (one of lllys_* structures) */
     enum UNRES_ITEM *type;  /* array of unres types */
-    void **str_snode;       /* array of pointers, each is determined by the type (a string, a lys_node *, or NULL) */
-    struct lys_module **module; /* array of pointers to the item's module */
+    void **str_snode;       /* array of pointers, each is determined by the type (a string, a lllys_node *, or NULL) */
+    struct lllys_module **module; /* array of pointers to the item's module */
     uint32_t count;         /* count of unres items */
 };
 
@@ -131,7 +131,7 @@ struct len_ran_intv {
         } fval;
     } value;
 
-    struct lys_type *type;     /* just to be able to get to optional error-message and/or error-app-tag */
+    struct lllys_type *type;     /* just to be able to get to optional error-message and/or error-app-tag */
     struct len_ran_intv *next;
 };
 
@@ -158,71 +158,71 @@ int parse_schema_json_predicate(const char *id, const char **mod_name, int *mod_
  * @param[in] expr compiled if-feature expression
  * @return 1 if enabled, 0 if disabled
  */
-int resolve_iffeature(struct lys_iffeature *expr);
-void resolve_iffeature_getsizes(struct lys_iffeature *iffeat, unsigned int *expr_size, unsigned int *feat_size);
-int resolve_iffeature_compile(struct lys_iffeature *iffeat_expr, const char *value, struct lys_node *node,
+int resolve_iffeature(struct lllys_iffeature *expr);
+void resolve_iffeature_getsizes(struct lllys_iffeature *iffeat, unsigned int *expr_size, unsigned int *feat_size);
+int resolve_iffeature_compile(struct lllys_iffeature *iffeat_expr, const char *value, struct lllys_node *node,
                               int infeature, struct unres_schema *unres);
 uint8_t iff_getop(uint8_t *list, int pos);
 
-int inherit_config_flag(struct lys_node *node, int flags, int clear);
+int inherit_config_flag(struct lllys_node *node, int flags, int clear);
 
-void resolve_identity_backlink_update(struct lys_ident *der, struct lys_ident *base);
+void resolve_identity_backlink_update(struct lllys_ident *der, struct lllys_ident *base);
 
-struct lyd_node *resolve_data_descendant_schema_nodeid(const char *nodeid, struct lyd_node *start);
+struct lllyd_node *resolve_data_descendant_schema_nodeid(const char *nodeid, struct lllyd_node *start);
 
-int resolve_schema_nodeid(const char *nodeid, const struct lys_node *start, const struct lys_module *cur_module,
-                          struct ly_set **ret, int extended, int no_node_error);
+int resolve_schema_nodeid(const char *nodeid, const struct lllys_node *start, const struct lllys_module *cur_module,
+                          struct llly_set **ret, int extended, int no_node_error);
 
-int resolve_descendant_schema_nodeid(const char *nodeid, const struct lys_node *start, int ret_nodetype,
-                                     int no_innerlist, const struct lys_node **ret);
+int resolve_descendant_schema_nodeid(const char *nodeid, const struct lllys_node *start, int ret_nodetype,
+                                     int no_innerlist, const struct lllys_node **ret);
 
-int resolve_choice_default_schema_nodeid(const char *nodeid, const struct lys_node *start, const struct lys_node **ret);
+int resolve_choice_default_schema_nodeid(const char *nodeid, const struct lllys_node *start, const struct lllys_node **ret);
 
-int resolve_absolute_schema_nodeid(const char *nodeid, const struct lys_module *module, int ret_nodetype,
-                                   const struct lys_node **ret);
+int resolve_absolute_schema_nodeid(const char *nodeid, const struct lllys_module *module, int ret_nodetype,
+                                   const struct lllys_node **ret);
 
-const struct lys_node *resolve_json_nodeid(const char *nodeid, const struct ly_ctx *ctx, const struct lys_node *start, int output);
+const struct lllys_node *resolve_json_nodeid(const char *nodeid, const struct llly_ctx *ctx, const struct lllys_node *start, int output);
 
-struct lyd_node *resolve_partial_json_data_nodeid(const char *nodeid, const char *llist_value, struct lyd_node *start,
+struct lllyd_node *resolve_partial_json_data_nodeid(const char *nodeid, const char *llist_value, struct lllyd_node *start,
                                                   int options, int *parsed);
 
-int resolve_len_ran_interval(struct ly_ctx *ctx, const char *str_restr, struct lys_type *type, struct len_ran_intv **ret);
+int resolve_len_ran_interval(struct llly_ctx *ctx, const char *str_restr, struct lllys_type *type, struct len_ran_intv **ret);
 
-int resolve_superior_type(const char *name, const char *prefix, const struct lys_module *module,
-                          const struct lys_node *parent, struct lys_tpdf **ret);
+int resolve_superior_type(const char *name, const char *prefix, const struct lllys_module *module,
+                          const struct lllys_node *parent, struct lllys_tpdf **ret);
 
-int resolve_unique(struct lys_node *parent, const char *uniq_str_path, uint8_t *trg_type);
+int resolve_unique(struct lllys_node *parent, const char *uniq_str_path, uint8_t *trg_type);
 
-void resolve_when_ctx_snode(const struct lys_node *schema, struct lys_node **ctx_snode,
-                            enum lyxp_node_type *ctx_snode_type);
+void resolve_when_ctx_snode(const struct lllys_node *schema, struct lllys_node **ctx_snode,
+                            enum lllyxp_node_type *ctx_snode_type);
 
 /* get know if resolve_when() is applicable to the node (there is when condition connected with this node)
  *
  * @param[in] mode 0 - search for when in parent until there is another possible data node
  *                 2 - search for when until reached the stop node, if NULL, search in all parents
  */
-int resolve_applies_when(const struct lys_node *schema, int mode, const struct lys_node *stop);
+int resolve_applies_when(const struct lllys_node *schema, int mode, const struct lllys_node *stop);
 
 /* return: 0x0 - no applicable must,
  *         0x1 - node's schema has must,
  *         0x2 - node's parent is inout with must,
  *         0x3 - 0x2 & 0x1 combined */
-int resolve_applies_must(const struct lyd_node *node);
+int resolve_applies_must(const struct lllyd_node *node);
 
-struct lys_ident *resolve_identref(struct lys_type *type, const char *ident_name, struct lyd_node *node,
-                                   struct lys_module *mod, int dflt);
+struct lllys_ident *resolve_identref(struct lllys_type *type, const char *ident_name, struct lllyd_node *node,
+                                   struct lllys_module *mod, int dflt);
 
-int resolve_unres_schema(struct lys_module *mod, struct unres_schema *unres);
+int resolve_unres_schema(struct lllys_module *mod, struct unres_schema *unres);
 
-int resolve_when(struct lyd_node *node, int ignore_fail, struct lys_when **failed_when);
+int resolve_when(struct lllyd_node *node, int ignore_fail, struct lllys_when **failed_when);
 
-int unres_schema_add_str(struct lys_module *mod, struct unres_schema *unres, void *item, enum UNRES_ITEM type,
+int unres_schema_add_str(struct lllys_module *mod, struct unres_schema *unres, void *item, enum UNRES_ITEM type,
                          const char *str);
 
-int unres_schema_add_node(struct lys_module *mod, struct unres_schema *unres, void *item, enum UNRES_ITEM type,
-                          struct lys_node *node);
+int unres_schema_add_node(struct lllys_module *mod, struct unres_schema *unres, void *item, enum UNRES_ITEM type,
+                          struct lllys_node *node);
 
-int unres_schema_dup(struct lys_module *mod, struct unres_schema *unres, void *item, enum UNRES_ITEM type,
+int unres_schema_dup(struct lllys_module *mod, struct unres_schema *unres, void *item, enum UNRES_ITEM type,
                      void *new_item);
 
 /* start_on_backwards - unres is searched from the end to beginning, so the search will start
@@ -231,19 +231,19 @@ int unres_schema_dup(struct lys_module *mod, struct unres_schema *unres, void *i
  */
 int unres_schema_find(struct unres_schema *unres, int start_on_backwards, void *item, enum UNRES_ITEM type);
 
-void unres_schema_free(struct lys_module *module, struct unres_schema **unres, int all);
+void unres_schema_free(struct lllys_module *module, struct unres_schema **unres, int all);
 
-int resolve_union(struct lyd_node_leaf_list *leaf, struct lys_type *type, int store, int ignore_fail,
-                  struct lys_type **resolved_type);
+int resolve_union(struct lllyd_node_leaf_list *leaf, struct lllys_type *type, int store, int ignore_fail,
+                  struct lllys_type **resolved_type);
 
-int resolve_unres_data_item(struct lyd_node *dnode, enum UNRES_ITEM type, int ignore_fail, struct lys_when **failed_when);
+int resolve_unres_data_item(struct lllyd_node *dnode, enum UNRES_ITEM type, int ignore_fail, struct lllys_when **failed_when);
 
-int unres_data_addonly(struct unres_data *unres, struct lyd_node *node, enum UNRES_ITEM type);
-int unres_data_add(struct unres_data *unres, struct lyd_node *node, enum UNRES_ITEM type);
+int unres_data_addonly(struct unres_data *unres, struct lllyd_node *node, enum UNRES_ITEM type);
+int unres_data_add(struct unres_data *unres, struct lllyd_node *node, enum UNRES_ITEM type);
 void unres_data_del(struct unres_data *unres, uint32_t i);
 
-int resolve_unres_data(struct ly_ctx *ctx, struct unres_data *unres, struct lyd_node **root, int options);
-int schema_nodeid_siblingcheck(const struct lys_node *sibling, const struct lys_module *cur_module,
+int resolve_unres_data(struct llly_ctx *ctx, struct unres_data *unres, struct lllyd_node **root, int options);
+int schema_nodeid_siblingcheck(const struct lllys_node *sibling, const struct lllys_module *cur_module,
                            const char *mod_name, int mod_name_len, const char *name, int nam_len);
 
 #endif /* _RESOLVE_H */

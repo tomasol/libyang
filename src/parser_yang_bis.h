@@ -165,20 +165,20 @@ union YYSTYPE
   void *v;
   char ch;
   struct yang_type *type;
-  struct lys_deviation *dev;
-  struct lys_deviate *deviate;
+  struct lllys_deviation *dev;
+  struct lllys_deviate *deviate;
   union {
     uint32_t index;
-    struct lys_node_container *container;
-    struct lys_node_anydata *anydata;
+    struct lllys_node_container *container;
+    struct lllys_node_anydata *anydata;
     struct type_node node;
-    struct lys_node_case *cs;
-    struct lys_node_grp *grouping;
-    struct lys_refine *refine;
-    struct lys_node_notif *notif;
-    struct lys_node_uses *uses;
-    struct lys_node_inout *inout;
-    struct lys_node_augment *augment;
+    struct lllys_node_case *cs;
+    struct lllys_node_grp *grouping;
+    struct lllys_refine *refine;
+    struct lllys_node_notif *notif;
+    struct lllys_node_uses *uses;
+    struct lllys_node_inout *inout;
+    struct lllys_node_augment *augment;
   } nodes;
   enum yytokentype token;
   struct {
@@ -186,7 +186,7 @@ union YYSTYPE
     enum yytokentype token;
   } backup_token;
   struct {
-    struct lys_revision **revision;
+    struct lllys_revision **revision;
     int index;
   } revisions;
 

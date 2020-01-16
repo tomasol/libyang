@@ -15,9 +15,9 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    const struct lys_module *mod;
-    struct lyd_node *dt;
+    struct llly_ctx *ctx;
+    const struct lllys_module *mod;
+    struct lllyd_node *dt;
     char *xml;
 };
 
@@ -34,14 +34,14 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
     }
 
     /* schema */
-    st->mod = lys_parse_path(st->ctx, schemafile, LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, schemafile, LLLYS_IN_YIN);
     if (!st->mod) {
         fprintf(stderr, "Failed to load data model \"%s\".\n", schemafile);
         goto error;
@@ -50,7 +50,7 @@ setup_f(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -62,8 +62,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->dt);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st->xml);
     free(st);
     (*state) = NULL;
@@ -77,7 +77,7 @@ test_ok_strict(void **state)
     struct state *st = (*state);
     const char *xml = "<known-leaf xmlns=\"urn:libyang:tests:unknown-element\">X</known-leaf>";
 
-    st->dt = lyd_parse_mem(st->ctx, xml, LYD_XML, LYD_OPT_CONFIG | LYD_OPT_STRICT);
+    st->dt = lllyd_parse_mem(st->ctx, xml, LLLYD_XML, LLLYD_OPT_CONFIG | LLLYD_OPT_STRICT);
     assert_ptr_not_equal(st->dt, NULL);
 }
 
@@ -87,12 +87,12 @@ test_unknown_namespace_xml_strict(void **state)
     struct state *st = (*state);
     const char *xml = "<unknown-leaf xmlns=\"urn:libyang:tests:unknown-namespace\">X</unknown-leaf>";
 
-    st->dt = lyd_parse_mem(st->ctx, xml, LYD_XML, LYD_OPT_CONFIG | LYD_OPT_STRICT);
+    st->dt = lllyd_parse_mem(st->ctx, xml, LLLYD_XML, LLLYD_OPT_CONFIG | LLLYD_OPT_STRICT);
     assert_ptr_equal(st->dt, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INELEM);
-    assert_ptr_not_equal(ly_errpath(st->ctx), NULL);
-    assert_string_equal(ly_errpath(st->ctx), "/");
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INELEM);
+    assert_ptr_not_equal(llly_errpath(st->ctx), NULL);
+    assert_string_equal(llly_errpath(st->ctx), "/");
 }
 
 static void
@@ -101,7 +101,7 @@ test_unknown_namespace_xml_nonstrict(void **state)
     struct state *st = (*state);
     const char *xml = "<unknown-leaf xmlns=\"urn:libyang:tests:unknown-namespace\">X</unknown-leaf>";
 
-    st->dt = lyd_parse_mem(st->ctx, xml, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, xml, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
 }
 
@@ -114,12 +114,12 @@ test_unknown_nested_element_xml_strict(void **state)
         "<unknown-subelement>X</unknown-subelement>"
         "</known-container>";
 
-    st->dt = lyd_parse_mem(st->ctx, xml, LYD_XML, LYD_OPT_CONFIG | LYD_OPT_STRICT);
+    st->dt = lllyd_parse_mem(st->ctx, xml, LLLYD_XML, LLLYD_OPT_CONFIG | LLLYD_OPT_STRICT);
     assert_ptr_equal(st->dt, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_INELEM);
-    assert_ptr_not_equal(ly_errpath(st->ctx), NULL);
-    assert_string_equal(ly_errpath(st->ctx), "/unknown-element:known-container");
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_INELEM);
+    assert_ptr_not_equal(llly_errpath(st->ctx), NULL);
+    assert_string_equal(llly_errpath(st->ctx), "/unknown-element:known-container");
 }
 
 static void
@@ -131,7 +131,7 @@ test_unknown_nested_element_xml_nonstrict(void **state)
         "</known-container>";
 
     /* Non-strict still disallows unknown subelements */
-    st->dt = lyd_parse_mem(st->ctx, xml, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, xml, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
 }
 

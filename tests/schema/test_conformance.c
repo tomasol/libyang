@@ -35,7 +35,7 @@
 static int
 setup_ctx(void **state)
 {
-    *state = ly_ctx_new(NULL, 0);
+    *state = llly_ctx_new(NULL, 0);
     if (!*state) {
         return -1;
     }
@@ -45,39 +45,39 @@ setup_ctx(void **state)
 static int
 teardown_ctx(void **state)
 {
-    ly_ctx_destroy(*state, NULL);
+    llly_ctx_destroy(*state, NULL);
     return 0;
 }
 
 static void
 test_implemented1_yin(void **state)
 {
-    struct ly_ctx *ctx = *state;
-    const struct lys_module *a, *b, *b2, *c, *c2;
+    struct llly_ctx *ctx = *state;
+    const struct lllys_module *a, *b, *b2, *c, *c2;
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
 
     /* loads a.yin (impl), b@2015-01-01.yin (impl by augment) and c@2015-03-03.yin (imp) */
-    a = lys_parse_path(ctx, SCHEMA_FOLDER_YIN"/a.yin", LYS_IN_YIN);
+    a = lllys_parse_path(ctx, SCHEMA_FOLDER_YIN"/a.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(a, NULL);
     assert_int_equal(a->implemented, 1);
 
-    b = ly_ctx_get_module(ctx, "b", NULL, 1);
+    b = llly_ctx_get_module(ctx, "b", NULL, 1);
     assert_ptr_not_equal(b, NULL);
     assert_int_equal(b->implemented, 1);
 
-    c = ly_ctx_get_module(ctx, "c", NULL, 0);
+    c = llly_ctx_get_module(ctx, "c", NULL, 0);
     assert_ptr_not_equal(c, NULL);
     assert_int_equal(c->implemented, 0);
 
     /* another b cannot be loaded, since it is already implemented */
-    b2 = lys_parse_path(ctx, SCHEMA_FOLDER_YIN"/b@2015-04-04.yin", LYS_IN_YIN);
+    b2 = lllys_parse_path(ctx, SCHEMA_FOLDER_YIN"/b@2015-04-04.yin", LLLYS_IN_YIN);
     assert_ptr_equal(b2, NULL);
-    assert_int_equal(ly_errno, LY_EINVAL);
-    assert_string_equal(ly_errmsg(ctx), "Module \"b\" parsing failed.");
+    assert_int_equal(llly_errno, LLLY_EINVAL);
+    assert_string_equal(llly_errmsg(ctx), "Module \"b\" parsing failed.");
 
     /* older c can be loaded and it will be marked as implemented */
-    c2 = lys_parse_path(ctx, SCHEMA_FOLDER_YIN"/c@2015-01-01.yin", LYS_IN_YIN);
+    c2 = lllys_parse_path(ctx, SCHEMA_FOLDER_YIN"/c@2015-01-01.yin", LLLYS_IN_YIN);
     assert_ptr_not_equal(c2, NULL);
     assert_int_equal(c2->implemented, 1);
     assert_ptr_not_equal(c, c2);
@@ -86,32 +86,32 @@ test_implemented1_yin(void **state)
 static void
 test_implemented1_yang(void **state)
 {
-    struct ly_ctx *ctx = *state;
-    const struct lys_module *a, *b, *b2, *c, *c2;
+    struct llly_ctx *ctx = *state;
+    const struct lllys_module *a, *b, *b2, *c, *c2;
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
 
     /* loads a.yang (impl), b@2015-01-01.yang (impl by augment) and c@2015-03-03.yang (imp) */
-    a = lys_parse_path(ctx, SCHEMA_FOLDER_YANG"/a.yang", LYS_IN_YANG);
+    a = lllys_parse_path(ctx, SCHEMA_FOLDER_YANG"/a.yang", LLLYS_IN_YANG);
     assert_ptr_not_equal(a, NULL);
     assert_int_equal(a->implemented, 1);
 
-    b = ly_ctx_get_module(ctx, "b", NULL, 1);
+    b = llly_ctx_get_module(ctx, "b", NULL, 1);
     assert_ptr_not_equal(b, NULL);
     assert_int_equal(b->implemented, 1);
 
-    c = ly_ctx_get_module(ctx, "c", NULL, 0);
+    c = llly_ctx_get_module(ctx, "c", NULL, 0);
     assert_ptr_not_equal(c, NULL);
     assert_int_equal(c->implemented, 0);
 
     /* another b cannot be loaded, since it is already implemented */
-    b2 = lys_parse_path(ctx, SCHEMA_FOLDER_YANG"/b@2015-04-04.yang", LYS_IN_YANG);
+    b2 = lllys_parse_path(ctx, SCHEMA_FOLDER_YANG"/b@2015-04-04.yang", LLLYS_IN_YANG);
     assert_ptr_equal(b2, NULL);
-    assert_int_equal(ly_errno, LY_EINVAL);
-    assert_string_equal(ly_errmsg(ctx), "Module \"b\" parsing failed.");
+    assert_int_equal(llly_errno, LLLY_EINVAL);
+    assert_string_equal(llly_errmsg(ctx), "Module \"b\" parsing failed.");
 
     /* older c can be loaded and it will be marked as implemented */
-    c2 = lys_parse_path(ctx, SCHEMA_FOLDER_YANG"/c@2015-01-01.yang", LYS_IN_YANG);
+    c2 = lllys_parse_path(ctx, SCHEMA_FOLDER_YANG"/c@2015-01-01.yang", LLLYS_IN_YANG);
     assert_ptr_not_equal(c2, NULL);
     assert_int_equal(c2->implemented, 1);
     assert_ptr_not_equal(c, c2);
@@ -120,45 +120,45 @@ test_implemented1_yang(void **state)
 static void
 test_implemented2_yin(void **state)
 {
-    struct ly_ctx *ctx = *state;
-    const struct lys_module *a, *b2;
+    struct llly_ctx *ctx = *state;
+    const struct lllys_module *a, *b2;
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
 
     /* load the newest b first, it is implemented */
-    b2 = ly_ctx_load_module(ctx, "b", "2015-04-04");
+    b2 = llly_ctx_load_module(ctx, "b", "2015-04-04");
     assert_ptr_not_equal(b2, NULL);
     assert_int_equal(b2->implemented, 1);
 
     /* loads a.yin (impl), b@2015-04-04 is augmented by a, but cannot be implemented */
-    a = lys_parse_path(ctx, SCHEMA_FOLDER_YIN"/a.yin", LYS_IN_YIN);
+    a = lllys_parse_path(ctx, SCHEMA_FOLDER_YIN"/a.yin", LLLYS_IN_YIN);
     assert_ptr_equal(a, NULL);
 }
 
 static void
 test_implemented2_yang(void **state)
 {
-    struct ly_ctx *ctx = *state;
-    const struct lys_module *a, *b2;
+    struct llly_ctx *ctx = *state;
+    const struct lllys_module *a, *b2;
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
 
     /* load the newest b first, it is implemented */
-    b2 = ly_ctx_load_module(ctx, "b", "2015-04-04");
+    b2 = llly_ctx_load_module(ctx, "b", "2015-04-04");
     assert_ptr_not_equal(b2, NULL);
     assert_int_equal(b2->implemented, 1);
 
     /* loads a.yin (impl), b@2015-04-04 is augmented by a, but cannot be implemented */
-    a = lys_parse_path(ctx, SCHEMA_FOLDER_YANG"/a.yang", LYS_IN_YANG);
+    a = lllys_parse_path(ctx, SCHEMA_FOLDER_YANG"/a.yang", LLLYS_IN_YANG);
     assert_ptr_equal(a, NULL);
 }
 
 static void
 test_implemented_info_yin(void **state)
 {
-    struct ly_ctx *ctx = *state;
-    struct lyd_node *info;
-    const struct lys_module *a;
+    struct llly_ctx *ctx = *state;
+    struct lllyd_node *info;
+    const struct lllys_module *a;
     char *data;
     const char *template = "<yang-library xmlns=\"urn:ietf:params:xml:ns:yang:ietf-yang-library\">\n"
 "  <module-set>\n"
@@ -277,18 +277,18 @@ test_implemented_info_yin(void **state)
 "  <module-set-id>10</module-set-id>\n"
 "</modules-state>\n";
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YIN);
 
     /* loads a.yin (impl), b@2015-01-01.yin (impl by augment) and c@2015-03-03.yin (imp) */
-    assert_ptr_not_equal((a = lys_parse_path(ctx, SCHEMA_FOLDER_YIN"/a.yin", LYS_IN_YIN)), NULL);
-    assert_int_equal(lys_features_enable(a, "foo"), 0);
+    assert_ptr_not_equal((a = lllys_parse_path(ctx, SCHEMA_FOLDER_YIN"/a.yin", LLLYS_IN_YIN)), NULL);
+    assert_int_equal(lllys_features_enable(a, "foo"), 0);
 
     /* get yang-library data */
-    info = ly_ctx_info(ctx);
+    info = llly_ctx_info(ctx);
     assert_ptr_not_equal(info, NULL);
 
-    lyd_print_mem(&data, info, LYD_XML, LYP_FORMAT | LYP_WITHSIBLINGS);
-    lyd_free_withsiblings(info);
+    lllyd_print_mem(&data, info, LLLYD_XML, LLLYP_FORMAT | LLLYP_WITHSIBLINGS);
+    lllyd_free_withsiblings(info);
     assert_string_equal(data, template);
     free(data);
 }
@@ -296,9 +296,9 @@ test_implemented_info_yin(void **state)
 static void
 test_implemented_info_yang(void **state)
 {
-    struct ly_ctx *ctx = *state;
-    struct lyd_node *info;
-    const struct lys_module *a;
+    struct llly_ctx *ctx = *state;
+    struct lllyd_node *info;
+    const struct lllys_module *a;
     char *data;
     const char *template = "<yang-library xmlns=\"urn:ietf:params:xml:ns:yang:ietf-yang-library\">\n"
 "  <module-set>\n"
@@ -417,18 +417,18 @@ test_implemented_info_yang(void **state)
 "  <module-set-id>10</module-set-id>\n"
 "</modules-state>\n";
 
-    ly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
+    llly_ctx_set_searchdir(ctx, SCHEMA_FOLDER_YANG);
 
     /* loads a.yang (impl), b@2015-01-01.yang (impl by augment) and c@2015-03-03.yang (imp) */
-    assert_ptr_not_equal((a = lys_parse_path(ctx, SCHEMA_FOLDER_YANG"/a.yang", LYS_IN_YANG)), NULL);
-    assert_int_equal(lys_features_enable(a, "foo"), 0);
+    assert_ptr_not_equal((a = lllys_parse_path(ctx, SCHEMA_FOLDER_YANG"/a.yang", LLLYS_IN_YANG)), NULL);
+    assert_int_equal(lllys_features_enable(a, "foo"), 0);
 
     /* get yang-library data */
-    info = ly_ctx_info(ctx);
+    info = llly_ctx_info(ctx);
     assert_ptr_not_equal(info, NULL);
 
-    lyd_print_mem(&data, info, LYD_XML, LYP_FORMAT | LYP_WITHSIBLINGS);
-    lyd_free_withsiblings(info);
+    lllyd_print_mem(&data, info, LLLYD_XML, LLLYP_FORMAT | LLLYP_WITHSIBLINGS);
+    lllyd_free_withsiblings(info);
     assert_string_equal(data, template);
     free(data);
 }
@@ -436,7 +436,7 @@ test_implemented_info_yang(void **state)
 static void
 test_revision_date_yin(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *yin1 = "<module name=\"x\""
           "xmlns=\"urn:ietf:params:xml:ns:yang:yin:1\""
           "xmlns:x=\"urn:cesnet:x\">"
@@ -481,25 +481,25 @@ test_revision_date_yin(void **state)
         "</module>";
 
     /* invalid dates */
-    assert_ptr_equal(lys_parse_mem(ctx, yin1, LYS_IN_YIN), NULL);
-    assert_int_equal(ly_vecode(ctx), LYVE_INDATE);
+    assert_ptr_equal(lllys_parse_mem(ctx, yin1, LLLYS_IN_YIN), NULL);
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INDATE);
 
-    assert_ptr_equal(lys_parse_mem(ctx, yin2, LYS_IN_YIN), NULL);
-    assert_int_equal(ly_vecode(ctx), LYVE_INDATE);
+    assert_ptr_equal(lllys_parse_mem(ctx, yin2, LLLYS_IN_YIN), NULL);
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INDATE);
 
-    assert_ptr_equal(lys_parse_mem(ctx, yin3, LYS_IN_YIN), NULL);
-    assert_int_equal(ly_vecode(ctx), LYVE_INDATE);
+    assert_ptr_equal(lllys_parse_mem(ctx, yin3, LLLYS_IN_YIN), NULL);
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INDATE);
 
     /* valid dates */
-    assert_ptr_not_equal(lys_parse_mem(ctx, yin4, LYS_IN_YIN), NULL);
-    assert_ptr_not_equal(lys_parse_mem(ctx, yin5, LYS_IN_YIN), NULL);
-    assert_ptr_not_equal(lys_parse_mem(ctx, yin6, LYS_IN_YIN), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, yin4, LLLYS_IN_YIN), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, yin5, LLLYS_IN_YIN), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, yin6, LLLYS_IN_YIN), NULL);
 }
 
 static void
 test_revision_date_yang(void **state)
 {
-    struct ly_ctx *ctx = *state;
+    struct llly_ctx *ctx = *state;
     const char *yang1 = "module x {"
           "namespace urn:cesnet:x;"
           "prefix x;"
@@ -526,49 +526,49 @@ test_revision_date_yang(void **state)
           "revision \"2000-02-29\";}";
 
     /* invalid dates */
-    assert_ptr_equal(lys_parse_mem(ctx, yang1, LYS_IN_YANG), NULL);
-    assert_int_equal(ly_vecode(ctx), LYVE_INDATE);
+    assert_ptr_equal(lllys_parse_mem(ctx, yang1, LLLYS_IN_YANG), NULL);
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INDATE);
 
-    assert_ptr_equal(lys_parse_mem(ctx, yang2, LYS_IN_YANG), NULL);
-    assert_int_equal(ly_vecode(ctx), LYVE_INDATE);
+    assert_ptr_equal(lllys_parse_mem(ctx, yang2, LLLYS_IN_YANG), NULL);
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INDATE);
 
-    assert_ptr_equal(lys_parse_mem(ctx, yang3, LYS_IN_YANG), NULL);
-    assert_int_equal(ly_vecode(ctx), LYVE_INDATE);
+    assert_ptr_equal(lllys_parse_mem(ctx, yang3, LLLYS_IN_YANG), NULL);
+    assert_int_equal(llly_vecode(ctx), LLLYVE_INDATE);
 
     /* valid dates */
-    assert_ptr_not_equal(lys_parse_mem(ctx, yang4, LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_mem(ctx, yang5, LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_mem(ctx, yang6, LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, yang4, LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, yang5, LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_mem(ctx, yang6, LLLYS_IN_YANG), NULL);
 }
 
 
-const struct lys_module *
-_my_data_clb(struct ly_ctx *ctx, const char *name, const char *ns, int options, void *user_data)
+const struct lllys_module *
+_my_data_clb(struct llly_ctx *ctx, const char *name, const char *ns, int options, void *user_data)
 {
     char filepath[256] = {0};
-    const struct lys_module *ly_module = NULL;
+    const struct lllys_module *llly_module = NULL;
 
     fprintf(stderr, "%s:%i %s() name:%s ns:%s \n", __FILE__, __LINE__, __FUNCTION__, name, ns);
 
     snprintf(filepath, sizeof(filepath), "%s/%s.yang", SCHEMA_FOLDER_YANG, name);
-    ly_module = lys_parse_path(ctx, filepath, LYS_IN_YANG);
-    if ( !ly_module ) {
-        fprintf(stderr, "%s:%i %s() lys_parse_path(%s) failed (%d %p)\n", __FILE__, __LINE__, __FUNCTION__, filepath, options, user_data);
+    llly_module = lllys_parse_path(ctx, filepath, LLLYS_IN_YANG);
+    if ( !llly_module ) {
+        fprintf(stderr, "%s:%i %s() lllys_parse_path(%s) failed (%d %p)\n", __FILE__, __LINE__, __FUNCTION__, filepath, options, user_data);
     }
 
-    return ly_module;
+    return llly_module;
 }
 
 static void
 test_issue_already_implemented(void **state) {
-    struct ly_ctx *ctx = *state;
-    const struct lys_module *a = NULL;
+    struct llly_ctx *ctx = *state;
+    const struct lllys_module *a = NULL;
     char* search_paths[] = {SCHEMA_FOLDER_YANG, NULL};
 
     ctx->models.search_paths = search_paths;
     ctx->data_clb = _my_data_clb;
 
-    a = lys_parse_path(ctx, SCHEMA_FOLDER_YANG "/ident-aug-must-issue-apst.yang", LYS_IN_YANG);
+    a = lllys_parse_path(ctx, SCHEMA_FOLDER_YANG "/ident-aug-must-issue-apst.yang", LLLYS_IN_YANG);
 
     ctx->data_clb = NULL;
     ctx->models.search_paths = NULL;

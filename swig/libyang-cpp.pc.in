@@ -6,6 +6,6 @@ Name: @PROJECT_NAME@
 Description: @LIBYANG_DESCRIPTION@
 Version: @LIBYANG_VERSION@
 Requires.private: libyang
-Libs: -L${libdir} -lyang-cpp
-Libs.private: -lyang
+Libs: -L${libdir} -lllyang-cpp
+Libs.private: -lllyang
 Cflags: -I${includedir}

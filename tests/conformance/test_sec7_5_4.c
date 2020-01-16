@@ -34,8 +34,8 @@
 #define TEST_DATA_FILE_LOAD_FLAG 0,0,0,1,1,1,2,2,2,3,3,3,4,4
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *node;
+    struct llly_ctx *ctx;
+    struct lllyd_node *node;
 };
 
 static int
@@ -50,7 +50,7 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         return -1;
@@ -64,8 +64,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->node);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->node);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -80,15 +80,15 @@ TEST_MODULE(void **state)
     const int data_files_fail[] = {TEST_DATA_FILE_LOAD_FAIL};
     const int data_flag[] = {TEST_DATA_FILE_LOAD_FLAG};
     char buf[1024];
-    LYS_INFORMAT schema_format = LYS_IN_YANG;
-    const struct lys_module *mod;
-    struct lyd_node *rpc = NULL;
+    LLLYS_INFORMAT schema_format = LLLYS_IN_YANG;
+    const struct lllys_module *mod;
+    struct lllyd_node *rpc = NULL;
     int i, j, ret, option;
 
     for (i = 0; i < 2; ++i) {
         for (j = 0; j < TEST_SCHEMA_COUNT; ++j) {
-            sprintf(buf, TESTS_DIR "/conformance/" TEST_DIR "/mod%d.%s", j + 1, (schema_format == LYS_IN_YANG ? "yang" : "yin"));
-            mod = lys_parse_path(st->ctx, buf, schema_format);
+            sprintf(buf, TESTS_DIR "/conformance/" TEST_DIR "/mod%d.%s", j + 1, (schema_format == LLLYS_IN_YANG ? "yang" : "yin"));
+            mod = lllys_parse_path(st->ctx, buf, schema_format);
             if (schemas_fail[j]) {
                 assert_ptr_equal(mod, NULL);
             } else {
@@ -101,34 +101,34 @@ TEST_MODULE(void **state)
             rpc = NULL;
             switch (data_flag[j]) {
             case 1:
-                option = LYD_OPT_DATA;
+                option = LLLYD_OPT_DATA;
                 break;
             case 2:
-                option = LYD_OPT_NOTIF;
+                option = LLLYD_OPT_NOTIF;
                 break;
             case 3:
-                option = LYD_OPT_RPC;
+                option = LLLYD_OPT_RPC;
                 break;
             case 4:
-                option = LYD_OPT_RPCREPLY;
-                rpc = lyd_new(NULL, mod, "rpc_test");
+                option = LLLYD_OPT_RPCREPLY;
+                rpc = lllyd_new(NULL, mod, "rpc_test");
                 break;
             default:
-                option = LYD_OPT_CONFIG;
+                option = LLLYD_OPT_CONFIG;
                 break;
             }
-            st->node = lyd_parse_path(st->ctx, buf, LYD_XML, option, rpc, NULL);
-            lyd_free(rpc);
+            st->node = lllyd_parse_path(st->ctx, buf, LLLYD_XML, option, rpc, NULL);
+            lllyd_free(rpc);
             if (data_files_fail[j]) {
                 assert_ptr_equal(st->node, NULL);
             } else {
                 assert_ptr_not_equal(st->node, NULL);
             }
-            lyd_free_withsiblings(st->node);
+            lllyd_free_withsiblings(st->node);
             st->node=NULL;
         }
 
-        if (schema_format == LYS_IN_YANG) {
+        if (schema_format == LLLYS_IN_YANG) {
             /* convert the modules */
             for (j = 0; j < TEST_SCHEMA_COUNT; ++j) {
                 sprintf(buf, BUILD_DIR "/yang2yin "
@@ -144,9 +144,9 @@ TEST_MODULE(void **state)
                 }
             }
 
-            schema_format = LYS_IN_YIN;
-            ly_ctx_destroy(st->ctx, NULL);
-            st->ctx = ly_ctx_new(TESTS_DIR "/conformance/" TEST_DIR, 0);
+            schema_format = LLLYS_IN_YIN;
+            llly_ctx_destroy(st->ctx, NULL);
+            st->ctx = llly_ctx_new(TESTS_DIR "/conformance/" TEST_DIR, 0);
             if (!st->ctx) {
                 fprintf(stderr, "Failed to create context.\n");
                 fail();

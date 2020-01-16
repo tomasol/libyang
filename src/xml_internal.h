@@ -12,8 +12,8 @@
  *     https://opensource.org/licenses/BSD-3-Clause
  */
 
-#ifndef LY_XML_INTERNAL_H_
-#define LY_XML_INTERNAL_H_
+#ifndef LLLY_XML_INTERNAL_H_
+#define LLLY_XML_INTERNAL_H_
 
 #include <stdio.h>
 #include "xml.h"
@@ -58,13 +58,13 @@
  * @param[in] child Element to be added as a last child of the parent.
  * @return EXIT_SUCCESS or EXIT_FAILURE
  */
-int lyxml_add_child(struct ly_ctx *ctx, struct lyxml_elem *parent, struct lyxml_elem *child);
+int lllyxml_add_child(struct llly_ctx *ctx, struct lllyxml_elem *parent, struct lllyxml_elem *child);
 
 /* copy_ns: 0 - set invalid namespaces to NULL, 1 - copy them into this subtree */
-void lyxml_correct_elem_ns(struct ly_ctx *ctx, struct lyxml_elem *elem, int copy_ns, int correct_attrs);
+void lllyxml_correct_elem_ns(struct llly_ctx *ctx, struct lllyxml_elem *elem, int copy_ns, int correct_attrs);
 
-struct lyxml_elem *lyxml_dup_elem(struct ly_ctx *ctx, struct lyxml_elem *elem,
-                                  struct lyxml_elem *parent, int recursive, int with_siblings);
+struct lllyxml_elem *lllyxml_dup_elem(struct llly_ctx *ctx, struct lllyxml_elem *elem,
+                                  struct lllyxml_elem *parent, int recursive, int with_siblings);
 
 /**
  * @brief Free attribute. Includes unlinking from an element if the attribute
@@ -74,7 +74,7 @@ struct lyxml_elem *lyxml_dup_elem(struct ly_ctx *ctx, struct lyxml_elem *elem,
  * @param[in] parent Parent element where the attribute is placed
  * @param[in] attr Attribute to free.
  */
-void lyxml_free_attr(struct ly_ctx *ctx, struct lyxml_elem *parent, struct lyxml_attr *attr);
+void lllyxml_free_attr(struct llly_ctx *ctx, struct lllyxml_elem *parent, struct lllyxml_attr *attr);
 
 /**
  * @brief Free (and unlink from their element) all attributes (including
@@ -82,19 +82,19 @@ void lyxml_free_attr(struct ly_ctx *ctx, struct lyxml_elem *parent, struct lyxml
  *
  * @param[in] elem Element to modify.
  */
-void lyxml_free_attrs(struct ly_ctx *ctx, struct lyxml_elem *elem);
+void lllyxml_free_attrs(struct llly_ctx *ctx, struct lllyxml_elem *elem);
 
 /**
  * @brief Unlink the attribute from its parent element. In contrast to
- * lyxml_free_attr(), after return the caller can still manipulate with the
+ * lllyxml_free_attr(), after return the caller can still manipulate with the
  * attr.
  *
  * @param[in] attr Attribute to unlink from its parent (if any).
  */
-void lyxml_unlink_attr(struct lyxml_attr *attr);
+void lllyxml_unlink_attr(struct lllyxml_attr *attr);
 
 /**
- * @brief Unlink the element from its parent. In contrast to lyxml_free_elem(),
+ * @brief Unlink the element from its parent. In contrast to lllyxml_free_elem(),
  * after return the caller can still manipulate with the elem.
  *
  * @param[in] ctx libyang context to use.
@@ -106,7 +106,7 @@ void lyxml_unlink_attr(struct lyxml_attr *attr);
  * 2 skips any NS checking.
  *
  */
-void lyxml_unlink_elem(struct ly_ctx *ctx, struct lyxml_elem *elem, int copy_ns);
+void lllyxml_unlink_elem(struct llly_ctx *ctx, struct lllyxml_elem *elem, int copy_ns);
 
 /**
  * @brief Get the first UTF-8 character value (4bytes) from buffer
@@ -125,15 +125,15 @@ void lyxml_unlink_elem(struct ly_ctx *ctx, struct lyxml_elem *elem, int copy_ns)
  * 00000800 -- 0000FFFF:    1110xxxx 10xxxxxx 10xxxxxx
  * 00010000 -- 001FFFFF:    11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
  */
-int lyxml_getutf8(struct ly_ctx *ctx, const char *buf, unsigned int *read);
+int lllyxml_getutf8(struct llly_ctx *ctx, const char *buf, unsigned int *read);
 
 /**
  * @brief Types of the XML data
  */
-typedef enum lyxml_data_type {
-    LYXML_DATA_ATTR = 1,   /**< XML attribute data */
-    LYXML_DATA_ELEM = 2    /**< XML element data */
-} LYXML_DATA_TYPE;
+typedef enum lllyxml_data_type {
+    LLLYXML_DATA_ATTR = 1,   /**< XML attribute data */
+    LLLYXML_DATA_ELEM = 2    /**< XML element data */
+} LLLYXML_DATA_TYPE;
 
 /**
  * @brief Dump XML text. Converts special characters to their equivalent
@@ -142,6 +142,6 @@ typedef enum lyxml_data_type {
  * @param[in] text Text to dump.
  * @return Number of dumped characters.
  */
-int lyxml_dump_text(struct lyout *out, const char *text, LYXML_DATA_TYPE type);
+int lllyxml_dump_text(struct lllyout *out, const char *text, LLLYXML_DATA_TYPE type);
 
-#endif /* LY_XML_INTERNAL_H_ */
+#endif /* LLLY_XML_INTERNAL_H_ */

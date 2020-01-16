@@ -22,8 +22,8 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    struct lyd_node *dt;
+    struct llly_ctx *ctx;
+    struct lllyd_node *dt;
     char *xml;
 };
 
@@ -39,7 +39,7 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
@@ -48,7 +48,7 @@ setup_f(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -60,8 +60,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->dt);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st->xml);
     free(st);
     (*state) = NULL;
@@ -75,17 +75,17 @@ test_acm_yangtypes_xpath(void **state)
     struct state *st = (struct state *)*state;
 
     /* schema */
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf-acm.yang", LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/data/files/all-imp.yang", LYS_IN_YANG), NULL);
-    assert_ptr_not_equal(lys_parse_path(st->ctx, TESTS_DIR"/data/files/all.yang", LYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/schema/yang/ietf/ietf-netconf-acm.yang", LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/data/files/all-imp.yang", LLLYS_IN_YANG), NULL);
+    assert_ptr_not_equal(lllys_parse_path(st->ctx, TESTS_DIR"/data/files/all.yang", LLLYS_IN_YANG), NULL);
 
     /* data */
-    st->dt = lyd_parse_path(st->ctx, TESTS_DIR"/data/files/nacm.xml", LYD_XML, LYD_OPT_CONFIG /*DATA_NO_YANGLIB*/);
+    st->dt = lllyd_parse_path(st->ctx, TESTS_DIR"/data/files/nacm.xml", LLLYD_XML, LLLYD_OPT_CONFIG /*DATA_NO_YANGLIB*/);
     assert_ptr_not_equal(st->dt, NULL);
 
-    assert_string_equal(((struct lyd_node_leaf_list *)st->dt->child->child->next->child->next)->value_str, "/all:cont1/leaf3");
+    assert_string_equal(((struct lllyd_node_leaf_list *)st->dt->child->child->next->child->next)->value_str, "/all:cont1/leaf3");
 
-    lyd_print_mem(&(st->xml), st->dt, LYD_XML, 0);
+    lllyd_print_mem(&(st->xml), st->dt, LLLYD_XML, 0);
     assert_string_equal(st->xml, "<nacm xmlns=\"urn:ietf:params:xml:ns:yang:ietf-netconf-acm\"><rule-list><name>test-list</name><rule><name>test-rule</name><path xmlns:all_mod=\"urn:all\">/all_mod:cont1/all_mod:leaf3</path><action>deny</action></rule></rule-list></nacm>");
 }
 

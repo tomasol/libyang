@@ -25,7 +25,7 @@
 #include "libyang.h"
 
 int done;
-struct ly_ctx *ctx = NULL;
+struct llly_ctx *ctx = NULL;
 
 /* main_ni.c */
 int main_ni(int argc, char *argv[]);
@@ -45,7 +45,7 @@ main(int argc, char* argv[])
     linenoiseSetCompletionCallback(complete_cmd);
     load_config();
 
-    ctx = ly_ctx_new(NULL, 0);
+    ctx = llly_ctx_new(NULL, 0);
     if (!ctx) {
         fprintf(stderr, "Failed to create context.\n");
         return 1;
@@ -104,7 +104,7 @@ main(int argc, char* argv[])
     }
 
     store_config();
-    ly_ctx_destroy(ctx, NULL);
+    llly_ctx_destroy(ctx, NULL);
 
     return 0;
 }

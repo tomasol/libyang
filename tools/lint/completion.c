@@ -23,7 +23,7 @@
 #include "../../linenoise/linenoise.h"
 #include "libyang.h"
 
-extern struct ly_ctx *ctx;
+extern struct llly_ctx *ctx;
 
 static void
 get_cmd_completion(const char *hint, char ***matches, unsigned int *match_count)
@@ -79,13 +79,13 @@ get_model_completion(const char *hint, char ***matches, unsigned int *match_coun
 {
     int i;
     uint32_t idx = 0;
-    const struct lys_module *module;
+    const struct lllys_module *module;
     void *p;
 
     *match_count = 0;
     *matches = NULL;
 
-    while ((module = ly_ctx_get_module_iter(ctx, &idx))) {
+    while ((module = llly_ctx_get_module_iter(ctx, &idx))) {
         if (!strncmp(hint, module->name, strlen(hint))) {
             ++(*match_count);
             p = realloc(*matches, *match_count * sizeof **matches);

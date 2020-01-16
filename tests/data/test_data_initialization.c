@@ -29,14 +29,14 @@
 #include "tests/config.h"
 #include "libyang.h"
 
-struct ly_ctx *ctx = NULL;
-struct lyd_node *root = NULL;
+struct llly_ctx *ctx = NULL;
+struct lllyd_node *root = NULL;
 
 int
 generic_init(char *config_file, char *yang_file, char *yang_folder)
 {
-    LYS_INFORMAT yang_format;
-    LYD_FORMAT in_format;
+    LLLYS_INFORMAT yang_format;
+    LLLYD_FORMAT in_format;
     char *schema = NULL;
     char *config = NULL;
     struct stat sb_schema, sb_config;
@@ -46,10 +46,10 @@ generic_init(char *config_file, char *yang_file, char *yang_folder)
         goto error;
     }
 
-    yang_format = LYS_IN_YIN;
-    in_format = LYD_XML;
+    yang_format = LLLYS_IN_YIN;
+    in_format = LLLYD_XML;
 
-    ctx = ly_ctx_new(yang_folder, 0);
+    ctx = llly_ctx_new(yang_folder, 0);
     if (!ctx) {
         goto error;
     }
@@ -71,11 +71,11 @@ generic_init(char *config_file, char *yang_file, char *yang_folder)
     close(fd);
     fd = -1;
 
-    if (!lys_parse_mem(ctx, schema, yang_format)) {
+    if (!lllys_parse_mem(ctx, schema, yang_format)) {
         goto error;
     }
 
-    root = lyd_parse_mem(ctx, config, in_format, LYD_OPT_CONFIG | LYD_OPT_STRICT);
+    root = lllyd_parse_mem(ctx, config, in_format, LLLYD_OPT_CONFIG | LLLYD_OPT_STRICT);
     if (!root) {
         goto error;
     }
@@ -121,8 +121,8 @@ static int
 teardown_f(void **state)
 {
     (void) state; /* unused */
-    lyd_free_withsiblings(root);
-    ly_ctx_destroy(ctx, NULL);
+    lllyd_free_withsiblings(root);
+    llly_ctx_destroy(ctx, NULL);
 
     return 0;
 }
@@ -131,19 +131,19 @@ static void
 test_ctx_new_destroy(void **state)
 {
     (void) state; /* unused */
-    ctx = ly_ctx_new(NULL, 0);
+    ctx = llly_ctx_new(NULL, 0);
     if (!ctx) {
         fail();
     }
 
-    ly_ctx_destroy(ctx, NULL);
+    llly_ctx_destroy(ctx, NULL);
 }
 
 static void
 test_container_name(void **state)
 {
     (void) state; /* unused */
-    struct lyd_node *node;
+    struct lllyd_node *node;
     const char *result = "";
 
     node = root;
@@ -156,7 +156,7 @@ static void
 test_leaf_name(void **state)
 {
     (void) state; /* unused */
-    struct lyd_node *node;
+    struct lllyd_node *node;
     const char *result;
 
     node = root;
@@ -169,8 +169,8 @@ static void
 test_leaf_list_parameters(void **state)
 {
     (void) state; /* unused */
-    struct lyd_node *node;
-    struct lyd_node *tmp;
+    struct lllyd_node *node;
+    struct lllyd_node *tmp;
     const char *name_result;
     const char *str_result;
     int int_result;
@@ -178,8 +178,8 @@ test_leaf_list_parameters(void **state)
     node = root;
     tmp = node->child->next;
     name_result = tmp->schema->name;
-    int_result = ((struct lyd_node_leaf_list *)tmp)->value.int32;
-    str_result = ((struct lyd_node_leaf_list *)tmp)->value_str;
+    int_result = ((struct lllyd_node_leaf_list *)tmp)->value.int32;
+    str_result = ((struct lllyd_node_leaf_list *)tmp)->value_str;
 
     assert_int_equal(1234, int_result);
     assert_string_equal("1234", str_result);
@@ -190,16 +190,16 @@ static void
 test_yanglibrary(void **state)
 {
     (void) state; /* unused */
-    struct lyd_node *yanglib;
+    struct lllyd_node *yanglib;
     int rc;
 
-    yanglib = ly_ctx_info(ctx);
+    yanglib = llly_ctx_info(ctx);
     assert_non_null(yanglib);
 
-    rc = lyd_validate(&yanglib, LYD_OPT_DATA, NULL);
+    rc = lllyd_validate(&yanglib, LLLYD_OPT_DATA, NULL);
 
     /* cleanup */
-    lyd_free_withsiblings(yanglib);
+    lllyd_free_withsiblings(yanglib);
 
     assert_int_equal(rc, 0);
 }

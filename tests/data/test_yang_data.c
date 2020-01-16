@@ -22,9 +22,9 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    const struct lys_module *mod;
-    struct lyd_node *dt;
+    struct llly_ctx *ctx;
+    const struct lllys_module *mod;
+    struct lllyd_node *dt;
     char * str1, *str2;
 };
 
@@ -70,13 +70,13 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(TESTS_DIR"/data/files/", 0);
+    st->ctx = llly_ctx_new(TESTS_DIR"/data/files/", 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         return -1;
     }
 
-    st->mod = lys_parse_mem(st->ctx, yang, LYS_IN_YANG);
+    st->mod = lllys_parse_mem(st->ctx, yang, LLLYS_IN_YANG);
     if (!st->mod){
         fprintf(stderr, "Failed to load module.\n");
         return -1;
@@ -89,8 +89,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->dt);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st->str1);
     free(st->str2);
     free(st);
@@ -104,12 +104,12 @@ test_new_path(void **state)
 {
     struct state *st = (*state);
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/yang-data:#node/test1/first", "test", 0 ,0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/yang-data:#node/test1/first", "test", 0 ,0);
     assert_ptr_equal(st->dt, NULL);
-    st->dt = lyd_new_path(NULL, st->ctx, "/yang-data:#node/test1/first", "50", 0 ,0);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/yang-data:#node/test1/first", "50", 0 ,0);
     assert_ptr_not_equal(st->dt, NULL);
-    assert_ptr_not_equal(lyd_new_path(st->dt, st->ctx, "/yang-data:#node/test1/second", "test-second", 0 ,0), NULL);
-    assert_ptr_equal(lyd_new_path(st->dt, st->ctx, "/yang-data:test1/third", "true", 0 ,0), NULL);
+    assert_ptr_not_equal(lllyd_new_path(st->dt, st->ctx, "/yang-data:#node/test1/second", "test-second", 0 ,0), NULL);
+    assert_ptr_equal(lllyd_new_path(st->dt, st->ctx, "/yang-data:test1/third", "true", 0 ,0), NULL);
 }
 
 static void
@@ -117,11 +117,11 @@ test_new_yangdata(void **state)
 {
     struct state *st = (*state);
 
-    st->dt = lyd_new_yangdata(st->mod, "node", "test");
+    st->dt = lllyd_new_yangdata(st->mod, "node", "test");
     assert_ptr_not_equal(st->dt, NULL);
-    lyd_new_leaf(st->dt, st->mod, "num", "25");
+    lllyd_new_leaf(st->dt, st->mod, "num", "25");
     assert_ptr_not_equal(st->dt->child, NULL);
-    st->str1 = lyd_path(st->dt->child);
+    st->str1 = lllyd_path(st->dt->child);
     assert_string_equal(st->str1, "/yang-data:#node/test/num");
 }
 
@@ -167,21 +167,21 @@ test_mem_yangdata(void **state)
                        "     ]\n"
                        "   }\n"
                        "}\n";
-    st->dt = lyd_parse_mem(st->ctx, json_file1, LYD_JSON, LYD_OPT_DATA_TEMPLATE, "data");
+    st->dt = lllyd_parse_mem(st->ctx, json_file1, LLLYD_JSON, LLLYD_OPT_DATA_TEMPLATE, "data");
     assert_ptr_equal(st->dt, NULL);
-    st->dt = lyd_parse_mem(st->ctx, json_file2, LYD_JSON, LYD_OPT_DATA_TEMPLATE, "data");
+    st->dt = lllyd_parse_mem(st->ctx, json_file2, LLLYD_JSON, LLLYD_OPT_DATA_TEMPLATE, "data");
     assert_ptr_not_equal(st->dt, NULL);
 
-    lyd_print_mem(&str, st->dt, LYD_LYB, 0);
-    lyd_free(st->dt);
-    st->dt = lyd_parse_mem(st->ctx, str, LYD_LYB, LYD_OPT_DATA_TEMPLATE, "data");
+    lllyd_print_mem(&str, st->dt, LLLYD_LYB, 0);
+    lllyd_free(st->dt);
+    st->dt = lllyd_parse_mem(st->ctx, str, LLLYD_LYB, LLLYD_OPT_DATA_TEMPLATE, "data");
     free(str);
     assert_ptr_not_equal(st->dt, NULL);
-    lyd_free(st->dt);
+    lllyd_free(st->dt);
 
-    st->dt = lyd_parse_mem(st->ctx, xml_file, LYD_XML, LYD_OPT_DATA_TEMPLATE | LYD_OPT_STRICT, "data");
+    st->dt = lllyd_parse_mem(st->ctx, xml_file, LLLYD_XML, LLLYD_OPT_DATA_TEMPLATE | LLLYD_OPT_STRICT, "data");
     assert_ptr_equal(st->dt, NULL);
-    st->dt = lyd_parse_mem(st->ctx, xml_file, LYD_XML, LYD_OPT_DATA_TEMPLATE, "data");
+    st->dt = lllyd_parse_mem(st->ctx, xml_file, LLLYD_XML, LLLYD_OPT_DATA_TEMPLATE, "data");
     assert_ptr_not_equal(st->dt, NULL);
 }
 
@@ -190,54 +190,54 @@ test_validate_yangdata(void **state)
 {
     struct state *st = (*state);
 
-    st->dt = lyd_new_path(NULL, st->ctx, "/yang-data:#data/errors/error[1]/error-type", "transport", 0 ,0);
-    assert_return_code(lyd_validate(&st->dt, LYD_OPT_DATA_TEMPLATE, NULL), EXIT_FAILURE);
-    assert_ptr_not_equal(lyd_new_leaf(st->dt->child, st->mod, "error-tag", "Error"), NULL);
-    assert_return_code(lyd_validate(&st->dt, LYD_OPT_DATA_TEMPLATE, NULL), EXIT_SUCCESS);
+    st->dt = lllyd_new_path(NULL, st->ctx, "/yang-data:#data/errors/error[1]/error-type", "transport", 0 ,0);
+    assert_return_code(lllyd_validate(&st->dt, LLLYD_OPT_DATA_TEMPLATE, NULL), EXIT_FAILURE);
+    assert_ptr_not_equal(lllyd_new_leaf(st->dt->child, st->mod, "error-tag", "Error"), NULL);
+    assert_return_code(lllyd_validate(&st->dt, LLLYD_OPT_DATA_TEMPLATE, NULL), EXIT_SUCCESS);
 }
 
 static void
 test_path_yangdata(void **state)
 {
     struct state *st = (*state);
-    struct ly_set *set;
-    const struct lys_node *node;
+    struct llly_set *set;
+    const struct lllys_node *node;
     char *str;
 
-    st->dt = lyd_new_path(st->dt, st->ctx, "/yang-data:#node/test1/second", "test-second", 0 ,0);
-    set = lyd_find_path(st->dt,"/yang-data:#node/test1/second");
+    st->dt = lllyd_new_path(st->dt, st->ctx, "/yang-data:#node/test1/second", "test-second", 0 ,0);
+    set = lllyd_find_path(st->dt,"/yang-data:#node/test1/second");
     assert_ptr_not_equal(set, NULL);
     assert_int_equal(set->number, 1);
 
-    st->str1 = lys_data_path(st->dt->child->schema);
-    st->str2 = lyd_path(st->dt->child);
+    st->str1 = lllys_data_path(st->dt->child->schema);
+    st->str2 = lllyd_path(st->dt->child);
     assert_string_equal(st->str1, st->str2);
     assert_string_equal(st->str1, "/yang-data:#node/test1/second");
 
     str = st->str2;
     free(st->str1);
-    st->str1 = lys_path(st->dt->child->schema, LYS_PATH_FIRST_PREFIX);
-    st->str2 = ly_path_data2schema(st->ctx,str);
+    st->str1 = lllys_path(st->dt->child->schema, LLLYS_PATH_FIRST_PREFIX);
+    st->str2 = llly_path_data2schema(st->ctx,str);
     free(str);
     assert_string_equal(st->str1, st->str2);
     assert_string_equal(st->str1, "/yang-data:#node/select/test1/test1/second");
 
-    ly_set_free(set);
-    set = lys_find_path(st->mod, NULL, st->str1);
+    llly_set_free(set);
+    set = lllys_find_path(st->mod, NULL, st->str1);
     assert_ptr_not_equal(set, NULL);
     assert_int_equal(set->number, 1);
 
-    ly_set_free(set);
+    llly_set_free(set);
     free(st->str1);
-    st->str1 = lys_path(st->dt->child->schema, 0);
-    set = ly_ctx_find_path(st->ctx, st->str1);
+    st->str1 = lllys_path(st->dt->child->schema, 0);
+    set = llly_ctx_find_path(st->ctx, st->str1);
     assert_ptr_not_equal(set, NULL);
     assert_int_equal(set->number, 1);
-    ly_set_free(set);
+    llly_set_free(set);
 
     free(st->str2);
-    st->str2 = lyd_path(st->dt->child);
-    node = ly_ctx_get_node(st->ctx, NULL, st->str2, 0);
+    st->str2 = lllyd_path(st->dt->child);
+    node = llly_ctx_get_node(st->ctx, NULL, st->str2, 0);
     assert_ptr_not_equal(node, NULL);
 }
 

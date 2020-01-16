@@ -22,9 +22,9 @@
 #include "libyang.h"
 
 struct state {
-    struct ly_ctx *ctx;
-    const struct lys_module *mod;
-    struct lyd_node *dt;
+    struct llly_ctx *ctx;
+    const struct lllys_module *mod;
+    struct lllyd_node *dt;
     char *xml;
 };
 
@@ -41,14 +41,14 @@ setup_f(void **state)
     }
 
     /* libyang context */
-    st->ctx = ly_ctx_new(NULL, 0);
+    st->ctx = llly_ctx_new(NULL, 0);
     if (!st->ctx) {
         fprintf(stderr, "Failed to create context.\n");
         goto error;
     }
 
     /* schemas */
-    st->mod = lys_parse_path(st->ctx, schemafile, LYS_IN_YIN);
+    st->mod = lllys_parse_path(st->ctx, schemafile, LLLYS_IN_YIN);
     if (!st->mod) {
         fprintf(stderr, "Failed to load data model \"%s\".\n", schemafile);
         goto error;
@@ -57,7 +57,7 @@ setup_f(void **state)
     return 0;
 
 error:
-    ly_ctx_destroy(st->ctx, NULL);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st);
     (*state) = NULL;
 
@@ -69,8 +69,8 @@ teardown_f(void **state)
 {
     struct state *st = (*state);
 
-    lyd_free_withsiblings(st->dt);
-    ly_ctx_destroy(st->ctx, NULL);
+    lllyd_free_withsiblings(st->dt);
+    llly_ctx_destroy(st->ctx, NULL);
     free(st->xml);
     free(st);
     (*state) = NULL;
@@ -87,7 +87,7 @@ test_un_correct(void **state)
                         "<list><name>y</name><value>2</value><a>2</a><input><x>2</x><y>2</y></input></list>"
                       "</un>";
 
-    st->dt = lyd_parse_mem(st->ctx, xml, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, xml, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
 }
 
@@ -108,19 +108,19 @@ test_un_defaults(void **state)
                         "<list><name>y</name><input><y>2</y></input></list>"
                        "</un>";
 
-    st->dt = lyd_parse_mem(st->ctx, xml1, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, xml1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
-    lyd_free(st->dt);
+    lllyd_free(st->dt);
 
-    st->dt = lyd_parse_mem(st->ctx, xml2, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, xml2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
-    lyd_free(st->dt);
+    lllyd_free(st->dt);
 
-    st->dt = lyd_parse_mem(st->ctx, xml3, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, xml3, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_equal(st->dt, NULL);
-    assert_int_equal(ly_errno, LY_EVALID);
-    assert_int_equal(ly_vecode(st->ctx), LYVE_NOUNIQ);
-    assert_string_equal(ly_errmsg(st->ctx), "Unique data leaf(s) \"value a\" not satisfied in \"/unique:un/list[name='x']\" and \"/unique:un/list[name='y']\".");
+    assert_int_equal(llly_errno, LLLY_EVALID);
+    assert_int_equal(llly_vecode(st->ctx), LLLYVE_NOUNIQ);
+    assert_string_equal(llly_errmsg(st->ctx), "Unique data leaf(s) \"value a\" not satisfied in \"/unique:un/list[name='x']\" and \"/unique:un/list[name='y']\".");
 }
 
 static void
@@ -136,11 +136,11 @@ test_un_empty(void **state)
                         "<list><name>y</name><a>2</a></list>"
                        "</un>";
 
-    st->dt = lyd_parse_mem(st->ctx, xml1, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, xml1, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
-    lyd_free(st->dt);
+    lllyd_free(st->dt);
 
-    st->dt = lyd_parse_mem(st->ctx, xml2, LYD_XML, LYD_OPT_CONFIG);
+    st->dt = lllyd_parse_mem(st->ctx, xml2, LLLYD_XML, LLLYD_OPT_CONFIG);
     assert_ptr_not_equal(st->dt, NULL);
 }
 
@@ -161,7 +161,7 @@ test_schema_inpath(void **state)
                       "      leaf value { type string; }"
                       "} } }";
 
-    assert_ptr_equal(lys_parse_mem(st->ctx, sch, LYS_IN_YANG), NULL);
+    assert_ptr_equal(lllys_parse_mem(st->ctx, sch, LLLYS_IN_YANG), NULL);
 }
 
 int main(void)

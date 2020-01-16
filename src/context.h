@@ -12,8 +12,8 @@
  *     https://opensource.org/licenses/BSD-3-Clause
  */
 
-#ifndef LY_CONTEXT_H_
-#define LY_CONTEXT_H_
+#ifndef LLLY_CONTEXT_H_
+#define LLLY_CONTEXT_H_
 
 #include <pthread.h>
 
@@ -22,33 +22,33 @@
 #include "hash_table.h"
 #include "tree_schema.h"
 
-struct ly_modules_list {
+struct llly_modules_list {
     char **search_paths;
     int size;
     int used;
-    struct lys_module **list;
+    struct lllys_module **list;
     /* all (sub)modules that are currently being parsed */
-    struct lys_module **parsing_sub_modules;
+    struct lllys_module **parsing_sub_modules;
     /* all already parsed submodules of a module, which is before all its submodules (to mark submodule imports) */
-    struct lys_module **parsed_submodules;
+    struct lllys_module **parsed_submodules;
     uint8_t parsing_sub_modules_count;
     uint8_t parsed_submodules_count;
     uint16_t module_set_id;
     int flags; /* see @ref contextoptions. */
 };
 
-struct ly_ctx {
+struct llly_ctx {
     struct dict_table dict;
-    struct ly_modules_list models;
-    ly_module_imp_clb imp_clb;
+    struct llly_modules_list models;
+    llly_module_imp_clb imp_clb;
     void *imp_clb_data;
-    ly_module_data_clb data_clb;
+    llly_module_data_clb data_clb;
     void *data_clb_data;
-#ifdef LY_ENABLED_LYD_PRIV
+#ifdef LLLY_ENABLED_LYD_PRIV
     void *(*priv_dup_clb)(const void *priv);
 #endif
     pthread_key_t errlist_key;
     uint8_t internal_module_count;
 };
 
-#endif /* LY_CONTEXT_H_ */
+#endif /* LLLY_CONTEXT_H_ */
